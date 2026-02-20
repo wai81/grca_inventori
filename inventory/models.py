@@ -1,6 +1,9 @@
 from django.db import models
 from django.utils import timezone
 
+from config import settings
+
+
 class Organization(models.Model):
     code = models.CharField(max_length=3, unique=True)
     name = models.CharField(max_length=200, unique=True)
@@ -147,3 +150,63 @@ class EquipmentEvent(models.Model):
 
     def __str__(self):
         return f"{self.equipment} — {self.get_event_type_display()} — {self.created_at:%Y-%m-%d}"
+
+
+class DocumentType(models.TextChoices):
+    TRANSFER = "transfer", "акт передачи"
+    WRITE_OFF = "write_off", "акт списания"
+
+
+class InventoryDocument(models.Model):
+    """
+    Документ (акт), который может содержать несколько единиц оборудования.
+    """
+    doc_type = models.CharField(max_length=20, choices=DocumentType.choices)
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="documents")
+
+    number = models.CharField(max_length=60)  # номер акта/документа
+    date = models.DateField(default=timezone.now)
+
+    from_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="docs_from")
+    to_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="docs_to")
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    comment = models.TextField(blank=True)
+
+    applied_at = models.DateTimeField(null=True, blank=True)  # когда применили (обновили статусы/закрепления)
+
+    class Meta:
+        unique_together = [("doc_type", "organization", "number")]
+
+    def __str__(self):
+        return f"{self.get_doc_type_display()} №{self.number} от {self.date:%Y-%m-%d}"
+
+
+class InventoryDocumentLine(models.Model):
+    document = models.ForeignKey(InventoryDocument, on_delete=models.CASCADE, related_name="lines")
+    equipment = models.ForeignKey(Equipment, on_delete=models.PROTECT)
+
+    # снимок на момент формирования (для печати)
+    inventory_number_snapshot = models.CharField(max_length=100, blank=True)
+    pc_number_snapshot = models.CharField(max_length=50, blank=True)
+    name_snapshot = models.CharField(max_length=200)
+    type_snapshot = models.CharField(max_length=120, blank=True)
+
+    class Meta:
+        unique_together = [("document", "equipment")]
+
+    def save(self, *args, **kwargs):
+        if not self.name_snapshot:
+            self.name_snapshot = self.equipment.name
+        if not self.type_snapshot:
+            self.type_snapshot = str(self.equipment.equipment_type)
+        if not self.inventory_number_snapshot:
+            self.inventory_number_snapshot = self.equipment.inventory_number or ""
+        if not self.pc_number_snapshot:
+            self.pc_number_snapshot = self.equipment.pc_number or ""
+        super().save(*args, **kwargs)

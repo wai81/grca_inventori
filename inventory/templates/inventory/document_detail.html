@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Документ — {{ object }}{% endblock %}
+{% block content %}
+<h1>{{ object }}</h1>
+<p class="muted">{{ object.organization }}</p>
+
+<div class="no-print">
+  <a href="{% url 'inventory:document_pdf' object.pk %}">Скачать/открыть PDF</a>
+  {% if perms.inventory.change_inventorydocument %}
+    | <a href="{% url 'inventory:document_apply' object.pk %}">Применить документ</a>
+  {% endif %}
+</div>
+
+<table>
+  <tr><th>Тип</th><td>{{ object.get_doc_type_display }}</td></tr>
+  <tr><th>Номер</th><td>{{ object.number }}</td></tr>
+  <tr><th>Дата</th><td>{{ object.date|date:"Y-m-d" }}</td></tr>
+  <tr><th>Сдал</th><td>{{ object.from_employee|default:"—" }}</td></tr>
+  <tr><th>Принял</th><td>{{ object.to_employee|default:"—" }}</td></tr>
+  <tr><th>Применен</th><td>{{ object.applied_at|date:"Y-m-d H:i"|default:"нет" }}</td></tr>
+</table>
+
+<h3>Строки</h3>
+<table>
+  <thead>
+    <tr><th>#</th><th>Оборудование</th><th>Тип</th><th>Инв. №</th><th>№ ПК</th></tr>
+  </thead>
+  <tbody>
+  {% for l in object.lines.all %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ l.name_snapshot }}</td>
+      <td>{{ l.type_snapshot }}</td>
+      <td>{{ l.inventory_number_snapshot|default:"—" }}</td>
+      <td>{{ l.pc_number_snapshot|default:"—" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5">Нет строк</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

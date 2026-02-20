@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Карточка — {{ object.name }}{% endblock %}
+{% block content %}
+<h1>{{ object.name }}</h1>
+<p class="muted">
+  {{ object.equipment_type }} · {{ object.organization }} · Статус: <b>{{ object.get_status_display }}</b>
+</p>
+
+<div class="no-print">
+  <a href="{% url 'inventory:equipment_qr_label' object.pk %}">Печать этикетки QR</a> |
+  <a href="{% url 'inventory:equipment_qr_png' object.pk %}">Открыть QR PNG</a>
+</div>
+
+<h3>Поля</h3>
+<table>
+  <tr><th>Инв. №</th><td>{{ object.inventory_number|default:"—" }}</td></tr>
+  <tr><th>№ ПК</th><td>{{ object.pc_number|default:"—" }}</td></tr>
+  <tr><th>Модель</th><td>{{ object.model|default:"—" }}</td></tr>
+  <tr><th>Серийный №</th><td>{{ object.serial_number|default:"—" }}</td></tr>
+  <tr><th>Характеристики</th><td style="white-space:pre-wrap">{{ object.specs|default:"—" }}</td></tr>
+  <tr><th>Дата ввода</th><td>{{ object.commissioning_date|date:"Y-m-d"|default:"—" }}</td></tr>
+  <tr><th>Закреплено</th><td>{{ object.assigned_to|default:"—" }}</td></tr>
+</table>
+
+<h3>QR</h3>
+<img alt="QR" src="{% url 'inventory:equipment_qr_png' object.pk %}" style="width:180px; height:180px; border:1px solid #ddd">
+
+<h3>История</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Дата</th><th>Тип</th><th>От</th><th>Кому</th><th>Статус</th><th>Документ</th><th>Комментарий</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for e in object.events.all %}
+    <tr>
+      <td>{{ e.created_at|date:"Y-m-d H:i" }}</td>
+      <td>{{ e.get_event_type_display }}</td>
+      <td>{{ e.from_employee|default:"—" }}</td>
+      <td>{{ e.to_employee|default:"—" }}</td>
+      <td>
+        {% if e.old_status or e.new_status %}
+          {{ e.old_status }} → {{ e.new_status }}
+        {% else %}—{% endif %}
+      </td>
+      <td>{{ e.document_number|default:"—" }}</td>
+      <td style="white-space:pre-wrap">{{ e.comment|default:"" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7">Событий нет</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

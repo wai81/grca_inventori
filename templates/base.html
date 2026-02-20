@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Инвентаризация{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:20px;}
+    header a{margin-right:12px;}
+    table{border-collapse:collapse; width:100%;}
+    th,td{border:1px solid #ddd; padding:8px; vertical-align:top;}
+    th{background:#f6f6f6; text-align:left;}
+    .muted{color:#666; font-size:12px;}
+    .actions a{margin-right:8px;}
+    .filter{background:#fafafa; border:1px solid #eee; padding:12px; margin:12px 0;}
+    @media print {
+      header, .no-print { display:none !important; }
+      body{ margin:0; }
+    }
+  </style>
+</head>
+<body>
+<header class="no-print">
+  <a href="{% url 'inventory:equipment_list' %}">Оборудование</a>
+  <a href="{% url 'inventory:employee_list' %}">Сотрудники</a>
+</header>
+
+{% if messages %}
+  <ul class="no-print">
+    {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+  </ul>
+{% endif %}
+
+{% block content %}{% endblock %}
+</body>
+</html>

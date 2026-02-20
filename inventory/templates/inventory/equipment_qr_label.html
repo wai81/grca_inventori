@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Этикетка QR — {{ object.name }}{% endblock %}
+{% block content %}
+<h1>Этикетка</h1>
+<button class="no-print" onclick="window.print()">Печать</button>
+
+<div style="display:flex; gap:16px; align-items:center; margin-top:12px;">
+  <img alt="QR" src="{% url 'inventory:equipment_qr_png' object.pk %}" style="width:220px; height:220px; border:1px solid #ddd">
+  <div>
+    <div><b>{{ object.name }}</b></div>
+    <div>Тип: {{ object.equipment_type }}</div>
+    <div>Инв. №: {{ object.inventory_number|default:"—" }}</div>
+    <div>№ ПК: {{ object.pc_number|default:"—" }}</div>
+    <div>Орг.: {{ object.organization }}</div>
+    <div class="muted">Откроется карточка оборудования при сканировании</div>
+  </div>
+</div>
+{% endblock %}

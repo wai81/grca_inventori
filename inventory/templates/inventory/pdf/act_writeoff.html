@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: A4; margin: 15mm; }
+    body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 11pt; }
+    h1 { font-size: 14pt; text-align:center; margin: 0 0 6mm; }
+    .row { margin: 2mm 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 6mm; }
+    th, td { border: 1px solid #333; padding: 5px; }
+    th { background: #eee; }
+    .sign { margin-top: 12mm; }
+    .line { border-bottom: 1px solid #000; height: 18px; width: 70mm; }
+  </style>
+</head>
+<body>
+<h1>АКТ СПИСАНИЯ ОБОРУДОВАНИЯ</h1>
+
+<div class="row"><b>Организация:</b> {{ doc.organization }}</div>
+<div class="row"><b>Номер:</b> {{ doc.number }} &nbsp;&nbsp; <b>Дата:</b> {{ doc.date|date:"Y-m-d" }}</div>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>Наименование</th><th>Тип</th><th>Инв. №</th><th>№ ПК</th></tr>
+  </thead>
+  <tbody>
+    {% for l in doc.lines.all %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ l.name_snapshot }}</td>
+        <td>{{ l.type_snapshot }}</td>
+        <td>{{ l.inventory_number_snapshot|default:"—" }}</td>
+        <td>{{ l.pc_number_snapshot|default:"—" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5">Нет строк</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="sign">
+  <div class="row"><b>Комиссия/ответственный:</b></div>
+  <div class="line"></div>
+  <div style="font-size:10pt;">(подпись, ФИО)</div>
+</div>
+</body>
+</html>

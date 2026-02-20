@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Печать — сотрудники{% endblock %}
+{% block content %}
+<h1>Сотрудники (печать)</h1>
+<p class="muted">Фильтр: {{ request.GET.urlencode|default:"(нет)" }}</p>
+<button class="no-print" onclick="window.print()">Печать</button>
+
+<table>
+  <thead>
+    <tr>
+      <th>ФИО</th>
+      <th>Подразделение</th>
+      <th>Организация</th>
+      <th>Email</th>
+      <th>Телефон</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for obj in filter.qs %}
+    <tr>
+      <td>{{ obj.full_name }}</td>
+      <td>{{ obj.department }}</td>
+      <td>{{ obj.organization }}</td>
+      <td>{{ obj.email|default:"—" }}</td>
+      <td>{{ obj.phone|default:"—" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5">Нет данных</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

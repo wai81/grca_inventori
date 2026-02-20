@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: A4; margin: 12mm; }
+    body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 10pt; }
+    h1 { font-size: 14pt; margin: 0 0 6mm; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #777; padding: 4px; vertical-align: top; }
+    th { background: #eee; }
+    .muted { color: #666; font-size: 9pt; }
+  </style>
+</head>
+<body>
+<h1>Сотрудники (PDF)</h1>
+<div class="muted">Фильтр: {{ request.GET.urlencode|default:"(нет)" }}</div>
+<br>
+<table>
+  <thead>
+    <tr><th>ФИО</th><th>Подразделение</th><th>Орг.</th><th>Email</th><th>Телефон</th></tr>
+  </thead>
+  <tbody>
+  {% for obj in filter.qs %}
+    <tr>
+      <td>{{ obj.full_name }}</td>
+      <td>{{ obj.department }}</td>
+      <td>{{ obj.organization }}</td>
+      <td>{{ obj.email|default:"—" }}</td>
+      <td>{{ obj.phone|default:"—" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5">Нет данных</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</body>
+</html>
