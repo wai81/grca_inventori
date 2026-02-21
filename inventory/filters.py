@@ -49,8 +49,10 @@ class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
         )
 
 
-class EmployeeFilter(django_filters.FilterSet):
-    q = django_filters.CharFilter(method="search", label="Поиск")
+class EmployeeFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
+    q = django_filters.CharFilter(method="search",
+                                  label="Поиск",
+                                  widget=forms.TextInput(attrs={"placeholder": "ФИО, e-mail, Телефон..."}))
     organization = django_filters.ModelChoiceFilter(queryset=Organization.objects.all(), label="Организация")
     department = django_filters.ModelChoiceFilter(queryset=Department.objects.select_related("organization").all(), label="Подразделение")
     active = django_filters.BooleanFilter(label="Активен")

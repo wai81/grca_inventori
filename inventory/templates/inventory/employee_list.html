@@ -1,46 +1,152 @@
 {% extends "layouts/base.html" %}
+{% load static %}
 {% block title %}Сотрудники{% endblock %}
 {% block content %}
-<h1>Сотрудники</h1>
+    <div class="pc-container">
+        <div class="pc-content">
+            <!-- Page header -->
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="page-header-title">
+                                <h5>Сотрудники</h5>
+                            </div>
+                            <ul class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+                                <li class="breadcrumb-item" aria-current="page">Сотрудники</li>
+                            </ul>
+                        </div>
+                        <div class="col-auto">
+                            <a class="btn btn-primary" href="
 
-<div class="filter no-print">
-  <form method="get">
-    {{ filter.form.as_p }}
-    <button type="submit">Фильтровать</button>
-    <a href="{% url 'inventory:employee_list' %}">Сброс</a>
-    <span style="float:right">
-{#      <a href="{% url 'inventory:employee_print' %}?{{ request.GET.urlencode }}">Печать текущего фильтра</a>#}
-        <a href="{% url 'inventory:employee_list_pdf' %}?{{ request.GET.urlencode }}">PDF по текущему фильтру</a>
-    </span>
-  </form>
-</div>
 
-<p class="muted">Найдено: {{ page_obj.paginator.count }}</p>
 
-<table>
-  <thead>
-    <tr>
-      <th>ФИО</th>
-      <th>Подразделение</th>
-      <th>Организация</th>
-      <th>Email</th>
-      <th>Телефон</th>
-      <th>Активен</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for obj in page_obj %}
-    <tr>
-      <td>{{ obj.full_name }}</td>
-      <td>{{ obj.department }}</td>
-      <td>{{ obj.organization }}</td>
-      <td>{{ obj.email|default:"—" }}</td>
-      <td>{{ obj.phone|default:"—" }}</td>
-      <td>{% if obj.active %}да{% else %}нет{% endif %}</td>
-    </tr>
-  {% empty %}
-    <tr><td colspan="6">Нет данных</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% endblock %}
+
+
+
+                                    {% url 'inventory:employee_list_pdf' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">
+                                PDF по текущему фильтру
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Filter -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Фильтр</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="get" class="row g-3 align-items-end">
+                                {% if filter.form.non_field_errors %}
+                                    <div class="col-12">
+                                        <div class="alert alert-danger mb-0">{{ filter.form.non_field_errors }}</div>
+                                    </div>
+                                {% endif %}
+
+                                {% for field in filter.form.visible_fields %}
+                                    <div class="col-12 col-md-6 col-lg-4">
+                                        <label class="form-label"
+                                               for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.errors %}
+                                            <div class="invalid-feedback d-block">{{ field.errors|striptags }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+
+                                <div class="col-12 d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">Фильтровать</button>
+                                    <a class="btn btn-outline-secondary" href="{% url 'inventory:equipment_list' %}">Сброс</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card table-card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h5 class="mb-0">Список</h5>
+                            <div class="text-muted">Найдено: {{ page_obj.paginator.count }}</div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                    <tr>
+                                        <th class="ps-4">ФИО</th>
+                                        <th>Подразделение</th>
+                                        <th>Организация</th>
+                                        <th>Email</th>
+                                        <th>Телефон</th>
+                                        <th>Активен</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for obj in page_obj %}
+                                        <tr>
+                                            <td class="ps-4">{{ obj.full_name }}</td>
+                                            <td>{{ obj.department }}</td>
+                                            <td>{{ obj.organization }}</td>
+                                            <td>{{ obj.email|default:"—" }}</td>
+                                            <td>{{ obj.phone|default:"—" }}</td>
+                                            <td>{% if obj.active %}да{% else %}нет{% endif %}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="8" class="text-center py-5 text-muted">
+                                                Нет данных
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% if is_paginated %}
+                            <div class="card-footer d-flex align-items-center justify-content-between">
+                                <div class="text-muted">
+                                    стр. {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                                </div>
+                                <div class="d-flex gap-2">
+                                    {% if page_obj.has_previous %}
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           href="?page=
+
+
+
+                                                   {{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                                            Назад
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled>Назад</button>
+                                    {% endif %}
+
+                                    {% if page_obj.has_next %}
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           href="?page=
+
+
+
+                                                   {{ page_obj.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                                            Вперед
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled>Вперед</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
