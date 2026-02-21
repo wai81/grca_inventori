@@ -1,15 +1,30 @@
 import django_filters
+from django import forms
+
+from .filters_mixins import BootstrapFilterFormMixin
 from .models import Equipment, Employee, EquipmentStatus, EquipmentType, Organization, Department
 
 
-class EquipmentFilter(django_filters.FilterSet):
-    q = django_filters.CharFilter(method="search", label="Поиск")
+class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
+    q = django_filters.CharFilter(
+        method="search",
+        label="Поиск",
+        widget=forms.TextInput(attrs={"placeholder": "Название, инв. №, серийный, модель..."})
+    )
+
     status = django_filters.ChoiceFilter(choices=EquipmentStatus.choices, label="Статус")
     equipment_type = django_filters.ModelChoiceFilter(queryset=EquipmentType.objects.all(), label="Тип")
     organization = django_filters.ModelChoiceFilter(queryset=Organization.objects.all(), label="Организация")
     assigned_to = django_filters.ModelChoiceFilter(queryset=Employee.objects.all(), label="Сотрудник")
-    commissioning_date__gte = django_filters.DateFilter(field_name="commissioning_date", lookup_expr="gte", label="Ввод с")
-    commissioning_date__lte = django_filters.DateFilter(field_name="commissioning_date", lookup_expr="lte", label="Ввод по")
+
+    commissioning_date__gte = django_filters.DateFilter(
+        field_name="commissioning_date", lookup_expr="gte", label="Ввод с",
+        widget=forms.DateInput(attrs={"type": "date"})
+    )
+    commissioning_date__lte = django_filters.DateFilter(
+        field_name="commissioning_date", lookup_expr="lte", label="Ввод по",
+        widget=forms.DateInput(attrs={"type": "date"})
+    )
 
     class Meta:
         model = Equipment
