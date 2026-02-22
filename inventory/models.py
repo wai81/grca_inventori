@@ -4,50 +4,6 @@ from django.utils import timezone
 from config import settings
 
 
-class Organization(models.Model):
-    code = models.CharField(max_length=3, unique=True)
-    name = models.CharField(max_length=200, unique=True)
-
-    class Meta:
-        verbose_name = "Организация"
-        verbose_name_plural = "Организации"
-
-    def __str__(self):
-        return f'{self.code} {self.name}'
-
-
-class Department(models.Model):
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="departments")
-    name = models.CharField(max_length=200)
-
-    class Meta:
-        verbose_name = "Подразделение"
-        verbose_name_plural = "Подразделения"
-        unique_together = [("organization", "name")]
-
-    def __str__(self):
-        return f"{self.organization} / {self.name}"
-
-
-
-class Employee(models.Model):
-    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="employees")
-    department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="employees")
-    full_name = models.CharField(max_length=200)
-    email = models.EmailField(blank=True)
-    phone = models.CharField(max_length=50, blank=True)
-    active = models.BooleanField(default=True)
-
-    class Meta:
-        verbose_name = "Сотрудник"
-        verbose_name_plural = "Сотрудники"
-        indexes = [
-            models.Index(fields=["full_name"]),
-            models.Index(fields=["organization", "department"]),
-        ]
-
-    def __str__(self):
-        return self.full_name
 
 class EquipmentType(models.Model):
     name = models.CharField(max_length=120, unique=True)  # ПК, Принтер, МФУ, Монитор, Сканер, ИБП...
@@ -69,7 +25,7 @@ class EquipmentStatus(models.TextChoices):
     WRITTEN_OFF = "written_off", "списано"
 
 class Equipment(models.Model):
-    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="equipment")
+    organization = models.ForeignKey("directory.Organization", on_delete=models.PROTECT, related_name="equipment")
     equipment_type = models.ForeignKey(EquipmentType, on_delete=models.PROTECT, related_name="equipment")
 
     name = models.CharField(max_length=200)  # коротко: "ПК Lenovo", "Принтер HP"
@@ -84,7 +40,7 @@ class Equipment(models.Model):
     status = models.CharField(max_length=20, choices=EquipmentStatus.choices, default=EquipmentStatus.IN_USE)
 
     assigned_to = models.ForeignKey(
-        Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_equipment"
+        "directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_equipment"
     )
 
     # Уникальный токен для QR (удобно печатать/сканировать и открывать карточку)
@@ -128,10 +84,10 @@ class EquipmentEvent(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     from_employee = models.ForeignKey(
-        Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="events_from"
+        "directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="events_from"
     )
     to_employee = models.ForeignKey(
-        Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="events_to"
+        "directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="events_to"
     )
 
     old_status = models.CharField(max_length=20, choices=EquipmentStatus.choices, blank=True)
@@ -162,13 +118,13 @@ class InventoryDocument(models.Model):
     Документ (акт), который может содержать несколько единиц оборудования.
     """
     doc_type = models.CharField(max_length=20, choices=DocumentType.choices)
-    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="documents")
+    organization = models.ForeignKey("directory.Organization", on_delete=models.PROTECT, related_name="documents")
 
     number = models.CharField(max_length=60)  # номер акта/документа
     date = models.DateField(default=timezone.now)
 
-    from_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="docs_from")
-    to_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="docs_to")
+    from_employee = models.ForeignKey("directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="docs_from")
+    to_employee = models.ForeignKey("directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="docs_to")
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
