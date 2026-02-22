@@ -53,6 +53,10 @@
                         <div class="card-header d-flex align-items-center justify-content-between"><h5 class="mb-0">
                             Список</h5>
                             <div class="text-muted">Найдено: {{ page_obj.paginator.count }}</div>
+                            <a class="btn btn-light-primary d-flex align-items-center gap-2" href="{% url 'directory:organization_create' %}">
+                                <i class="ti ti-plus"></i>
+                                Создать
+                            </a>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
@@ -63,6 +67,8 @@
                                         <th>Название</th>
                                         <th>Подразделений</th>
                                         <th class="text-end pe-4">Сотрудников</th>
+                                        <th>Активна</th>
+                                        <th class="text-end pe-4">Действия</th>
                                     </tr>
                                     </thead>
                                     <tbody> {% for obj in page_obj %}
@@ -71,6 +77,47 @@
                                             <td>{{ obj.name }}</td>
                                             <td>{{ obj.departments_count }}</td>
                                             <td class="text-end pe-4">{{ obj.employees_count }}</td>
+                                            <td>
+                                                {% if obj.active %}
+                                                    <span class="badge bg-light-success text-success">да</span>
+                                                {% else %}
+                                                    <span class="badge bg-light-danger text-danger">нет</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <ul class="list-inline mb-0">
+                                                <li class="list-inline-item">
+                                                <a class="avatar avatar-s btn-link-success btn-pc-default"
+                                                   href="{% url 'directory:organization_edit' obj.pk %}">
+                                                    <i class="ti ti-edit f-20"></i>
+{#                                                    Редактировать#}
+                                                </a>
+                                                </li>
+                                                <form method="post"
+                                                      action="{% url 'directory:organization_toggle_active' obj.pk %}"
+                                                      class="d-inline">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="next"
+                                                           value="{{ request.get_full_path }}">
+                                                    {% if obj.active %}
+                                                        <li class="list-inline-item">
+                                                        <button class="avatar avatar-s btn-link-danger btn-pc-default" type="submit">
+                                                        <i class="ti ti-toggle-right f-20"></i>
+{#                                                            Деактивировать#}
+                                                        </button>
+                                                        </li>
+                                                    {% else %}
+                                                        <li class="list-inline-item">
+                                                        <button class="avatar avatar-s btn-link-success btn-pc-default" type="submit">
+                                                        <i class="ti ti-toggle-left f-20"></i>
+{#                                                            Активировать#}
+                                                        </button>
+                                                        </li>
+                                                    {% endif %}
+                                                </form>
+                                                </ul>
+                                            </td>
+
                                         </tr> {% empty %}
                                         <tr>
                                             <td colspan="4" class="text-center py-5 text-muted">Нет данных</td>

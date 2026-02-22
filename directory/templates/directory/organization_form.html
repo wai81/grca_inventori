@@ -1,0 +1,60 @@
+{% extends "layouts/base.html" %}
+{% block title %}{% if object %}Редактирование организации{% else %}Создание организации{% endif %}{% endblock %}
+
+{% block content %}
+<div class="pc-container">
+  <div class="pc-content">
+
+    <div class="page-header">
+      <div class="page-block">
+        <div class="row align-items-center">
+          <div class="col">
+            <div class="page-header-title">
+              <h5 class="m-b-10">
+                {% if object %}Редактирование организации{% else %}Создание организации{% endif %}
+              </h5>
+            </div>
+          </div>
+          <div class="col-auto">
+            <a class="btn btn-outline-secondary" href="{% url 'directory:organization_list' %}">Назад к списку</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" class="row g-3">
+          {% csrf_token %}
+
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="{{ form.code.id_for_label }}">Код</label>
+            {{ form.code }}
+            {% if form.code.errors %}<div class="invalid-feedback d-block">{{ form.code.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="col-12 col-md-8">
+            <label class="form-label" for="{{ form.name.id_for_label }}">Название</label>
+            {{ form.name }}
+            {% if form.name.errors %}<div class="invalid-feedback d-block">{{ form.name.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="col-12">
+            <div class="form-check">
+              {{ form.active }}
+              <label class="form-check-label" for="{{ form.active.id_for_label }}">Активна</label>
+            </div>
+            {% if form.active.errors %}<div class="invalid-feedback d-block">{{ form.active.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" type="submit">Сохранить</button>
+            <a class="btn btn-outline-secondary" href="{% url 'directory:organization_list' %}">Отмена</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock content %}

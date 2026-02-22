@@ -1,10 +1,14 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Count
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.views import View
+from django.views.generic import CreateView, UpdateView
 from django_filters.views import FilterView
 
 from config.pdf import render_pdf_response
 from directory.filters import EmployeeFilter, OrganizationFilter, DepartmentFilter
+from directory.forms import OrganizationForm
 from directory.models import Employee, Organization, Department
 
 
@@ -34,6 +38,7 @@ class OrganizationListView(FilterView):
     template_name = "directory/organization_list.html"
     filterset_class = OrganizationFilter
     paginate_by = 20
+
     def get_queryset(self):
         return (
             Organization.objects
@@ -41,8 +46,32 @@ class OrganizationListView(FilterView):
                 departments_count=Count("departments", distinct=True),
                 employees_count=Count("employees", distinct=True),
             )
-            .order_by("code", "name")
+            .order_by("-active", "code", "name")
         )
+
+
+class OrganizationToggleActiveView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        obj = get_object_or_404(Organization, pk=pk)
+        obj.active = not obj.active
+        obj.save(update_fields=["active"])
+
+        next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or "/organizations/"
+        return redirect(next_url)
+
+
+class OrganizationCreateView(LoginRequiredMixin, CreateView):
+    model = Organization
+    form_class = OrganizationForm
+    template_name = "directory/organization_form.html"
+    success_url = reverse_lazy("directory:organization_list")
+
+
+class OrganizationUpdateView(LoginRequiredMixin, UpdateView):
+    model = Organization
+    form_class = OrganizationForm
+    template_name = "directory/organization_form.html"
+    success_url = reverse_lazy("directory:organization_list")
 
 
 class DepartmentListView(FilterView):

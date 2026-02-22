@@ -3,6 +3,7 @@ from django.db import models
 class Organization(models.Model):
     code = models.CharField(max_length=3, unique=True)
     name = models.CharField(max_length=200, unique=True)
+    active = models.BooleanField(default=False, verbose_name="Активна")
 
     class Meta:
         verbose_name = "Организация"

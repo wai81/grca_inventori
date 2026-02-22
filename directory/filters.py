@@ -1,6 +1,6 @@
 import django_filters
 from django import forms
-
+from django.db import models
 from .filters_mixins import BootstrapFilterFormMixin
 from .models import Organization, Department, Employee
 
@@ -36,6 +36,11 @@ class OrganizationFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
         label="Поиск",
         widget=forms.TextInput(attrs={"placeholder": "Код или название..."})
     )
+    show_inactive = django_filters.BooleanFilter(
+        method="filter_show_inactive",
+        label="Показывать неактивные",
+        widget=forms.CheckboxInput(),
+    )
 
 
     class Meta:
@@ -50,6 +55,13 @@ class OrganizationFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
             models.Q(code__icontains=value) |
             models.Q(name__icontains=value)
         )
+
+    def filter_show_inactive(self, queryset, name, value):
+        # value=True => показать все
+        if value:
+            return queryset
+        # по умолчанию (нет галки) — только активные
+        return queryset.filter(active=True)
 
 class DepartmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
     q = django_filters.CharFilter(
