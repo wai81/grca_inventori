@@ -39,7 +39,15 @@
                     </a>
                 </li>
 
+                <li class="pc-item pc-caption">
+                    <label>Справочники</label>
+                </li>
+
                 <li class="pc-item">
+                    <a href="{% url "directory:organization_list" %}" class="pc-link">
+                        <span class="pc-micon"><i data-feather="home"></i></span>
+                        <span class="pc-mtext">Организации</span>
+                    </a>
                     <a href="{% url "directory:employee_list" %}" class="pc-link">
                         <span class="pc-micon"><i data-feather="users"></i></span>
                         <span class="pc-mtext">Сотрудники</span>
@@ -73,12 +81,12 @@
 {#                        <span class="pc-mtext">Typography</span>#}
 {#                    </a>#}
 {#                </li>#}
-{#                <li class="pc-item">#}
-{#                    <a href="{% url "icon_feather" %}" class="pc-link">#}
-{#                        <span class="pc-micon"><i data-feather="feather"></i></span>#}
-{#                        <span class="pc-mtext">Icons</span>#}
-{#                    </a>#}
-{#                </li>#}
+                <li class="pc-item">
+                    <a href="{% url "icon_feather" %}" class="pc-link">
+                        <span class="pc-micon"><i data-feather="feather"></i></span>
+                        <span class="pc-mtext">Icons</span>
+                    </a>
+                </li>
 {#                <li class="pc-item pc-caption">#}
 {#                    <label>Pages</label>#}
 {#                    <i data-feather="monitor"></i>#}
