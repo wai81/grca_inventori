@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.views.generic import DetailView
 from django_filters.views import FilterView
 
-from inventory.filters import EmployeeFilter, EquipmentFilter
+from inventory.filters import EquipmentFilter
 from inventory.models import InventoryDocument, Equipment
 from config.pdf import render_pdf_response
 from inventory.services import apply_document

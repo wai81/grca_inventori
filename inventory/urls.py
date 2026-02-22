@@ -11,9 +11,9 @@ urlpatterns = [
     path("equipment/<int:pk>/qr.png", views.equipment_qr_png, name="equipment_qr_png"),
     path("equipment/<int:pk>/qr-label/", views.equipment_qr_label, name="equipment_qr_label"),
 
-    path("employees/", views.EmployeeListView.as_view(), name="employee_list"),
+    # path("employees/", views.EmployeeListView.as_view(), name="employee_list"),
     # path("employees/print/", views.EmployeePrintView.as_view(), name="employee_print"),
-    path("employees/pdf/", views.EmployeeListPdfView.as_view(), name="employee_list_pdf"),
+    # path("employees/pdf/", views.EmployeeListPdfView.as_view(), name="employee_list_pdf"),
 
     path("documents/<int:pk>/", views.DocumentDetailView.as_view(), name="document_detail"),
     path("documents/<int:pk>/pdf/", views.DocumentPdfView.as_view(), name="document_pdf"),

@@ -42,7 +42,7 @@
 
           <div class="col-auto">
             {# если у вас есть view для PDF — подставьте её name сюда #}
-            {% url "inventory:employee_list_pdf" as employee_pdf_url %}
+            {% url "directory:employee_list_pdf" as employee_pdf_url %}
             {% if employee_pdf_url %}
               <a class="btn btn-primary"
                  href="{{ employee_pdf_url }}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">

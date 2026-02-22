@@ -1,3 +1,10 @@
+import django_filters
+from django import forms
+
+from .filters_mixins import BootstrapFilterFormMixin
+from .models import Organization, Department, Employee
+
+
 class EmployeeFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
     q = django_filters.CharFilter(method="search",
                                   label="Поиск",
