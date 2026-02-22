@@ -2,14 +2,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.shortcuts import render
 from django_filters.views import FilterView
 
+from config.pdf import render_pdf_response
 from directory.filters import EmployeeFilter
 from directory.models import Employee
 
 
 # Create your views here.
 class EmployeeListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
-    permission_required = "inventory.view_employee"
-    template_name = "inventory/employee_list.html"
+    permission_required = "directory.view_employee"
+    template_name = "directory/employee_list.html"
     model = Employee
     filterset_class = EmployeeFilter
     paginate_by = 25
@@ -25,5 +26,5 @@ class EmployeeListPdfView(EmployeeListView):
         self.object_list = self.get_queryset()
         filt = self.get_filterset(self.filterset_class)
         context = {"filter": filt, "request": request}
-        return render_pdf_response(request, "inventory/pdf/employee_list_pdf.html", context, "employees.pdf")
+        return render_pdf_response(request, "directory/pdf/employee_list_pdf.html", context, "employees.pdf")
 
