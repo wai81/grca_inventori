@@ -4,12 +4,9 @@ from . import views
 app_name = "directory"
 
 urlpatterns = [
-
-
     path("employees/", views.EmployeeListView.as_view(), name="employee_list"),
 
     path("employees/pdf/", views.EmployeeListPdfView.as_view(), name="employee_list_pdf"),
-    path("organizations/", views.OrganizationListView.as_view(), name="organization_list")
-
-
+    path("organizations/", views.OrganizationListView.as_view(), name="organization_list"),
+    path("departments/", views.DepartmentListView.as_view(), name="department_list"),
 ]

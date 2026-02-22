@@ -4,8 +4,8 @@ from django.shortcuts import render
 from django_filters.views import FilterView
 
 from config.pdf import render_pdf_response
-from directory.filters import EmployeeFilter, OrganizationFilter
-from directory.models import Employee, Organization
+from directory.filters import EmployeeFilter, OrganizationFilter, DepartmentFilter
+from directory.models import Employee, Organization, Department
 
 
 # Create your views here.
@@ -21,7 +21,7 @@ class EmployeeListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
 
 
 class EmployeeListPdfView(EmployeeListView):
-    permission_required = "inventory.view_employee"
+    permission_required = "directory.view_employee"
 
     def get(self, request, *args, **kwargs):
         self.object_list = self.get_queryset()
@@ -42,4 +42,18 @@ class OrganizationListView(FilterView):
                 employees_count=Count("employees", distinct=True),
             )
             .order_by("code", "name")
+        )
+
+
+class DepartmentListView(FilterView):
+    template_name = "directory/department_list.html"
+    filterset_class = DepartmentFilter
+    paginate_by = 20
+
+    def get_queryset(self):
+        return (
+            Department.objects
+            .select_related("organization")
+            .annotate(employees_count=Count("employees", distinct=True))
+            .order_by("organization__code", "name")
         )

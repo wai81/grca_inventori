@@ -50,3 +50,28 @@ class OrganizationFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
             models.Q(code__icontains=value) |
             models.Q(name__icontains=value)
         )
+
+class DepartmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
+    q = django_filters.CharFilter(
+        method="search",
+        label="Поиск",
+        widget=forms.TextInput(attrs={"placeholder": "Подразделение или организация..."})
+    )
+    organization = django_filters.ModelChoiceFilter(
+        queryset=Organization.objects.all(),
+        label="Организация"
+    )
+
+    class Meta:
+        model = Department
+        fields = ["organization"]
+
+    def search(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        return queryset.filter(
+            models.Q(name__icontains=value)
+            | models.Q(organization__name__icontains=value)
+            | models.Q(organization__code__icontains=value)
+        )

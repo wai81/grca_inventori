@@ -1,0 +1,117 @@
+{% extends "layouts/base.html" %}
+{% block title %}Подразделения{% endblock %}
+
+{% block content %}
+<div class="pc-container">
+  <div class="pc-content">
+
+    {% url "index" as index_url %}
+
+    <div class="page-header">
+      <div class="page-block">
+        <div class="row align-items-center">
+          <div class="col">
+            <div class="page-header-title">
+              <h5 class="m-b-10">Подразделения</h5>
+            </div>
+            <ul class="breadcrumb">
+              <li class="breadcrumb-item">
+                {% if index_url %}<a href="{{ index_url }}">Главная</a>{% else %}<span>Главная</span>{% endif %}
+              </li>
+              <li class="breadcrumb-item" aria-current="page">Подразделения</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header"><h5 class="mb-0">Фильтр</h5></div>
+          <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+              {% for field in filter.form.visible_fields %}
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.errors %}
+                    <div class="invalid-feedback d-block">{{ field.errors|striptags }}</div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+
+              <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Фильтровать</button>
+                <a class="btn btn-outline-secondary" href="{{ request.path }}">Сброс</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card table-card">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="mb-0">Список</h5>
+            <div class="text-muted">Найдено: {{ page_obj.paginator.count }}</div>
+          </div>
+
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th class="ps-4">Подразделение</th>
+                    <th>Организация</th>
+                    <th class="text-end pe-4">Сотрудников</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for obj in page_obj %}
+                    <tr>
+                      <td class="ps-4 fw-semibold">{{ obj.name }}</td>
+                      <td>{{ obj.organization }}</td>
+                      <td class="text-end pe-4">{{ obj.employees_count }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="3" class="text-center py-5 text-muted">Нет данных</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {% if is_paginated %}
+            <div class="card-footer d-flex align-items-center justify-content-between">
+              <div class="text-muted">стр. {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</div>
+              <div class="d-flex gap-2">
+                {% if page_obj.has_previous %}
+                  <a class="btn btn-sm btn-outline-secondary"
+                     href="?page={{ page_obj.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' and v %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}">
+                    Назад
+                  </a>
+                {% else %}<button class="btn btn-sm btn-outline-secondary" disabled>Назад</button>{% endif %}
+
+                {% if page_obj.has_next %}
+                  <a class="btn btn-sm btn-outline-secondary"
+                     href="?page={{ page_obj.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' and v %}&{{ k }}={{ v|urlencode }}{% endif %}{% endfor %}">
+                    Вперед
+                  </a>
+                {% else %}<button class="btn btn-sm btn-outline-secondary" disabled>Вперед</button>{% endif %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock content %}
