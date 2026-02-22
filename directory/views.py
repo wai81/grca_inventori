@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Count
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import View
@@ -8,7 +9,7 @@ from django_filters.views import FilterView
 
 from config.pdf import render_pdf_response
 from directory.filters import EmployeeFilter, OrganizationFilter, DepartmentFilter
-from directory.forms import OrganizationForm, DepartmentForm
+from directory.forms import OrganizationForm, DepartmentForm, EmployeeForm
 from directory.models import Employee, Organization, Department
 
 
@@ -21,8 +22,34 @@ class EmployeeListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
     paginate_by = 25
 
     def get_queryset(self):
-        return Employee.objects.select_related("organization", "department")
+        return (
+            Employee.objects
+            .select_related("organization", "department")
+            .order_by("-active", "full_name")
+        )
 
+
+class EmployeeCreateView(LoginRequiredMixin, CreateView):
+    model = Employee
+    form_class = EmployeeForm
+    template_name = "directory/employee_form.html"
+    success_url = reverse_lazy("directory:employee_list")
+
+
+class EmployeeUpdateView(LoginRequiredMixin, UpdateView):
+    model = Employee
+    form_class = EmployeeForm
+    template_name = "directory/employee_form.html"
+    success_url = reverse_lazy("directory:employee_list")
+
+
+class EmployeeToggleActiveView(LoginRequiredMixin, View):
+    # Используем как “Удалить” (active=False) и “Восстановить” (active=True)
+    def post(self, request, pk):
+        obj = get_object_or_404(Employee, pk=pk)
+        obj.active = not obj.active
+        obj.save(update_fields=["active"])
+        return redirect(request.POST.get("next") or request.META.get("HTTP_REFERER") or "/employees/")
 
 class EmployeeListPdfView(EmployeeListView):
     permission_required = "directory.view_employee"
@@ -87,6 +114,25 @@ class DepartmentListView(LoginRequiredMixin, FilterView):
             .order_by("-active","organization__code", "name")
         )
 
+class DepartmentsByOrganizationView(LoginRequiredMixin, View):
+    permission_required = "directory.view_department"
+
+    def get(self, request):
+        org_id = request.GET.get("organization_id")
+        if not org_id:
+            return JsonResponse({"results": []})
+
+        q = (request.GET.get("q") or "").strip()
+
+        qs = Department.objects.filter(organization_id=org_id, active=True)
+
+        if q:
+            qs = qs.filter(name__icontains=q)
+
+        qs = qs.order_by("name")[:50]
+
+        data = [{"id": d.id, "name": d.name} for d in qs]  # <-- без повторного order_by
+        return JsonResponse({"results": data})
 
 class DepartmentCreateView(LoginRequiredMixin, CreateView):
     model = Department

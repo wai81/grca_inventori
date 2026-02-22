@@ -12,11 +12,18 @@ class EmployeeFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
     organization = django_filters.ModelChoiceFilter(queryset=Organization.objects.all(), label="Организация")
     department = django_filters.ModelChoiceFilter(queryset=Department.objects.select_related("organization").all(),
                                                   label="Подразделение")
-    active = django_filters.BooleanFilter(label="Активен")
+    show_inactive = django_filters.BooleanFilter(
+        method="filter_show_inactive",
+        label="Показывать неактивных",
+        widget=forms.CheckboxInput(),
+    )
 
     class Meta:
         model = Employee
-        fields = ["organization", "department", "active"]
+        fields = ["organization", "department"]
+
+    def filter_show_inactive(self, queryset, name, value):
+        return queryset if value else queryset.filter(active=True)
 
     def search(self, queryset, name, value):
         value = (value or "").strip()

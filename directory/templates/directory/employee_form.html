@@ -1,0 +1,138 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block title %}{% if object %}Редактирование сотрудника{% else %}Создание сотрудника{% endif %}{% endblock %}
+
+{% block content %}
+{#    <style>#}
+{#        /* Организация */#}
+{#        #id_organization + .ts-wrapper,#}
+{#        #id_organization + .ts-wrapper .ts-control {#}
+{#            border: 1px !important;#}
+{#            box-shadow: none !important;#}
+{#        }#}
+{##}
+{#        /* Подразделение */#}
+{#        #id_department + .ts-wrapper,#}
+{#        #id_department + .ts-wrapper .ts-control {#}
+{#            border: 1px !important;#}
+{#            box-shadow: none !important;#}
+{#        }#}
+{##}
+{#        /* чтобы и dropdown был без рамки (если нужно) */#}
+{#        #id_organization + .ts-wrapper .ts-dropdown,#}
+{#        #id_department + .ts-wrapper .ts-dropdown {#}
+{#            border: 0 !important;#}
+{#        }#}
+{#    </style>#}
+    <div class="pc-container">
+        <div class="pc-content">
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{% if object %}Редактирование сотрудника{% else %}Создание
+                        сотрудника{% endif %}</h5>
+                    <a class="btn btn-outline-secondary" href="{% url 'directory:employee_list' %}">Назад</a>
+                </div>
+
+                <div class="card-body">
+                    <form method="post" class="row g-3">
+                        {% csrf_token %}
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="{{ form.organization.id_for_label }}">Организация</label>
+                            {{ form.organization }}
+                            {% if form.organization.errors %}
+                                <div class="invalid-feedback d-block">{{ form.organization.errors|striptags }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="{{ form.department.id_for_label }}">Подразделение</label>
+                            {{ form.department }}
+                            {% if form.department.errors %}
+                                <div class="invalid-feedback d-block">{{ form.department.errors|striptags }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="{{ form.full_name.id_for_label }}">ФИО</label>
+                            {{ form.full_name }}
+                            {% if form.full_name.errors %}
+                                <div class="invalid-feedback d-block">{{ form.full_name.errors|striptags }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">{{ form.email.errors|striptags }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="{{ form.phone.id_for_label }}">Телефон</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                                <div class="invalid-feedback d-block">{{ form.phone.errors|striptags }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check">
+                                {{ form.active }}
+                                <label class="form-check-label" for="{{ form.active.id_for_label }}">Активен</label>
+                            </div>
+                            {% if form.active.errors %}
+                                <div class="invalid-feedback d-block">{{ form.active.errors|striptags }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-12 d-flex gap-2">
+                            <button class="btn btn-primary" type="submit">Сохранить</button>
+                            <a class="btn btn-outline-secondary" href="{% url 'directory:employee_list' %}">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const orgEl = document.getElementById("id_organization");
+            const depEl = document.getElementById("id_department");
+            if (!orgEl || !depEl || typeof TomSelect === "undefined") return;
+
+            const orgTS = new TomSelect(orgEl, {create: false, allowEmptyOption: true});
+            const depTS = new TomSelect(depEl, {
+                create: false,
+                valueField: "id",
+                labelField: "name",
+                searchField: ["name"],
+                placeholder: "— сначала выберите организацию —"
+            });
+
+            depTS.disable();
+
+            const url = "{% url 'directory:ajax_departments' %}";
+
+            async function reloadDepartments(orgId, selectedId) {
+                depTS.disable();
+                depTS.clear(true);
+                depTS.clearOptions();
+                if (!orgId) return;
+
+                const r = await fetch(url + "?organization_id=" + encodeURIComponent(orgId));
+                const data = await r.json();
+                const items = (data.results || []).map(x => ({id: String(x.id), name: x.name}));
+
+                depTS.addOptions(items);
+                depTS.refreshOptions(false);
+
+                if (selectedId) depTS.setValue(String(selectedId), true);
+                depTS.enable();
+            }
+
+            const initialOrg = orgTS.getValue();
+            const initialDep = depEl.value;
+            if (initialOrg) reloadDepartments(initialOrg, initialDep);
+
+            orgTS.on("change", (value) => reloadDepartments(value, null));
+        });
+    </script>
+{% endblock %}

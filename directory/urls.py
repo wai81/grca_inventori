@@ -5,7 +5,9 @@ app_name = "directory"
 
 urlpatterns = [
     path("employees/", views.EmployeeListView.as_view(), name="employee_list"),
-
+    path("employees/create/", views.EmployeeCreateView.as_view(), name="employee_create"),
+    path("employees/<int:pk>/edit/", views.EmployeeUpdateView.as_view(), name="employee_edit"),
+    path("employees/<int:pk>/toggle-active/", views.EmployeeToggleActiveView.as_view(), name="employee_toggle_active"),
     path("employees/pdf/", views.EmployeeListPdfView.as_view(), name="employee_list_pdf"),
 
     path("organizations/", views.OrganizationListView.as_view(), name="organization_list"),
@@ -13,9 +15,11 @@ urlpatterns = [
     path("organizations/<int:pk>/edit/", views.OrganizationUpdateView.as_view(), name="organization_edit"),
     path("organizations/<int:pk>/toggle-active/", views.OrganizationToggleActiveView.as_view(), name="organization_toggle_active"),
 
+
     path("departments/", views.DepartmentListView.as_view(), name="department_list"),
     path("departments/create/", views.DepartmentCreateView.as_view(), name="department_create"),
     path("departments/<int:pk>/edit/", views.DepartmentUpdateView.as_view(), name="department_edit"),
     path("departments/<int:pk>/toggle-active/", views.DepartmentToggleActiveView.as_view(), name="department_toggle_active"),
 
+    path("ajax/departments/", views.DepartmentsByOrganizationView.as_view(), name="ajax_departments"),
 ]
