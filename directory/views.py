@@ -8,7 +8,7 @@ from django_filters.views import FilterView
 
 from config.pdf import render_pdf_response
 from directory.filters import EmployeeFilter, OrganizationFilter, DepartmentFilter
-from directory.forms import OrganizationForm
+from directory.forms import OrganizationForm, DepartmentForm
 from directory.models import Employee, Organization, Department
 
 
@@ -74,7 +74,7 @@ class OrganizationUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy("directory:organization_list")
 
 
-class DepartmentListView(FilterView):
+class DepartmentListView(LoginRequiredMixin, FilterView):
     template_name = "directory/department_list.html"
     filterset_class = DepartmentFilter
     paginate_by = 20
@@ -84,5 +84,27 @@ class DepartmentListView(FilterView):
             Department.objects
             .select_related("organization")
             .annotate(employees_count=Count("employees", distinct=True))
-            .order_by("organization__code", "name")
+            .order_by("-active","organization__code", "name")
         )
+
+
+class DepartmentCreateView(LoginRequiredMixin, CreateView):
+    model = Department
+    form_class = DepartmentForm
+    template_name = "directory/department_form.html"
+    success_url = reverse_lazy("directory:department_list")
+
+
+class DepartmentUpdateView(LoginRequiredMixin, UpdateView):
+    model = Department
+    form_class = DepartmentForm
+    template_name = "directory/department_form.html"
+    success_url = reverse_lazy("directory:department_list")
+
+
+class DepartmentToggleActiveView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        obj = get_object_or_404(Department, pk=pk)
+        obj.active = not obj.active
+        obj.save(update_fields=["active"])
+        return redirect(request.POST.get("next") or request.META.get("HTTP_REFERER") or "/departments/")

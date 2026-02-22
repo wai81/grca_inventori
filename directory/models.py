@@ -16,6 +16,7 @@ class Organization(models.Model):
 class Department(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="departments")
     name = models.CharField(max_length=200)
+    active = models.BooleanField(default=False, verbose_name="Активно")
 
     class Meta:
         verbose_name = "Подразделение"

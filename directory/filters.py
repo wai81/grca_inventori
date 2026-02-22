@@ -73,10 +73,18 @@ class DepartmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
         queryset=Organization.objects.all(),
         label="Организация"
     )
+    show_inactive = django_filters.BooleanFilter(
+        method="filter_show_inactive",
+        label="Показывать неактивные",
+        widget=forms.CheckboxInput(),
+    )
 
     class Meta:
         model = Department
         fields = ["organization"]
+
+    def filter_show_inactive(self, queryset, name, value):
+        return queryset if value else queryset.filter(active=True)
 
     def search(self, queryset, name, value):
         value = (value or "").strip()

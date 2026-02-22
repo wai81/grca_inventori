@@ -14,4 +14,8 @@ urlpatterns = [
     path("organizations/<int:pk>/toggle-active/", views.OrganizationToggleActiveView.as_view(), name="organization_toggle_active"),
 
     path("departments/", views.DepartmentListView.as_view(), name="department_list"),
+    path("departments/create/", views.DepartmentCreateView.as_view(), name="department_create"),
+    path("departments/<int:pk>/edit/", views.DepartmentUpdateView.as_view(), name="department_edit"),
+    path("departments/<int:pk>/toggle-active/", views.DepartmentToggleActiveView.as_view(), name="department_toggle_active"),
+
 ]
