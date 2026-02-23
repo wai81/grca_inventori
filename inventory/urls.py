@@ -4,12 +4,18 @@ from . import views
 app_name = "inventory"
 
 urlpatterns = [
+    path("equipment/create/", views.EquipmentCreateView.as_view(), name="equipment_create"),
+    path("equipment/<int:pk>/edit/", views.EquipmentUpdateView.as_view(), name="equipment_edit"),
+    path("equipment/<int:pk>/move/", views.EquipmentMoveView.as_view(), name="equipment_move"),
+
     path("equipment/", views.EquipmentListView.as_view(), name="equipment_list"),
+    path("equipment/<int:pk>/", views.EquipmentDetailView.as_view(), name="equipment_detail"),
     # path("equipment/print/", views.EquipmentPrintView.as_view(), name="equipment_print"),
     path("equipment/pdf/", views.EquipmentListPdfView.as_view(), name="equipment_list_pdf"),
-    path("equipment/<int:pk>/", views.EquipmentDetailView.as_view(), name="equipment_detail"),
+
     path("equipment/<int:pk>/qr.png", views.equipment_qr_png, name="equipment_qr_png"),
     path("equipment/<int:pk>/qr-label/", views.equipment_qr_label, name="equipment_qr_label"),
+
 
     # path("employees/", views.EmployeeListView.as_view(), name="employee_list"),
     # path("employees/print/", views.EmployeePrintView.as_view(), name="employee_print"),

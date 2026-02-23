@@ -1,18 +1,59 @@
 {% extends "layouts/base.html" %}
-{% block title %}Этикетка QR — {{ object.name }}{% endblock %}
-{% block content %}
-<h1>Этикетка</h1>
-<button class="no-print" onclick="window.print()">Печать</button>
+{% load static %}
 
-<div style="display:flex; gap:16px; align-items:center; margin-top:12px;">
-  <img alt="QR" src="{% url 'inventory:equipment_qr_png' object.pk %}" style="width:220px; height:220px; border:1px solid #ddd">
-  <div>
-    <div><b>{{ object.name }}</b></div>
-    <div>Тип: {{ object.equipment_type }}</div>
-    <div>Инв. №: {{ object.inventory_number|default:"—" }}</div>
-    <div>№ ПК: {{ object.pc_number|default:"—" }}</div>
-    <div>Орг.: {{ object.organization }}</div>
-    <div class="muted">Откроется карточка оборудования при сканировании</div>
+{% block title %}Этикетка QR — {{ object.name }}{% endblock %}
+
+{% block content %}
+<div class="pc-container">
+  <div class="pc-content">
+
+    <div class="page-header">
+      <div class="page-block">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <div class="page-header-title">
+              <h5 class="m-b-10">Этикетка QR</h5>
+            </div>
+            <ul class="breadcrumb">
+              <li class="breadcrumb-item"><a href="{% url 'inventory:equipment_list' %}">Оборудование</a></li>
+              <li class="breadcrumb-item"><a href="{% url 'inventory:equipment_detail' object.pk %}">{{ object.name }}</a></li>
+              <li class="breadcrumb-item" aria-current="page">Этикетка</li>
+            </ul>
+          </div>
+          <div class="col-md-4 text-md-end d-print-none">
+            <button class="btn btn-primary" onclick="window.print()">Печать</button>
+            <a class="btn btn-light" href="{% url 'inventory:equipment_detail' object.pk %}">Назад</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-auto">
+            <img src="{% url 'inventory:equipment_qr_png' object.pk %}" alt="QR" style="width:180px;height:180px;">
+          </div>
+          <div class="col">
+            <div class="fw-bold">{{ object.name }}</div>
+            <div>Тип: {{ object.equipment_type }}</div>
+            <div>Инв. №: {{ object.inventory_number|default:"—" }}</div>
+            <div>№ ПК: {{ object.pc_number|default:"—" }}</div>
+            <div>Орг.: {{ object.organization }}</div>
+            <div class="text-muted mt-2">Сканирование откроет карточку оборудования</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
+
+<style>
+@media print {
+  .pc-sidebar, .pc-header, .pc-footer, .page-header, .d-print-none { display: none !important; }
+  .pc-container { margin: 0 !important; padding: 0 !important; }
+  .card { border: 0 !important; }
+}
+</style>
 {% endblock %}

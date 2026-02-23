@@ -1,55 +1,135 @@
 {% extends "layouts/base.html" %}
+{% load static %}
+
 {% block title %}Карточка — {{ object.name }}{% endblock %}
+
 {% block content %}
-<h1>{{ object.name }}</h1>
-<p class="muted">
-  {{ object.equipment_type }} · {{ object.organization }} · Статус: <b>{{ object.get_status_display }}</b>
-</p>
+<div class="pc-container">
+  <div class="pc-content">
 
-<div class="no-print">
-  <a href="{% url 'inventory:equipment_qr_label' object.pk %}">Печать этикетки QR</a> |
-  <a href="{% url 'inventory:equipment_qr_png' object.pk %}">Открыть QR PNG</a>
+    {% url "index" as index_url %}
+
+    <div class="page-header">
+      <div class="page-block">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <div class="page-header-title">
+              <h5 class="m-b-10">Карточка оборудования</h5>
+            </div>
+            <ul class="breadcrumb">
+              <li class="breadcrumb-item">
+                {% if index_url %}
+                  <a href="{{ index_url }}">Главная</a>
+                {% else %}
+                  <span>Главная</span>
+                {% endif %}
+              </li>
+              <li class="breadcrumb-item"><a href="{% url 'inventory:equipment_list' %}">Оборудование</a></li>
+              <li class="breadcrumb-item" aria-current="page">{{ object.name }}</li>
+            </ul>
+          </div>
+
+          <div class="col-md-4 text-md-end">
+            <div class="btn-group">
+              <a class="btn btn-outline-primary" href="{% url 'inventory:equipment_qr_label' object.pk %}">Этикетка QR</a>
+              <a class="btn btn-outline-secondary" href="{% url 'inventory:equipment_qr_png' object.pk %}" target="_blank">QR PNG</a>
+            </div>
+            <div class="btn-group ms-2">
+              <a class="btn btn-light" href="{% url 'inventory:equipment_edit' object.pk %}">Редактировать</a>
+              <a class="btn btn-light" href="{% url 'inventory:equipment_move' object.pk %}">Переместить</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title mb-2">{{ object.name }}</h5>
+            <div class="text-muted mb-3">
+              {{ object.equipment_type }} · {{ object.organization }} · Статус: <strong>{{ object.get_status_display }}</strong>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-2"><strong>Инв. №:</strong> {{ object.inventory_number|default:"—" }}</div>
+              <div class="col-md-6 mb-2"><strong>№ ПК:</strong> {{ object.pc_number|default:"—" }}</div>
+              <div class="col-md-6 mb-2"><strong>Модель:</strong> {{ object.model|default:"—" }}</div>
+              <div class="col-md-6 mb-2"><strong>Серийный №:</strong> {{ object.serial_number|default:"—" }}</div>
+              <div class="col-md-6 mb-2"><strong>Дата ввода:</strong> {{ object.commissioning_date|date:"Y-m-d"|default:"—" }}</div>
+              <div class="col-md-6 mb-2"><strong>Закреплено:</strong> {{ object.assigned_to|default:"—" }}</div>
+              <div class="col-12 mt-2">
+                <strong>Характеристики:</strong>
+                <div class="mt-1">{{ object.specs|default:"—"|linebreaksbr }}</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="mb-2"><strong>QR</strong></div>
+            <img
+              src="{% url 'inventory:equipment_qr_png' object.pk %}"
+              alt="QR"
+              style="width:220px;height:220px;"
+            />
+            <div class="text-muted mt-2 small">Сканируйте для открытия карточки</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title mb-3">История</h5>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Тип</th>
+                <th>От</th>
+                <th>Кому</th>
+                <th>Статус</th>
+                <th>Документ</th>
+                <th>Комментарий</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in object.events.all %}
+                <tr>
+                  <td>{{ e.created_at|date:"Y-m-d H:i" }}</td>
+                  <td>{{ e.get_event_type_display }}</td>
+                  <td>{{ e.from_employee|default:"—" }}</td>
+                  <td>{{ e.to_employee|default:"—" }}</td>
+                  <td>
+                    {% if e.old_status or e.new_status %}
+                      {{ e.get_old_status_display|default:"—" }} → {{ e.get_new_status_display|default:"—" }}
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  <td>{{ e.document_number|default:"—" }}</td>
+                  <td>{{ e.comment|default:"" }}</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7" class="text-muted">Событий нет</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
 </div>
-
-<h3>Поля</h3>
-<table>
-  <tr><th>Инв. №</th><td>{{ object.inventory_number|default:"—" }}</td></tr>
-  <tr><th>№ ПК</th><td>{{ object.pc_number|default:"—" }}</td></tr>
-  <tr><th>Модель</th><td>{{ object.model|default:"—" }}</td></tr>
-  <tr><th>Серийный №</th><td>{{ object.serial_number|default:"—" }}</td></tr>
-  <tr><th>Характеристики</th><td style="white-space:pre-wrap">{{ object.specs|default:"—" }}</td></tr>
-  <tr><th>Дата ввода</th><td>{{ object.commissioning_date|date:"Y-m-d"|default:"—" }}</td></tr>
-  <tr><th>Закреплено</th><td>{{ object.assigned_to|default:"—" }}</td></tr>
-</table>
-
-<h3>QR</h3>
-<img alt="QR" src="{% url 'inventory:equipment_qr_png' object.pk %}" style="width:180px; height:180px; border:1px solid #ddd">
-
-<h3>История</h3>
-<table>
-  <thead>
-    <tr>
-      <th>Дата</th><th>Тип</th><th>От</th><th>Кому</th><th>Статус</th><th>Документ</th><th>Комментарий</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for e in object.events.all %}
-    <tr>
-      <td>{{ e.created_at|date:"Y-m-d H:i" }}</td>
-      <td>{{ e.get_event_type_display }}</td>
-      <td>{{ e.from_employee|default:"—" }}</td>
-      <td>{{ e.to_employee|default:"—" }}</td>
-      <td>
-        {% if e.old_status or e.new_status %}
-          {{ e.old_status }} → {{ e.new_status }}
-        {% else %}—{% endif %}
-      </td>
-      <td>{{ e.document_number|default:"—" }}</td>
-      <td style="white-space:pre-wrap">{{ e.comment|default:"" }}</td>
-    </tr>
-  {% empty %}
-    <tr><td colspan="7">Событий нет</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
 {% endblock %}

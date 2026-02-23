@@ -1,0 +1,124 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>QR-этикетка</title>
+
+    <style>
+        /* Размер этикетки */
+        @page {
+            size: 58mm 40mm;
+            margin: 0;
+        }
+
+        html, body {
+            width: 58mm;
+            height: 40mm;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* чтобы браузер не “подгонял” поля */
+        body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .label {
+            box-sizing: border-box;
+            width: 58mm;
+            height: 40mm;
+            padding: 2mm;
+            display: grid;
+            grid-template-columns: 22mm 1fr;
+            column-gap: 2mm;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+
+        .qr {
+            width: 22mm;
+            height: 22mm;
+            display: block;
+        }
+
+        .t1 {
+            font-size: 9pt;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .t2 {
+            font-size: 7.5pt;
+            line-height: 1.15;
+            margin-top: 1mm;
+        }
+
+        .muted {
+            color: #333;
+        }
+
+        /* на экране центрируем и показываем кнопку печати */
+        @media screen {
+            body {
+                background: #f5f5f5;
+            }
+
+            .wrap {
+                min-height: 100vh;
+                display: grid;
+                place-items: center;
+                gap: 12px;
+                padding: 16px;
+            }
+
+            .paper {
+                background: #fff;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+            }
+
+            .btn {
+                padding: 8px 12px;
+                border: 1px solid #ddd;
+                background: #fff;
+                cursor: pointer;
+            }
+        }
+
+        @media print {
+            .wrap > .btnrow {
+                display: none;
+            }
+
+            .paper {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="wrap">
+    <div class="btnrow">
+        <button class="btn btn-ligh" href="{% url 'inventory:equipment_detail' object.pk %}">Назад</button>
+        <button class="btn btn-primary" onclick="window.print()">Печать</button>
+    </div>
+
+    <div class="paper">
+        <div class="label">
+            <img class="qr" src="{% url 'inventory:equipment_qr_png' object.pk %}" alt="QR">
+
+            <div>
+                <div class="t1"> # {{ object.pk }}</div>
+                <div class="t2">{{ object.equipment_type|default:object.name }}</div>
+                <div class="t2 muted">
+                    {{ object.name|default:"" }}{% if object.pc_number %}<br>{{ object.pc_number }}{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

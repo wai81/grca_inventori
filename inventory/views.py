@@ -1,13 +1,17 @@
 from io import BytesIO
+
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db import transaction
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
-from django.views.generic import DetailView
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.views.generic import DetailView, UpdateView, FormView, CreateView
 from django_filters.views import FilterView
 
 from inventory.filters import EquipmentFilter
-from inventory.models import InventoryDocument, Equipment
+from inventory.form import EquipmentForm, EquipmentMoveForm
+from inventory.models import InventoryDocument, Equipment, EquipmentEventType, EquipmentEvent
 from config.pdf import render_pdf_response
 from inventory.services import apply_document
 
@@ -23,6 +27,68 @@ class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView)
         return Equipment.objects.select_related("organization", "equipment_type", "assigned_to", "assigned_to__department")
 
 
+class EquipmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "inventory.change_equipment"
+    model = Equipment
+    form_class = EquipmentForm
+    template_name = "inventory/equipment_form.html"
+    success_url = reverse_lazy("inventory:equipment_list")
+
+class EquipmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "inventory.add_equipment"
+    model = Equipment
+    form_class = EquipmentForm
+    template_name = "inventory/equipment_form.html"
+    success_url = reverse_lazy("inventory:equipment_list")
+
+class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
+    permission_required = "inventory.change_equipment"
+    template_name = "inventory/equipment_move_form.html"
+    form_class = EquipmentMoveForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.equipment = get_object_or_404(Equipment, pk=kwargs["pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        kw["equipment"] = self.equipment
+        return kw
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["object"] = self.equipment
+        return ctx
+
+    def form_valid(self, form):
+        eq = self.equipment
+        from_emp = eq.assigned_to
+        to_emp = form.cleaned_data["to_employee"]
+        new_status = form.cleaned_data["new_status"]
+        doc_no = (form.cleaned_data.get("document_number") or "").strip()
+        comment = (form.cleaned_data.get("comment") or "").strip()
+
+        old_status = eq.status
+
+        with transaction.atomic():
+            eq.assigned_to = to_emp
+            eq.status = new_status
+            eq.save()
+
+        EquipmentEvent.objects.create(
+            equipment=eq,
+            event_type=EquipmentEventType.MOVE,
+            from_employee=from_emp,
+            to_employee=to_emp,
+            old_status=old_status if old_status != new_status else "",
+            new_status=new_status if old_status != new_status else "",
+            document_number=doc_no,
+            comment=comment,
+        )
+
+        messages.success(self.request, "Перемещение сохранено.")
+        return redirect("inventory:equipment_detail", pk=eq.pk)
+
 class EquipmentListPdfView(EquipmentListView):
     permission_required = "inventory.view_equipment"
 
@@ -31,9 +97,6 @@ class EquipmentListPdfView(EquipmentListView):
         filt = self.get_filterset(self.filterset_class)
         context = {"filter": filt, "request": request}
         return render_pdf_response(request, "inventory/pdf/equipment_list_pdf.html", context, "equipment.pdf")
-
-
-
 
 
 class EquipmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
@@ -92,9 +155,8 @@ def equipment_qr_label(request, pk: int):
     Страница-этикетка (шаблон) для печати: QR + ключевые поля.
     """
     equipment = get_object_or_404(Equipment, pk=pk)
-    return HttpResponse(
-        request.render_to_response("inventory/equipment_qr_label.html", {"object": equipment}).content
-    )
+    # return render(request, "inventory/equipment_qr_label.html", {"object": equipment})
+    return render(request, "inventory/equipment_qr_label_58x40.html", {"object": equipment})
 
 
 def apply_document_view(request, pk: int):

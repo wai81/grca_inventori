@@ -1,0 +1,72 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Перемещение оборудования{% endblock %}
+
+{% block content %}
+
+    <div class="pc-container">
+        <div class="pc-content">
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="row align-items-center">
+                        <div class="col-md-12">
+                            <div class="page-header-title"><h5 class="m-b-10">Перемещение оборудования</h5></div>
+                            <ul class="breadcrumb">
+                                <li class="breadcrumb-item"><a
+                                        href="{% url 'inventory:equipment_list' %}">Оборудование</a></li>
+                                <li class="breadcrumb-item"><a
+                                        href="{% url 'inventory:equipment_detail' object.pk %}">{{ object }}</a></li>
+                                <li class="breadcrumb-item" aria-current="page">Перемещение</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div><strong>Организация:</strong> {{ object.organization }}</div>
+                                <div><strong>Сейчас закреплено:</strong> {{ object.assigned_to|default:"—" }}</div>
+                                <div><strong>Статус:</strong> {{ object.get_status_display }}</div>
+                            </div>
+                            <form method="post" novalidate> {% csrf_token %}
+                                {% if form.non_field_errors %}
+
+                                    <div class="alert alert-danger">{{ form.non_field_errors }}</div> {% endif %}
+                                <div class="row">
+                                    <div class="col-md-6 mb-3"><label
+                                            class="form-label">{{ form.to_employee.label }}</label> {{ form.to_employee }}
+                                        {% if form.to_employee.errors %}
+                                            <div class="text-danger small">{{ form.to_employee.errors|striptags }}</div> {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3"><label
+                                            class="form-label">{{ form.new_status.label }}</label> {{ form.new_status }}
+                                        {% if form.new_status.errors %}
+                                            <div class="text-danger small">{{ form.new_status.errors|striptags }}</div> {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3"><label
+                                            class="form-label">{{ form.document_number.label }}</label> {{ form.document_number }}
+                                        {% if form.document_number.errors %}
+                                            <div class="text-danger small">{{ form.document_number.errors|striptags }}</div> {% endif %}
+                                    </div>
+                                    <div class="col-md-12 mb-3"><label
+                                            class="form-label">{{ form.comment.label }}</label> {{ form.comment }}
+                                        {% if form.comment.errors %}
+                                            <div class="text-danger small">{{ form.comment.errors|striptags }}</div> {% endif %}
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Сохранить перемещение</button>
+                                <a href="{% url 'inventory:equipment_detail' object.pk %}"
+                                   class="btn btn-light">Отмена</a>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -21,9 +21,14 @@
                             </ul>
                         </div>
                         <div class="col-auto">
-                            <a class="btn btn-primary" href="
+                            <a class="btn btn-light-primary d-flex align-items-center gap-2"
+                               href="
 
-                                    {% url 'inventory:equipment_list_pdf' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">
+
+
+                                       {% url 'inventory:equipment_list_pdf' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}"
+                            >
+                                <i class="ti ti-printer"></i>
                                 PDF по текущему фильтру
                             </a>
                         </div>
@@ -58,8 +63,11 @@
                                 {% endfor %}
 
                                 <div class="col-12 d-flex gap-2">
-                                    <button type="submit" class="btn btn-primary">Фильтровать</button>
-                                    <a class="btn btn-outline-secondary" href="{% url 'inventory:equipment_list' %}">Сброс</a>
+                                    <button type="submit" class="btn btn-light-primary d-flex align-items-center gap-2">
+                                        Фильтровать
+                                    </button>
+                                    <a class="btn btn-light-secondary d-flex align-items-center gap-2"
+                                       href="{% url 'inventory:equipment_list' %}">Сброс</a>
                                 </div>
                             </form>
                         </div>
@@ -74,6 +82,11 @@
                         <div class="card-header d-flex align-items-center justify-content-between">
                             <h5 class="mb-0">Список</h5>
                             <div class="text-muted">Найдено: {{ page_obj.paginator.count }}</div>
+                            <a class="btn btn-light-primary d-flex align-items-center gap-2"
+                               href="{% url 'inventory:equipment_create' %}">
+                                <i class="ti ti-plus"></i>
+                                Создать
+                            </a>
                         </div>
 
                         <div class="card-body p-0">
@@ -81,6 +94,7 @@
                                 <table class="table table-hover mb-0">
                                     <thead>
                                     <tr>
+                                        <th>#</th>
                                         <th class="ps-4">Наименование</th>
                                         <th>Тип</th>
                                         <th>Инв. №</th>
@@ -94,10 +108,11 @@
                                     <tbody>
                                     {% for obj in page_obj %}
                                         <tr>
+                                            <td>{{ obj.pk }}</td>
                                             <td class="ps-4">
                                                 <div class="d-flex flex-column">
                                                     <a class="text-body fw-semibold"
-                                                       href="{% url 'equipment_detail' obj.pk %}">
+                                                       href="{% url 'inventory:equipment_detail' obj.pk %}">
                                                         {{ obj.name }}
                                                     </a>
                                                     <small class="text-muted">{{ obj.model }} {{ obj.serial_number }}</small>
@@ -118,16 +133,41 @@
                                             <td>{{ obj.organization }}</td>
 
                                             <td class="text-end pe-4">
-                                                <div class="btn-group" role="group" aria-label="actions">
-                                                    <a class="btn btn-sm btn-outline-primary"
-                                                       href="{% url 'equipment_qr_label' obj.pk %}">
-                                                        Этикетка QR
-                                                    </a>
-                                                    <a class="btn btn-sm btn-outline-secondary"
-                                                       href="{% url 'equipment_qr_png' obj.pk %}">
-                                                        QR PNG
-                                                    </a>
-                                                </div>
+                                                <ul class="list-inline mb-0">
+                                                    <li class="list-inline-item">
+                                                        <a class="btn btn-sm btn-link-hover-primary"
+                                                           href="{% url 'inventory:equipment_qr_label' obj.pk %}">
+                                                            Этикетка QR
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item">
+                                                        <a class="btn btn-sm btn-link-hover-secondary"
+                                                           href="{% url 'inventory:equipment_qr_png' obj.pk %}">
+                                                            QR PNG
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item">
+                                                        <a class="btn btn-sm btn-success"
+                                                           href="{% url 'inventory:equipment_detail' obj.pk %}">
+                                                            <i class="ti ti-eye"></i>
+{#                                                            Открыть#}
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item">
+                                                        <a class="btn btn-sm btn-primary"
+                                                           href="{% url "inventory:equipment_edit" obj.pk %}">
+                                                            <i class="ti ti-edit"></i>
+{#                                                            Редактировать#}
+                                                        </a>
+                                                    </li>
+                                                    <li class="list-inline-item">
+                                                        <a class="btn btn-sm btn-light"
+                                                           href="{% url 'inventory:equipment_move' obj.pk %}">
+                                                           <i class="ti ti-corner-down-right"></i>
+{#                                                            Переместить#}
+                                                        </a>
+                                                    </li>
+                                                </ul>
                                             </td>
                                         </tr>
                                     {% empty %}
@@ -152,6 +192,12 @@
                                         <a class="btn btn-sm btn-outline-secondary"
                                            href="?page=
 
+
+
+
+
+
+
                                                    {{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
                                             Назад
                                         </a>
@@ -162,6 +208,12 @@
                                     {% if page_obj.has_next %}
                                         <a class="btn btn-sm btn-outline-secondary"
                                            href="?page=
+
+
+
+
+
+
 
                                                    {{ page_obj.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
                                             Вперед
