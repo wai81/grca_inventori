@@ -25,28 +25,29 @@ class EquipmentStatus(models.TextChoices):
     WRITTEN_OFF = "written_off", "списано"
 
 class Equipment(models.Model):
-    organization = models.ForeignKey("directory.Organization", on_delete=models.PROTECT, related_name="equipment")
-    equipment_type = models.ForeignKey(EquipmentType, on_delete=models.PROTECT, related_name="equipment")
+    organization = models.ForeignKey("directory.Organization", on_delete=models.PROTECT, related_name="equipment", verbose_name="Организация")
+    equipment_type = models.ForeignKey(EquipmentType, on_delete=models.PROTECT, related_name="equipment", verbose_name="Тип оборудования")
 
-    name = models.CharField(max_length=200)  # коротко: "ПК Lenovo", "Принтер HP"
-    inventory_number = models.CharField(max_length=100, blank=True)  # если есть
-    pc_number = models.CharField(max_length=50, blank=True)  # если есть: PC400-001
+    name = models.CharField(max_length=200, verbose_name="Наименование")  # коротко: "ПК Lenovo", "Принтер HP"
+    inventory_number = models.CharField(max_length=100, blank=True, verbose_name="Инв. №")  # если есть
+    pc_number = models.CharField(max_length=50, blank=True, verbose_name="Номер ПК")  # если есть: PC400-001
 
-    serial_number = models.CharField(max_length=120, blank=True)
-    model = models.CharField(max_length=120, blank=True)
+    serial_number = models.CharField(max_length=120, blank=True, verbose_name="Серийный №")
+    model = models.CharField(max_length=120, blank=True, verbose_name="Модель")
 
-    specs = models.TextField(blank=True)  # характеристики в свободном виде (или позже вынести в JSON)
-    commissioning_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=EquipmentStatus.choices, default=EquipmentStatus.IN_USE)
+    specs = models.TextField(blank=True, verbose_name="Характеристики")  # характеристики в свободном виде (или позже вынести в JSON)
+    commissioning_date = models.DateField(null=True, blank=True, verbose_name="Дата поступления")
+    status = models.CharField(max_length=20, choices=EquipmentStatus.choices, default=EquipmentStatus.IN_USE, verbose_name="Статус")
 
     assigned_to = models.ForeignKey(
-        "directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_equipment"
+        "directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_equipment",
+        verbose_name="Закреплен"
     )
 
     # Уникальный токен для QR (удобно печатать/сканировать и открывать карточку)
     qr_token = models.CharField(max_length=32, unique=True, editable=False)
 
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(default=timezone.now,verbose_name="Создан")
 
     class Meta:
         verbose_name = "Оборудование"

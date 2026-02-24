@@ -3,12 +3,14 @@ from io import BytesIO
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import DetailView, UpdateView, FormView, CreateView
 from django_filters.views import FilterView
 
+from directory.models import Employee
 from inventory.filters import EquipmentFilter
 from inventory.form import EquipmentForm, EquipmentMoveForm
 from inventory.models import InventoryDocument, Equipment, EquipmentEventType, EquipmentEvent
@@ -133,6 +135,32 @@ class DocumentPdfView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
             tpl = "inventory/pdf/act_writeoff.html"
             fname = f"act-writeoff-{doc.number}.pdf"
         return render_pdf_response(request, tpl, {"doc": doc}, fname)
+
+
+class EmployeesByOrganizationView(LoginRequiredMixin, View):
+    permission_required = "directory.view_department"
+
+    def get(self, request):
+        org_id = request.GET.get("organization_id")
+        if not org_id:
+            return JsonResponse({"results": []})
+
+        q = (request.GET.get("q") or "").strip()
+
+        qs = (Employee.objects.filter(
+            organization_id=org_id,
+            active=True
+        ).select_related("department").order_by("full_name"))
+
+
+        if q:
+            qs = qs.filter(full_name__icontains=q)
+
+        data = [
+            {"id": e.id, "name": e.full_name,  "department": (e.department.name if e.department else "")}
+            for e in qs[:200]
+        ]
+        return JsonResponse({"results": data})
 
 
 def equipment_qr_png(request, pk: int):

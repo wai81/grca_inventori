@@ -22,4 +22,5 @@ urlpatterns = [
     path("departments/<int:pk>/toggle-active/", views.DepartmentToggleActiveView.as_view(), name="department_toggle_active"),
 
     path("ajax/departments/", views.DepartmentsByOrganizationView.as_view(), name="ajax_departments"),
+
 ]

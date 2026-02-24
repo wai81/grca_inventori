@@ -3,50 +3,237 @@
 
 {% block title %}{% if object %}Редактирование оборудования{% else %}Создание оборудования{% endif %}{% endblock %}
 
-{% block content %}
+{% block extrastyle %}
+    {{ block.super }}
+    {# пути поправь под свои файлы в static #}
+    <link rel="stylesheet" href="{% static 'tomselect/tom-select.bootstrap5.min.css' %}">
+    <style>
+        /* чуть лучше стыкуется с bootstrap */
+        .ts-control {
+            min-height: calc(1.5em + .75rem + 2px);
+        }
 
+        select.ts-hidden-accessible {
+            display: none !important;
+        }
+    </style>
+{% endblock extrastyle %}
+
+{% block content %}
     <div class="pc-container">
         <div class="pc-content">
+
             <div class="page-header">
                 <div class="page-block">
                     <div class="row align-items-center">
-                        <div class="col-md-12">
-                            <div class="page-header-title"><h5 class="m-b-10">{% if object %}Редактирование
-                                оборудования{% else %}Создание оборудования{% endif %}</h5></div>
+                        <div class="col-md-8">
+                            <div class="page-header-title">
+                                <h5 class="m-b-10">
+                                    {% if object %}Редактирование оборудования{% else %}Создание оборудования{% endif %}
+                                </h5>
+                            </div>
                             <ul class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
                                 <li class="breadcrumb-item"><a
                                         href="{% url 'inventory:equipment_list' %}">Оборудование</a></li>
-                                <li class="breadcrumb-item" aria-current="page">{% if object %}Редактирование{% else %}
-                                    Создание{% endif %}</li>
+                                <li class="breadcrumb-item" aria-current="page">
+                                    {% if object %}Редактирование{% else %}Создание{% endif %}
+                                </li>
                             </ul>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <form method="post" novalidate> {% csrf_token %}
-                                {% if form.non_field_errors %}
-
-                                    <div class="alert alert-danger">{{ form.non_field_errors }}</div> {% endif %}
-                                <div class="row"> {% for field in form.visible_fields %}
-                                    <div class="col-md-6 mb-3"><label
-                                            class="form-label">{{ field.label }}</label> {{ field }}
-                                        {% if field.errors %}
-                                            <div class="text-danger small">{{ field.errors|striptags }}</div> {% endif %}
-                                        {% if field.help_text %}
-                                            <div class="form-text">{{ field.help_text }}</div> {% endif %}
-                                    </div> {% endfor %} </div>
-                                <button type="submit" class="btn btn-primary">Сохранить</button>
-                                <a href="{% url 'inventory:equipment_list' %}" class="btn btn-light">Отмена</a>
-
-                            </form>
+                        <div class="col-md-4 text-md-end">
+                            <a class="btn btn-light" href="{% url 'inventory:equipment_list' %}">Отмена</a>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="card">
+                    <div class="card-body">
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="col-md-6">
+                                    <label class="form-label"
+                                           for="{{ form.equipment_type.id_for_label }}">{{ form.equipment_type.label }}</label>
+                                    {{ form.equipment_type }}
+                                    {% if form.equipment_type.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.equipment_type.errors|striptags }}</div>{% endif %}
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <label class="form-label"
+                                               for="{{ form.organization.id_for_label }}">{{ form.organization.label }}</label>
+                                        {{ form.organization }}
+                                        {% if form.organization.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.organization.errors|striptags }}</div>{% endif %}
+                                    </div>
+
+                                    <div class="col-6">
+                                        <label class="form-label"
+                                               for="{{ form.assigned_to.id_for_label }}">{{ form.assigned_to.label }}</label>
+                                        {{ form.assigned_to }}
+                                        {% if form.assigned_to.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.assigned_to.errors|striptags }}</div>{% endif %}
+                                        <div class="form-text">Сотрудники подгружаются по выбранной организации</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label"
+                                           for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.name.errors|striptags }}</div>{% endif %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label"
+                                           for="{{ form.model.id_for_label }}">{{ form.model.label }}</label>
+                                    {{ form.model }}
+                                    {% if form.model.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.model.errors|striptags }}</div>{% endif %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label"
+                                           for="{{ form.serial_number.id_for_label }}">{{ form.serial_number.label }}</label>
+                                    {{ form.serial_number }}
+                                    {% if form.serial_number.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.serial_number.errors|striptags }}</div>{% endif %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label"
+                                           for="{{ form.inventory_number.id_for_label }}">{{ form.inventory_number.label }}</label>
+                                    {{ form.inventory_number }}
+                                    {% if form.inventory_number.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.inventory_number.errors|striptags }}</div>{% endif %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label"
+                                           for="{{ form.pc_number.id_for_label }}">{{ form.pc_number.label }}</label>
+                                    {{ form.pc_number }}
+                                    {% if form.pc_number.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.pc_number.errors|striptags }}</div>{% endif %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label"
+                                           for="{{ form.commissioning_date.id_for_label }}">{{ form.commissioning_date.label }}</label>
+                                    {{ form.commissioning_date }}
+                                    {% if form.commissioning_date.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.commissioning_date.errors|striptags }}</div>{% endif %}
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label"
+                                           for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.status.errors|striptags }}</div>{% endif %}
+                                </div>
+
+
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label"
+                                       for="{{ form.specs.id_for_label }}">{{ form.specs.label }}</label>
+                                {{ form.specs }}
+                                {% if form.specs.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.specs.errors|striptags }}</div>{% endif %}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="card-footer text-end">
+                        <button class="btn btn-primary" type="submit">Сохранить</button>
+                        <a class="btn btn-light" href="{% url 'inventory:equipment_list' %}">Отмена</a>
+                    </div>
+                </div>
+            </form>
+
         </div>
     </div>
-{% endblock %}
+{% endblock content %}
+
+{% block extra_js %}
+    {{ block.super }}
+    <script src="{% static 'tomselect/tom-select.complete.min.js' %}"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const orgEl = document.getElementById("id_organization");
+            const assignedEl = document.getElementById("id_assigned_to");
+            if (!orgEl || !assignedEl) return;
+
+            // защита от двойной инициализации
+            if (orgEl.tomselect || assignedEl.tomselect) return;
+
+            // чтобы не было конфликтов рамок/высоты
+            orgEl.classList.remove("form-select", "form-control");
+            assignedEl.classList.remove("form-select", "form-control");
+
+            const employeesUrl = "{% url 'inventory:ajax_employees_by_org' %}";
+
+            const orgTS = new TomSelect(orgEl, {create: false, allowEmptyOption: true});
+
+            const assignedTS = new TomSelect(assignedEl, {
+                create: false,
+                allowEmptyOption: true,
+                valueField: "value",
+                labelField: "text",
+                searchField: ["text"],
+                preload: true,
+                placeholder: "— не закреплять —",
+                load: async (query, callback) => {
+                    const orgId = orgTS.getValue() || orgEl.value;
+                    if (!orgId) return callback([]);
+
+                    try {
+                        const url = employeesUrl
+                            + "?organization_id=" + encodeURIComponent(orgId)
+                            + "&q=" + encodeURIComponent(query || "");
+                        const r = await fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}});
+                        const data = await r.json();
+                        callback((data.results || []).map(x => ({
+                            value: String(x.id),
+                            text: x.department ? `${x.name} (${x.department})` : x.name
+                        })));
+                    } catch (e) {
+                        callback([]);
+                    }
+                },
+            });
+
+            function refreshAssigned() {
+                const hasOrg = !!(orgTS.getValue() || orgEl.value);
+                assignedTS.clearOptions();
+                if (!hasOrg) {
+                    assignedTS.clear(true);
+                    assignedTS.setTextboxValue("Сначала выберите организацию");
+                    return;
+                }
+                assignedTS.load("");
+            }
+
+            orgEl.addEventListener("change", () => {
+                assignedTS.clear(true);
+                refreshAssigned();
+            });
+
+            refreshAssigned();
+        });
+    </script>
+{% endblock extra_js %}

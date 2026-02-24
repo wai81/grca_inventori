@@ -7,17 +7,9 @@ class EquipmentForm(forms.ModelForm):
     class Meta:
         model = Equipment
         fields = [
-            "organization",
-            "equipment_type",
-            "name",
-            "inventory_number",
-            "pc_number",
-            "serial_number",
-            "model",
-            "specs",
-            "commissioning_date",
-            "status",
-            "assigned_to",
+            "organization", "equipment_type", "name", "model",
+            "inventory_number", "pc_number", "serial_number",
+            "specs", "commissioning_date", "status", "assigned_to",
         ]
 
     widgets = {
@@ -25,17 +17,41 @@ class EquipmentForm(forms.ModelForm):
         "specs": forms.Textarea(attrs={"rows": 4}),
     }
 
-    def init(self, *args, **kwargs):
-        super().init(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        self.fields["assigned_to"].queryset = Employee.objects.filter(active=True).select_related("organization",
-                                                                                                  "department").order_by(
-            "organization__code", "department__name", "full_name"
-        )
+        org_id = None
+        if self.is_bound:
+            org_id = self.data.get("organization") or None
+        elif self.instance and getattr(self.instance, "organization_id", None):
+            org_id = self.instance.organization_id
+
+        if org_id:
+            self.fields["assigned_to"].queryset = Employee.objects.filter(
+                organization_id=org_id, active=True
+            ).order_by("full_name")
+        else:
+            self.fields["assigned_to"].queryset = Employee.objects.none()
+
+        self.fields["assigned_to"].empty_label = "— сначала выберите организацию —"
         self.fields["assigned_to"].required = False
 
         for _, field in self.fields.items():
-            field.widget.attrs["class"] = "form-control"
+            if getattr(field.widget, "input_type", "") == "checkbox":
+                field.widget.attrs["class"] = "form-check-input"
+            elif isinstance(field.widget, forms.Select):
+                field.widget.attrs["class"] = "form-select"
+            else:
+                field.widget.attrs["class"] = "form-control"
+
+    def clean(self):
+        cleaned = super().clean()
+        org = cleaned.get("organization")
+        as_to = cleaned.get("assigned_to")
+        if org and as_to and as_to.organization_id != org.id:
+            self.add_error("assigned_to", "Сотрудник не принадлежит выбранной организации")
+        return cleaned
+
 
 
 class EquipmentMoveForm(forms.Form):
