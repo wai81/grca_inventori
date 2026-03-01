@@ -55,7 +55,7 @@ AUTH_USER_MODEL = "auth.User"
 
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/equipment/"
-LOGOUT_REDIRECT_URL = "/accounts/login/"
+LOGOUT_REDIRECT_URL = "login"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

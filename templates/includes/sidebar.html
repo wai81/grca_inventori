@@ -122,14 +122,17 @@
                     </li>
                 {% else %}
                     <li class="pc-item">
-                        <a href="{% url "logout" %}" class="pc-link">
-            <span class="pc-micon">
-              <svg class="pc-icon me-2">
-                <use xlink:href="#custom-logout-1-outline"></use>
-              </svg>
-            </span>
-                            <span class="pc-mtext">Logout</span>
-                        </a>
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="pc-link border-0 bg-transparent w-100 text-start">
+                              <span class="pc-micon">
+                                <svg class="pc-icon me-2">
+                                  <use xlink:href="#custom-logout-1-outline"></use>
+                                </svg>
+                              </span>
+                            <span class="pc-mtext">Выход</span>
+                            </button>
+                        </form>
                     </li>
                 {% endif %}
                 {#                <li class="pc-item pc-caption">#}
