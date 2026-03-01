@@ -27,6 +27,29 @@ class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
         widget=forms.DateInput(attrs={"type": "date"})
     )
 
+    # --- Компьютер ---
+    cpu = django_filters.CharFilter(
+        field_name="cpu", lookup_expr="icontains", label="CPU содержит",
+        widget=forms.TextInput(attrs={"placeholder": "i5, Ryzen..."})
+    )
+    ram_gb__gte = django_filters.NumberFilter(field_name="ram_gb", lookup_expr="gte", label="ОЗУ от (ГБ)")
+    ram_gb__lte = django_filters.NumberFilter(field_name="ram_gb", lookup_expr="lte", label="ОЗУ до (ГБ)")
+
+    storageHDD_gb__gte = django_filters.NumberFilter(field_name="storageHDD_gb", lookup_expr="gte", label="HDD от (ГБ)")
+    storageHDD_gb__lte = django_filters.NumberFilter(field_name="storageHDD_gb", lookup_expr="lte", label="HDD до (ГБ)")
+
+    storageSDD_gb__gte = django_filters.NumberFilter(field_name="storageSDD_gb", lookup_expr="gte", label="SSD от (ГБ)")
+    storageSDD_gb__lte = django_filters.NumberFilter(field_name="storageSDD_gb", lookup_expr="lte", label="SSD до (ГБ)")
+
+    # --- Печать ---
+    print_format = django_filters.CharFilter(
+        field_name="print_format", lookup_expr="icontains", label="Формат печати",
+        widget=forms.TextInput(attrs={"placeholder": "A4, A3..."})
+    )
+    print_mode = django_filters.ChoiceFilter(
+        field_name="print_mode", choices=Equipment.PrintMode.choices, label="Печать"
+    )
+
     class Meta:
         model = Equipment
         fields = [
@@ -47,6 +70,8 @@ class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
             | models.Q(serial_number__icontains=value)
             | models.Q(model__icontains=value)
             | models.Q(specs__icontains=value)
+            | models.Q(cpu__icontains=value)
+            | models.Q(print_format__icontains=value)
         )
 
 

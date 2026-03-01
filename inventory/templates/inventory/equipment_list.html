@@ -26,6 +26,9 @@
 
 
 
+
+
+
                                        {% url 'inventory:equipment_list_pdf' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}"
                             >
                                 <i class="ti ti-printer"></i>
@@ -39,39 +42,172 @@
             <!-- Filter -->
             <div class="row">
                 <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Фильтр</h5>
-                        </div>
-                        <div class="card-body">
-                            <form method="get" class="row g-3 align-items-end">
+
+                    <div class="card-body">
+                        <form method="get" class="card mb-3">
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <strong>Фильтр</strong>
+                                    <span id="eq-filter-category-badge"
+                                          class="badge bg-light text-muted border">—</span>
+                                </div>
+
+                                <button
+                                        class="btn btn-sm btn-outline-secondary"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#eq-filter-advanced"
+                                        aria-expanded="false"
+                                        aria-controls="eq-filter-advanced"
+                                >
+                                    Расширенный
+                                </button>
+                            </div>
+
+                            <div class="card-body">
                                 {% if filter.form.non_field_errors %}
-                                    <div class="col-12">
-                                        <div class="alert alert-danger mb-0">{{ filter.form.non_field_errors }}</div>
+                                    <div class="alert alert-danger py-2 mb-3">
+                                        {{ filter.form.non_field_errors }}
                                     </div>
                                 {% endif %}
 
-                                {% for field in filter.form.visible_fields %}
-                                    <div class="col-12 col-md-6 col-lg-4">
+                                <div class="row g-3">
+                                    <div class="col-12 filter-field" data-field-name="q">
                                         <label class="form-label"
-                                               for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        {{ field }}
-                                        {% if field.errors %}
-                                            <div class="invalid-feedback d-block">{{ field.errors|striptags }}</div>
-                                        {% endif %}
+                                               for="{{ filter.form.q.id_for_label }}">{{ filter.form.q.label }}</label>
+                                        {{ filter.form.q }}
+                                        {% if filter.form.q.errors %}
+                                            <div class="text-danger small">{{ filter.form.q.errors|striptags }}</div>{% endif %}
                                     </div>
-                                {% endfor %}
 
-                                <div class="col-12 d-flex gap-2">
-                                    <button type="submit" class="btn btn-light-primary d-flex align-items-center gap-2">
-                                        Фильтровать
-                                    </button>
-                                    <a class="btn btn-light-secondary d-flex align-items-center gap-2"
-                                       href="{% url 'inventory:equipment_list' %}">Сброс</a>
+                                    <div class="col-md-6 filter-field" data-field-name="organization">
+                                        <label class="form-label"
+                                               for="{{ filter.form.organization.id_for_label }}">{{ filter.form.organization.label }}</label>
+                                        {{ filter.form.organization }}
+                                        {% if filter.form.organization.errors %}
+                                            <div class="text-danger small">{{ filter.form.organization.errors|striptags }}</div>{% endif %}
+                                    </div>
+
+                                    <div class="col-md-6 filter-field" data-field-name="equipment_type">
+                                        <label class="form-label"
+                                               for="{{ filter.form.equipment_type.id_for_label }}">{{ filter.form.equipment_type.label }}</label>
+                                        {{ filter.form.equipment_type }}
+                                        {% if filter.form.equipment_type.errors %}
+                                            <div class="text-danger small">{{ filter.form.equipment_type.errors|striptags }}</div>{% endif %}
+                                    </div>
+
+                                    <div class="col-md-6 filter-field" data-field-name="status">
+                                        <label class="form-label"
+                                               for="{{ filter.form.status.id_for_label }}">{{ filter.form.status.label }}</label>
+                                        {{ filter.form.status }}
+                                        {% if filter.form.status.errors %}
+                                            <div class="text-danger small">{{ filter.form.status.errors|striptags }}</div>{% endif %}
+                                    </div>
+
+                                    <div class="col-md-6 filter-field" data-field-name="assigned_to">
+                                        <label class="form-label"
+                                               for="{{ filter.form.assigned_to.id_for_label }}">{{ filter.form.assigned_to.label }}</label>
+                                        {{ filter.form.assigned_to }}
+                                        {% if filter.form.assigned_to.errors %}
+                                            <div class="text-danger small">{{ filter.form.assigned_to.errors|striptags }}</div>{% endif %}
+                                    </div>
                                 </div>
-                            </form>
-                        </div>
+
+                                <div class="collapse mt-3" id="eq-filter-advanced">
+                                    <hr class="my-3">
+
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <div class="text-muted small mb-2">Дата ввода</div>
+                                        </div>
+
+                                        <div class="col-md-6 filter-field"
+                                             data-field-name="commissioning_date__gte">
+                                            <label class="form-label"
+                                                   for="{{ filter.form.commissioning_date__gte.id_for_label }}">{{ filter.form.commissioning_date__gte.label }}</label>
+                                            {{ filter.form.commissioning_date__gte }}
+                                        </div>
+
+                                        <div class="col-md-6 filter-field"
+                                             data-field-name="commissioning_date__lte">
+                                            <label class="form-label"
+                                                   for="{{ filter.form.commissioning_date__lte.id_for_label }}">{{ filter.form.commissioning_date__lte.label }}</label>
+                                            {{ filter.form.commissioning_date__lte }}
+                                        </div>
+
+                                        <div class="col-12 mt-2">
+                                            <div class="text-muted small mb-2">Компьютер</div>
+                                        </div>
+
+                                        <div class="col-12 filter-field" data-field-name="cpu">
+                                            <label class="form-label"
+                                                   for="{{ filter.form.cpu.id_for_label }}">{{ filter.form.cpu.label }}</label>
+                                            {{ filter.form.cpu }}
+                                        </div>
+
+                                        <div class="col-md-6 filter-field" data-field-name="ram_gb__gte">
+                                            <label class="form-label"
+                                                   for="{{ filter.form.ram_gb__gte.id_for_label }}">{{ filter.form.ram_gb__gte.label }}</label>
+                                            {{ filter.form.ram_gb__gte }}
+                                        </div>
+
+                                        <div class="col-md-6 filter-field" data-field-name="ram_gb__lte">
+                                            <label class="form-label"
+                                                   for="{{ filter.form.ram_gb__lte.id_for_label }}">{{ filter.form.ram_gb__lte.label }}</label>
+                                            {{ filter.form.ram_gb__lte }}
+                                        </div>
+
+                                        <div class="col-md-6 filter-field" data-field-name="storageHDD_gb__gte">
+                                            <label class="form-label"
+                                                   for="{{ filter.form.storageHDD_gb__gte.id_for_label }}">{{ filter.form.storageHDD_gb__gte.label }}</label>
+                                            {{ filter.form.storageHDD_gb__gte }}
+                                        </div>
+
+                                        <div class="col-md-6 filter-field" data-field-name="storageHDD_gb__lte">
+                                            <label class="form-label"
+                                                   for="{{ filter.form.storageHDD_gb__lte.id_for_label }}">{{ filter.form.storageHDD_gb__lte.label }}</label>
+                                            {{ filter.form.storageHDD_gb__lte }}
+                                        </div>
+
+                                        <div class="col-md-6 filter-field" data-field-name="storageSDD_gb__gte">
+                                            <label class="form-label"
+                                                   for="{{ filter.form.storageSDD_gb__gte.id_for_label }}">{{ filter.form.storageSDD_gb__gte.label }}</label>
+                                            {{ filter.form.storageSDD_gb__gte }}
+                                        </div>
+
+                                        <div class="col-md-6 filter-field" data-field-name="storageSDD_gb__lte">
+                                            <label class="form-label"
+                                                   for="{{ filter.form.storageSDD_gb__lte.id_for_label }}">{{ filter.form.storageSDD_gb__lte.label }}</label>
+                                            {{ filter.form.storageSDD_gb__lte }}
+                                        </div>
+
+                                        <div class="col-12 mt-2">
+                                            <div class="text-muted small mb-2">Печать</div>
+                                        </div>
+
+                                        <div class="col-md-6 filter-field" data-field-name="print_format">
+                                            <label class="form-label"
+                                                   for="{{ filter.form.print_format.id_for_label }}">{{ filter.form.print_format.label }}</label>
+                                            {{ filter.form.print_format }}
+                                        </div>
+
+                                        <div class="col-md-6 filter-field" data-field-name="print_mode">
+                                            <label class="form-label"
+                                                   for="{{ filter.form.print_mode.id_for_label }}">{{ filter.form.print_mode.label }}</label>
+                                            {{ filter.form.print_mode }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-footer d-flex gap-2">
+                                <button class="btn btn-primary" type="submit">Фильтровать</button>
+                                <a class="btn btn-outline-secondary"
+                                   href="{% url 'inventory:equipment_list' %}">Сброс</a>
+                            </div>
+                        </form>
                     </div>
+
                 </div>
             </div>
 
@@ -150,21 +286,21 @@
                                                         <a class="btn btn-sm btn-success"
                                                            href="{% url 'inventory:equipment_detail' obj.pk %}">
                                                             <i class="ti ti-eye"></i>
-{#                                                            Открыть#}
+                                                            {#                                                            Открыть#}
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item">
                                                         <a class="btn btn-sm btn-primary"
                                                            href="{% url "inventory:equipment_edit" obj.pk %}">
                                                             <i class="ti ti-edit"></i>
-{#                                                            Редактировать#}
+                                                            {#                                                            Редактировать#}
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item">
                                                         <a class="btn btn-sm btn-light"
                                                            href="{% url 'inventory:equipment_move' obj.pk %}">
-                                                           <i class="ti ti-corner-down-right"></i>
-{#                                                            Переместить#}
+                                                            <i class="ti ti-corner-down-right"></i>
+                                                            {#                                                            Переместить#}
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -194,10 +330,6 @@
 
 
 
-
-
-
-
                                                    {{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
                                             Назад
                                         </a>
@@ -208,10 +340,6 @@
                                     {% if page_obj.has_next %}
                                         <a class="btn btn-sm btn-outline-secondary"
                                            href="?page=
-
-
-
-
 
 
 
@@ -229,5 +357,83 @@
             </div>
 
         </div>
+        {{ equipmenttype_meta|json_script:"equipmenttype-meta" }}
     </div>
+
 {% endblock content %}
+
+
+{% block extra_js %}
+    {{ block.super }}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const metaEl = document.getElementById("equipmenttype-meta");
+            const typeEl = document.getElementById("id_equipment_type");
+
+            if (!metaEl || !typeEl) return;
+
+            const byId = new Map(JSON.parse(metaEl.textContent || "[]").map(x => [String(x.id), x.category]));
+
+            const computerFields = [
+                "cpu",
+                "ram_gb__gte", "ram_gb__lte",
+                "storageHDD_gb__gte", "storageHDD_gb__lte",
+                "storageSDD_gb__gte", "storageSDD_gb__lte",
+            ];
+            const printFields = ["print_format", "print_mode"];
+
+            function wrapper(name) {
+                return document.querySelector(`.filter-field[data-field-name="${name}"]`);
+            }
+
+            function inputEl(name) {
+                return document.getElementById(`id_${name}`);
+            }
+
+            function clearField(name) {
+                const el = inputEl(name);
+                if (!el) return;
+                if (el.tagName === "SELECT") el.value = "";
+                else el.value = "";
+            }
+
+            function setVisible(name, visible, clearWhenHidden = true) {
+                const w = wrapper(name);
+                if (w) w.classList.toggle("d-none", !visible);
+                if (!visible && clearWhenHidden) clearField(name);
+            }
+
+            function sync() {
+                const cat = byId.get(String(typeEl.value || "")) || "";
+
+                if (!typeEl.value) {
+                    // тип не выбран — показываем всё и ничего не чистим
+                    computerFields.forEach(f => setVisible(f, true, false));
+                    printFields.forEach(f => setVisible(f, true, false));
+                    return;
+                }
+
+                if (cat === "computer") {
+                    computerFields.forEach(f => setVisible(f, true, false));
+                    printFields.forEach(f => setVisible(f, false, true));
+                } else if (cat === "print") {
+                    computerFields.forEach(f => setVisible(f, false, true));
+                    printFields.forEach(f => setVisible(f, true, false));
+                } else {
+                    // other
+                    computerFields.forEach(f => setVisible(f, false, true));
+                    printFields.forEach(f => setVisible(f, false, true));
+                }
+                const badge = document.getElementById("eq-filter-category-badge");
+                if (badge) {
+                    const txt = !typeEl.value ? "Все" : (cat === "computer" ? "Компьютер" : (cat === "print" ? "Печать" : "Другое"));
+                    badge.textContent = txt;
+                    badge.className = "badge border " + (cat === "computer" ? "bg-light text-primary" : (cat === "print" ? "bg-light text-success" : "bg-light text-muted"));
+                }
+            }
+
+            typeEl.addEventListener("change", sync);
+            sync();
+        });
+    </script>
+{% endblock extra_js %}

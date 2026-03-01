@@ -65,7 +65,7 @@
                                     <tr>
                                         <th class="ps-4">Код</th>
                                         <th>Название</th>
-                                        <th>Подразделений</th>
+                                        <th class="text-end pe-4">Подразделений</th>
                                         <th class="text-end pe-4">Сотрудников</th>
                                         <th>Активна</th>
                                         <th class="text-end pe-4">Действия</th>
@@ -75,7 +75,7 @@
                                         <tr>
                                             <td class="ps-4 fw-semibold">{{ obj.code }}</td>
                                             <td>{{ obj.name }}</td>
-                                            <td>{{ obj.departments_count }}</td>
+                                            <td class="text-end pe-4">{{ obj.departments_count }}</td>
                                             <td class="text-end pe-4">{{ obj.employees_count }}</td>
                                             <td>
                                                 {% if obj.active %}

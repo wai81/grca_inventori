@@ -4,7 +4,7 @@ from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, Count
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -24,6 +24,12 @@ class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView)
     permission_required = "inventory.view_equipment"
     template_name = "inventory/equipment_list.html"
     model = Equipment
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["equipmenttype_meta"] = list(EquipmentType.objects.values("id", "category"))
+        return ctx
+
     filterset_class = EquipmentFilter
     paginate_by = 25
 
@@ -245,6 +251,14 @@ class EquipmentTypeListView(LoginRequiredMixin, PermissionRequiredMixin, ListVie
     permission_required = "inventory.view_equipmenttype"
     template_name = "inventory/equipmenttype_list.html"
     model = EquipmentType
+    def get_queryset(self):
+        return (
+            EquipmentType.objects
+            .annotate(
+                equipment_count=Count("equipment", distinct=True),
+            )
+        )
+
     paginate_by = 25
     ordering = ["name"]
 

@@ -64,6 +64,7 @@
                 {% if perms.inventory.view_equipmenttype %}
                     <li class="pc-item">
                         <a href="{% url 'inventory:equipmenttype_list' %}" class="pc-link">
+                            <span class="pc-micon"><i data-feather="server"></i></span>
                             <span class="pc-mtext">Типы оборудования</span>
                         </a>
                     </li>

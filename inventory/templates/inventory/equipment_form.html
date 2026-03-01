@@ -158,19 +158,51 @@
 
                             </div>
                             <div class="col-6">
-                                <div id="computer-fields">
-                                    {{ form.cpu.label }} {{ form.cpu }}
-                                    {{ form.ram_gb.label }} {{ form.ram_gb }}
-                                    {{ form.storageHDD_gb.label }} {{ form.storageHDD_gb }}
-                                    {{ form.storageSDD_gb.label }} {{ form.storageSDD_gb }}
+                                <div id="computer-fields" class="row g-3 mt-1">
+                                    <div class="col-md-12">
+                                        <label class="form-label"
+                                               for="{{ form.cpu.id_for_label }}">{{ form.cpu.label }}</label>
+                                        {{ form.cpu }}
+                                        {% if form.cpu.errors %}
+                                            <div class="text-danger small">{{ form.cpu.errors|striptags }}</div>{% endif %}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label"
+                                               for="{{ form.ram_gb.id_for_label }}">{{ form.ram_gb.label }}</label>
+                                        {{ form.ram_gb }}
+                                        {% if form.ram_gb.errors %}
+                                            <div class="text-danger small">{{ form.ram_gb.errors|striptags }}</div>{% endif %}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label"
+                                               for="{{ form.storageHDD_gb.id_for_label }}">{{ form.storageHDD_gb.label }}</label>
+                                        {{ form.storageHDD_gb }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label"
+                                               for="{{ form.storageSDD_gb.id_for_label }}">{{ form.storageSDD_gb.label }}</label>
+                                        {{ form.storageSDD_gb }}
+                                    </div>
                                 </div>
 
-                                <div id="print-fields">
-                                    {{ form.print_format.label }} {{ form.print_format }}
-                                    {{ form.print_mode.label }} {{ form.print_mode }}
+                                <div id="print-fields" class="row g-3 mt-1">
+                                    <div class="col-md-6">
+                                        <label class="form-label"
+                                               for="{{ form.print_format.id_for_label }}">{{ form.print_format.label }}</label>
+                                        {{ form.print_format }}
+                                        {% if form.print_format.errors %}
+                                            <div class="text-danger small">{{ form.print_format.errors|striptags }}</div>{% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label"
+                                               for="{{ form.print_mode.id_for_label }}">{{ form.print_mode.label }}</label>
+                                        {{ form.print_mode }}
+                                        {% if form.print_mode.errors %}
+                                            <div class="text-danger small">{{ form.print_mode.errors|striptags }}</div>{% endif %}
+                                    </div>
                                 </div>
 
-                                {{ equipmenttype_meta|json_script:"equipmenttype-meta" }}
+
                                 <label class="form-label"
                                        for="{{ form.specs.id_for_label }}">{{ form.specs.label }}</label>
                                 {{ form.specs }}
@@ -190,6 +222,7 @@
             </form>
 
         </div>
+    {{ equipmenttype_meta|json_script:"equipmenttype-meta" }}
     </div>
 {% endblock content %}
 

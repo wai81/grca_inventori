@@ -9,7 +9,7 @@ class EquipmentForm(forms.ModelForm):
         fields = [
             "organization", "equipment_type", "name", "model",
             "inventory_number", "pc_number", "serial_number",
-            "cpu", "ram_gb","storageSDD_gb", "storageHDD_gb", "print_format", "print_mode",
+            "cpu", "ram_gb", "storageSDD_gb", "storageHDD_gb", "print_format", "print_mode",
             "specs", "commissioning_date", "status", "assigned_to",
         ]
         widgets = {
@@ -46,16 +46,15 @@ class EquipmentForm(forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
+
         org = cleaned.get("organization")
         as_to = cleaned.get("assigned_to")
-
         if org and as_to and as_to.organization_id != org.id:
             self.add_error("assigned_to", "Сотрудник не принадлежит выбранной организации")
 
         et = cleaned.get("equipment_type")
         cat = getattr(et, "category", None)
 
-        # Компьютеры
         if cat == "computer":
             if not cleaned.get("cpu"):
                 self.add_error("cpu", "Укажите процессор.")
@@ -64,17 +63,14 @@ class EquipmentForm(forms.ModelForm):
             if not (cleaned.get("storageHDD_gb") or cleaned.get("storageSDD_gb")):
                 self.add_error("storageHDD_gb", "Укажите объём HDD или SSD.")
                 self.add_error("storageSDD_gb", "Укажите объём HDD или SSD.")
-            # очистим печать
             cleaned["print_format"] = ""
             cleaned["print_mode"] = ""
 
-        # Принтеры/МФУ
         elif cat == "print":
             if not cleaned.get("print_format"):
                 self.add_error("print_format", "Укажите формат печати.")
             if not cleaned.get("print_mode"):
                 self.add_error("print_mode", "Укажите тип печати.")
-            # очистим компьютерное
             cleaned["cpu"] = ""
             cleaned["ram_gb"] = None
             cleaned["storageHDD_gb"] = None
