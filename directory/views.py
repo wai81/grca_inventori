@@ -11,6 +11,7 @@ from config.pdf import render_pdf_response
 from directory.filters import EmployeeFilter, OrganizationFilter, DepartmentFilter
 from directory.forms import OrganizationForm, DepartmentForm, EmployeeForm
 from directory.models import Employee, Organization, Department
+from inventory.views import _append_query
 
 
 # Create your views here.
@@ -32,6 +33,23 @@ class EmployeeListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
 class EmployeeCreateView(LoginRequiredMixin, CreateView):
     model = Employee
     form_class = EmployeeForm
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["next"] = self.request.GET.get("next") or self.request.POST.get("next") or ""
+        ctx["org_id"] = self.request.GET.get("org_id") or self.request.POST.get("org_id") or ""
+        return ctx
+
+    def get_success_url(self):
+        nxt = self.request.POST.get("next") or self.request.GET.get("next") or ""
+        org_id = self.request.POST.get("org_id") or self.request.GET.get("org_id") or ""
+        if nxt:
+            url = _append_query(nxt, assigned_to=self.object.pk)
+            if org_id:
+                url = _append_query(url, organization=org_id)
+            return url
+        return super().get_success_url()
+
     template_name = "directory/employee_form.html"
     success_url = reverse_lazy("directory:employee_list")
 

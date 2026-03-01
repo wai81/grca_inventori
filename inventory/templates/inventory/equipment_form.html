@@ -5,14 +5,9 @@
 
 {% block extrastyle %}
     {{ block.super }}
-    {# пути поправь под свои файлы в static #}
-    <link rel="stylesheet" href="{% static 'tomselect/tom-select.bootstrap5.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/tom-select.css' %}">
     <style>
-        /* чуть лучше стыкуется с bootstrap */
-        .ts-control {
-            min-height: calc(1.5em + .75rem + 2px);
-        }
-
+        /* убираем “вторую рамку” — прячем оригинальный select после инициализации TomSelect */
         select.ts-hidden-accessible {
             display: none !important;
         }
@@ -62,32 +57,54 @@
 
                         <div class="row g-3">
                             <div class="col-6">
-                                <div class="col-md-6">
-                                    <label class="form-label"
-                                           for="{{ form.equipment_type.id_for_label }}">{{ form.equipment_type.label }}</label>
-                                    {{ form.equipment_type }}
-                                    {% if form.equipment_type.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.equipment_type.errors|striptags }}</div>{% endif %}
-                                </div>
-                                <div class="row">
-                                    <div class="col-12">
-                                        <label class="form-label"
+                                <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="form-label mb-0"
+                                                   for="{{ form.equipment_type.id_for_label }}">{{ form.equipment_type.label }}</label>
+                                            <a class="btn btn-sm-light-primary d-flex align-items-center gap-2"
+                                               href="{% url 'inventory:equipmenttype_create' %}?next={{ request.get_full_path|urlencode }}">
+                                                <i class="ti ti-plus"></i> Тип
+                                            </a>
+                                        </div>
+                                        {{ form.equipment_type }}
+                                        {% if form.equipment_type.errors %}
+                                            <div class="text-danger small">{{ form.equipment_type.errors|striptags }}</div>{% endif %}
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label class="form-label mb-1"
+                                               for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                                        {{ form.status }}
+                                        {% if form.status.errors %}
+                                            <div class="text-danger small">{{ form.status.errors|striptags }}</div>{% endif %}
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label class="form-label mb-1"
                                                for="{{ form.organization.id_for_label }}">{{ form.organization.label }}</label>
                                         {{ form.organization }}
                                         {% if form.organization.errors %}
-                                            <div class="invalid-feedback d-block">{{ form.organization.errors|striptags }}</div>{% endif %}
+                                            <div class="text-danger small">{{ form.organization.errors|striptags }}</div>{% endif %}
                                     </div>
 
-                                    <div class="col-6">
-                                        <label class="form-label"
-                                               for="{{ form.assigned_to.id_for_label }}">{{ form.assigned_to.label }}</label>
+                                    <div class="col-md-12">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="form-label mb-0"
+                                                   for="{{ form.assigned_to.id_for_label }}">{{ form.assigned_to.label }}</label>
+                                            <a class="btn btn-sm-light-primary d-flex align-items-center gap-2"
+                                               id="add-employee-btn"
+                                               href="{% url 'directory:employee_create' %}?next={{ request.path|urlencode }}&org_id={{ form.organization.value|default_if_none:'' }}">
+                                                <i class="ti ti-plus"></i> Сотрудник
+                                            </a>
+                                        </div>
                                         {{ form.assigned_to }}
                                         {% if form.assigned_to.errors %}
-                                            <div class="invalid-feedback d-block">{{ form.assigned_to.errors|striptags }}</div>{% endif %}
+                                            <div class="text-danger small">{{ form.assigned_to.errors|striptags }}</div>{% endif %}
                                         <div class="form-text">Сотрудники подгружаются по выбранной организации</div>
                                     </div>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-12">
                                     <label class="form-label"
                                            for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
                                     {{ form.name }}
@@ -95,7 +112,7 @@
                                         <div class="invalid-feedback d-block">{{ form.name.errors|striptags }}</div>{% endif %}
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-12">
                                     <label class="form-label"
                                            for="{{ form.model.id_for_label }}">{{ form.model.label }}</label>
                                     {{ form.model }}
@@ -103,49 +120,57 @@
                                         <div class="invalid-feedback d-block">{{ form.model.errors|striptags }}</div>{% endif %}
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label"
-                                           for="{{ form.serial_number.id_for_label }}">{{ form.serial_number.label }}</label>
-                                    {{ form.serial_number }}
-                                    {% if form.serial_number.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.serial_number.errors|striptags }}</div>{% endif %}
-                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label"
+                                               for="{{ form.serial_number.id_for_label }}">{{ form.serial_number.label }}</label>
+                                        {{ form.serial_number }}
+                                        {% if form.serial_number.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.serial_number.errors|striptags }}</div>{% endif %}
+                                    </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label"
-                                           for="{{ form.inventory_number.id_for_label }}">{{ form.inventory_number.label }}</label>
-                                    {{ form.inventory_number }}
-                                    {% if form.inventory_number.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.inventory_number.errors|striptags }}</div>{% endif %}
+                                    <div class="col-md-6">
+                                        <label class="form-label"
+                                               for="{{ form.inventory_number.id_for_label }}">{{ form.inventory_number.label }}</label>
+                                        {{ form.inventory_number }}
+                                        {% if form.inventory_number.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.inventory_number.errors|striptags }}</div>{% endif %}
+                                    </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label"
+                                               for="{{ form.pc_number.id_for_label }}">{{ form.pc_number.label }}</label>
+                                        {{ form.pc_number }}
+                                        {% if form.pc_number.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.pc_number.errors|striptags }}</div>{% endif %}
+                                    </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label"
-                                           for="{{ form.pc_number.id_for_label }}">{{ form.pc_number.label }}</label>
-                                    {{ form.pc_number }}
-                                    {% if form.pc_number.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.pc_number.errors|striptags }}</div>{% endif %}
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label"
-                                           for="{{ form.commissioning_date.id_for_label }}">{{ form.commissioning_date.label }}</label>
-                                    {{ form.commissioning_date }}
-                                    {% if form.commissioning_date.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.commissioning_date.errors|striptags }}</div>{% endif %}
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label"
-                                           for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
-                                    {{ form.status }}
-                                    {% if form.status.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.status.errors|striptags }}</div>{% endif %}
+                                    <div class="col-md-6">
+                                        <label class="form-label"
+                                               for="{{ form.commissioning_date.id_for_label }}">{{ form.commissioning_date.label }}</label>
+                                        {{ form.commissioning_date }}
+                                        {% if form.commissioning_date.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.commissioning_date.errors|striptags }}</div>{% endif %}
+                                    </div>
                                 </div>
 
 
                             </div>
                             <div class="col-6">
+                                <div id="computer-fields">
+                                    {{ form.cpu.label }} {{ form.cpu }}
+                                    {{ form.ram_gb.label }} {{ form.ram_gb }}
+                                    {{ form.storageHDD_gb.label }} {{ form.storageHDD_gb }}
+                                    {{ form.storageSDD_gb.label }} {{ form.storageSDD_gb }}
+                                </div>
+
+                                <div id="print-fields">
+                                    {{ form.print_format.label }} {{ form.print_format }}
+                                    {{ form.print_mode.label }} {{ form.print_mode }}
+                                </div>
+
+                                {{ equipmenttype_meta|json_script:"equipmenttype-meta" }}
                                 <label class="form-label"
                                        for="{{ form.specs.id_for_label }}">{{ form.specs.label }}</label>
                                 {{ form.specs }}
@@ -170,70 +195,105 @@
 
 {% block extra_js %}
     {{ block.super }}
-    <script src="{% static 'tomselect/tom-select.complete.min.js' %}"></script>
-
+    <script src="{% static 'plugins/tom-select.complete.min.js' %}"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const orgEl = document.getElementById("id_organization");
-            const assignedEl = document.getElementById("id_assigned_to");
-            if (!orgEl || !assignedEl) return;
+            const empEl = document.getElementById("id_assigned_to");
+            const btn = document.getElementById("add-employee-btn");
 
-            // защита от двойной инициализации
-            if (orgEl.tomselect || assignedEl.tomselect) return;
+            if (!orgEl || !empEl) return;
+            if (!orgEl || !btn) return;
 
-            // чтобы не было конфликтов рамок/высоты
+            // чтобы не было конфликтов рамок Bootstrap и TomSelect
             orgEl.classList.remove("form-select", "form-control");
-            assignedEl.classList.remove("form-select", "form-control");
+            empEl.classList.remove("form-select", "form-control");
 
-            const employeesUrl = "{% url 'inventory:ajax_employees_by_org' %}";
+            // защита от повторной инициализации
+            if (orgEl.tomselect || empEl.tomselect) return;
 
-            const orgTS = new TomSelect(orgEl, {create: false, allowEmptyOption: true});
+            const endpoint = "{% url 'inventory:ajax_employees_by_org' %}";
+            const base = btn.getAttribute("href").split("&org_id=")[0];
 
-            const assignedTS = new TomSelect(assignedEl, {
+            const orgTS = new TomSelect(orgEl, {
                 create: false,
                 allowEmptyOption: true,
-                valueField: "value",
-                labelField: "text",
-                searchField: ["text"],
-                preload: true,
-                placeholder: "— не закреплять —",
-                load: async (query, callback) => {
-                    const orgId = orgTS.getValue() || orgEl.value;
-                    if (!orgId) return callback([]);
-
-                    try {
-                        const url = employeesUrl
-                            + "?organization_id=" + encodeURIComponent(orgId)
-                            + "&q=" + encodeURIComponent(query || "");
-                        const r = await fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}});
-                        const data = await r.json();
-                        callback((data.results || []).map(x => ({
-                            value: String(x.id),
-                            text: x.department ? `${x.name} (${x.department})` : x.name
-                        })));
-                    } catch (e) {
-                        callback([]);
-                    }
-                },
+                placeholder: "Выберите организацию"
             });
 
-            function refreshAssigned() {
-                const hasOrg = !!(orgTS.getValue() || orgEl.value);
-                assignedTS.clearOptions();
-                if (!hasOrg) {
-                    assignedTS.clear(true);
-                    assignedTS.setTextboxValue("Сначала выберите организацию");
-                    return;
+            const empTS = new TomSelect(empEl, {
+                create: false,
+                allowEmptyOption: true,
+                placeholder: "— сначала выберите организацию —",
+                valueField: "id",
+                labelField: "name",
+                searchField: ["name", "department"],
+                preload: true,
+                render: {
+                    option: (item, escape) => {
+                        const dept = item.department ? ` <span class="text-muted">(${escape(item.department)})</span>` : "";
+                        return `<div>${escape(item.name)}${dept}</div>`;
+                    },
+                    item: (item, escape) => `<div>${escape(item.name)}</div>`
+                },
+                load: (query, callback) => {
+                    const orgId = orgEl.value;
+                    if (!orgId) return callback();
+
+                    const url = endpoint
+                        + "?organization_id=" + encodeURIComponent(orgId)
+                        + "&q=" + encodeURIComponent(query || "");
+
+                    fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}})
+                        .then(r => r.json())
+                        .then(data => callback((data && data.results) ? data.results : []))
+                        .catch(() => callback());
                 }
-                assignedTS.load("");
+            });
+
+            function reloadEmployees() {
+                empTS.clear(true);
+                empTS.clearOptions();
+                empTS.addOption({id: "", name: "— не закреплять —"});
+                empTS.refreshOptions(false);
+                empTS.load(""); // перезагрузка по выбранной организации
             }
 
-            orgEl.addEventListener("change", () => {
-                assignedTS.clear(true);
-                refreshAssigned();
-            });
+            orgTS.on("change", reloadEmployees);
 
-            refreshAssigned();
+            // если организация уже выбрана (например, при ошибках валидации) — подгрузим сразу
+            if (orgEl.value) reloadEmployees();
+
+            function sync() {
+                const orgId = orgEl.value || "";
+                btn.setAttribute("href", base + "&org_id=" + encodeURIComponent(orgId));
+                btn.classList.toggle("disabled", !orgId);
+                btn.setAttribute("aria-disabled", orgId ? "false" : "true");
+            }
+
+            orgEl.addEventListener("change", sync);
+            sync();
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const metaEl = document.getElementById("equipmenttype-meta");
+            if (!metaEl) return;
+
+            const byId = new Map(JSON.parse(metaEl.textContent || "[]").map(x => [String(x.id), x.category]));
+            const etEl = document.getElementById("id_equipment_type");
+            const comp = document.getElementById("computer-fields");
+            const prn = document.getElementById("print-fields");
+            if (!etEl || !comp || !prn) return;
+
+            function sync() {
+                const cat = byId.get(String(etEl.value || "")) || "other";
+                comp.style.display = (cat === "computer") ? "" : "none";
+                prn.style.display = (cat === "print") ? "" : "none";
+            }
+
+            etEl.addEventListener("change", sync);
+            sync();
         });
     </script>
 {% endblock extra_js %}

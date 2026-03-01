@@ -6,7 +6,13 @@ from config import settings
 
 
 class EquipmentType(models.Model):
-    name = models.CharField(max_length=120, unique=True)  # ПК, Принтер, МФУ, Монитор, Сканер, ИБП...
+    class Category(models.TextChoices):
+        COMPUTER = "computer", "Компьютер"
+        PRINT = "print", "Печать"
+        OTHER = "other", "Другое"
+
+    name = models.CharField(max_length=255)
+    category = models.CharField(max_length=20, choices=Category.choices, default=Category.OTHER)
 
     class Meta:
         verbose_name = "Тип оборудования"
@@ -46,6 +52,22 @@ class Equipment(models.Model):
 
     # Уникальный токен для QR (удобно печатать/сканировать и открывать карточку)
     qr_token = models.CharField(max_length=32, unique=True, editable=False)
+
+    # Компьютеры
+    cpu = models.CharField("Процессор", max_length=255, blank=True)
+    ram_gb = models.PositiveSmallIntegerField("ОЗУ (ГБ)", null=True, blank=True)
+    storageHDD_gb = models.PositiveIntegerField(verbose_name="HDD, Гб", null=True, blank=True)
+    storageSDD_gb = models.PositiveIntegerField(verbose_name="SDD, Гб", null=True, blank=True)
+
+    # Принтеры/МФУ
+    class PrintMode(models.TextChoices):
+        MONO = "mono", "Монохромная"
+        COLOR = "color", "Цветная"
+
+    print_format = models.CharField("Формат печати", max_length=50, blank=True)  # например: A4/A3
+    print_mode = models.CharField("Печать", max_length=10, choices=PrintMode.choices, blank=True)
+
+
 
     created_at = models.DateTimeField(default=timezone.now,verbose_name="Создан")
 

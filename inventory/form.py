@@ -1,6 +1,6 @@
 from django import forms
 from directory.models import Employee
-from inventory.models import Equipment, EquipmentStatus
+from inventory.models import Equipment, EquipmentStatus, EquipmentType
 
 
 class EquipmentForm(forms.ModelForm):
@@ -9,13 +9,13 @@ class EquipmentForm(forms.ModelForm):
         fields = [
             "organization", "equipment_type", "name", "model",
             "inventory_number", "pc_number", "serial_number",
+            "cpu", "ram_gb","storageSDD_gb", "storageHDD_gb", "print_format", "print_mode",
             "specs", "commissioning_date", "status", "assigned_to",
         ]
-
-    widgets = {
-        "commissioning_date": forms.DateInput(attrs={"type": "date"}),
-        "specs": forms.Textarea(attrs={"rows": 4}),
-    }
+        widgets = {
+            "commissioning_date": forms.DateInput(attrs={"type": "date"}),
+            "specs": forms.Textarea(attrs={"rows": 4}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,8 +48,38 @@ class EquipmentForm(forms.ModelForm):
         cleaned = super().clean()
         org = cleaned.get("organization")
         as_to = cleaned.get("assigned_to")
+
         if org and as_to and as_to.organization_id != org.id:
             self.add_error("assigned_to", "Сотрудник не принадлежит выбранной организации")
+
+        et = cleaned.get("equipment_type")
+        cat = getattr(et, "category", None)
+
+        # Компьютеры
+        if cat == "computer":
+            if not cleaned.get("cpu"):
+                self.add_error("cpu", "Укажите процессор.")
+            if not cleaned.get("ram_gb"):
+                self.add_error("ram_gb", "Укажите объём ОЗУ.")
+            if not (cleaned.get("storageHDD_gb") or cleaned.get("storageSDD_gb")):
+                self.add_error("storageHDD_gb", "Укажите объём HDD или SSD.")
+                self.add_error("storageSDD_gb", "Укажите объём HDD или SSD.")
+            # очистим печать
+            cleaned["print_format"] = ""
+            cleaned["print_mode"] = ""
+
+        # Принтеры/МФУ
+        elif cat == "print":
+            if not cleaned.get("print_format"):
+                self.add_error("print_format", "Укажите формат печати.")
+            if not cleaned.get("print_mode"):
+                self.add_error("print_mode", "Укажите тип печати.")
+            # очистим компьютерное
+            cleaned["cpu"] = ""
+            cleaned["ram_gb"] = None
+            cleaned["storageHDD_gb"] = None
+            cleaned["storageSDD_gb"] = None
+
         return cleaned
 
 
@@ -90,3 +120,13 @@ class EquipmentMoveForm(forms.Form):
         if emp and emp.organization_id != self.equipment.organization_id:
             raise forms.ValidationError("Сотрудник не принадлежит организации оборудования.")
         return emp
+
+class EquipmentTypeForm(forms.ModelForm):
+    class Meta:
+        model = EquipmentType
+        fields = ["name",  "category"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for _, field in self.fields.items():
+            field.widget.attrs["class"] = "form-control"

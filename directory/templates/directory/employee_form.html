@@ -3,27 +3,7 @@
 {% block title %}{% if object %}Редактирование сотрудника{% else %}Создание сотрудника{% endif %}{% endblock %}
 
 {% block content %}
-{#    <style>#}
-{#        /* Организация */#}
-{#        #id_organization + .ts-wrapper,#}
-{#        #id_organization + .ts-wrapper .ts-control {#}
-{#            border: 1px !important;#}
-{#            box-shadow: none !important;#}
-{#        }#}
-{##}
-{#        /* Подразделение */#}
-{#        #id_department + .ts-wrapper,#}
-{#        #id_department + .ts-wrapper .ts-control {#}
-{#            border: 1px !important;#}
-{#            box-shadow: none !important;#}
-{#        }#}
-{##}
-{#        /* чтобы и dropdown был без рамки (если нужно) */#}
-{#        #id_organization + .ts-wrapper .ts-dropdown,#}
-{#        #id_department + .ts-wrapper .ts-dropdown {#}
-{#            border: 0 !important;#}
-{#        }#}
-{#    </style>#}
+
     <div class="pc-container">
         <div class="pc-content">
 
@@ -37,7 +17,8 @@
                 <div class="card-body">
                     <form method="post" class="row g-3">
                         {% csrf_token %}
-
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <input type="hidden" name="org_id" value="{{ org_id }}">
                         <div class="col-12 col-md-6">
                             <label class="form-label" for="{{ form.organization.id_for_label }}">Организация</label>
                             {{ form.organization }}

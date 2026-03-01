@@ -61,6 +61,13 @@
                         <span class="pc-mtext">Сотрудники</span>
                     </a>
                 </li>
+                {% if perms.inventory.view_equipmenttype %}
+                    <li class="pc-item">
+                        <a href="{% url 'inventory:equipmenttype_list' %}" class="pc-link">
+                            <span class="pc-mtext">Типы оборудования</span>
+                        </a>
+                    </li>
+                {% endif %}
 
                 {#                <li class="pc-item pc-caption">#}
                 {#                    <label>Navigation</label>#}

@@ -22,4 +22,10 @@ urlpatterns = [
 
     path("ajax/employees/", views.EmployeesByOrganizationView.as_view(), name="ajax_employees_by_org"),
 
+    path("equipment-types/", views.EquipmentTypeListView.as_view(), name="equipmenttype_list"),
+    path("equipment-types/create/", views.EquipmentTypeCreateView.as_view(), name="equipmenttype_create"),
+    path("equipment-types/<int:pk>/", views.EquipmentTypeDetailView.as_view(), name="equipmenttype_detail"),
+    path("equipment-types/<int:pk>/edit/", views.EquipmentTypeUpdateView.as_view(), name="equipmenttype_edit"),
+    path("equipment-types/<int:pk>/delete/", views.EquipmentTypeDeleteView.as_view(), name="equipmenttype_delete"),
+
 ]

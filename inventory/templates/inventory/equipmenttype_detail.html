@@ -1,0 +1,28 @@
+{% extends "layouts/base.html" %}
+{% block title %}Тип — {{ object.name }}{% endblock %}
+{% block content %}
+<div class="pc-container"><div class="pc-content">
+  <div class="page-header">
+    <div class="page-block">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="page-header-title"><h5 class="m-b-10">{{ object.name }}</h5></div>
+          <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'inventory:equipmenttype_list' %}">Типы оборудования</a></li>
+            <li class="breadcrumb-item" aria-current="page">{{ object.name }}</li>
+          </ul>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <a class="btn btn-light" href="{% url 'inventory:equipmenttype_edit' object.pk %}">Редактировать</a>
+          <a class="btn btn-outline-danger" href="{% url 'inventory:equipmenttype_delete' object.pk %}">Удалить</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card"><div class="card-body">
+    <div><strong>Название:</strong> {{ object.name }}</div>
+  </div></div>
+</div></div>
+{% endblock %}

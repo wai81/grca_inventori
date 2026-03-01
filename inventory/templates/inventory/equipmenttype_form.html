@@ -1,0 +1,58 @@
+{% extends "layouts/base.html" %}
+{% block title %}{% if object %}Редактирование типа{% else %}Создание типа{% endif %}{% endblock %}
+{% block content %}
+    <div class="pc-container">
+        <div class="pc-content">
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="page-header-title">
+                                <h5 class="m-b-10">{% if object %}Редактирование типа{% else %}Создание
+                                    типа{% endif %}</h5>
+                            </div>
+                            <ul class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'inventory:equipmenttype_list' %}">Типы
+                                    оборудования</a></li>
+                                <li class="breadcrumb-item" aria-current="page">{% if object %}Редактирование{% else %}
+                                    Создание{% endif %}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <a class="btn btn-light" href="{% url 'inventory:equipmenttype_list' %}">Отмена</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+                <div class="card">
+                    <div class="card-body">
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">{{ form.name.errors|striptags }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"
+                                   for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="invalid-feedback d-block">{{ form.category.errors|striptags }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <button class="btn btn-primary" type="submit">Сохранить</button>
+                        <a class="btn btn-light" href="{% url 'inventory:equipmenttype_list' %}">Отмена</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

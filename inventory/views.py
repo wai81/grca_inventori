@@ -1,19 +1,21 @@
 from io import BytesIO
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import transaction
+from django.db.models import ProtectedError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.generic import DetailView, UpdateView, FormView, CreateView
+from django.views.generic import DetailView, UpdateView, FormView, CreateView, DeleteView, ListView
 from django_filters.views import FilterView
 
 from directory.models import Employee
 from inventory.filters import EquipmentFilter
-from inventory.form import EquipmentForm, EquipmentMoveForm
-from inventory.models import InventoryDocument, Equipment, EquipmentEventType, EquipmentEvent
+from inventory.form import EquipmentForm, EquipmentMoveForm, EquipmentTypeForm
+from inventory.models import InventoryDocument, Equipment, EquipmentEventType, EquipmentEvent, EquipmentType
 from config.pdf import render_pdf_response
 from inventory.services import apply_document
 
@@ -33,6 +35,12 @@ class EquipmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
     permission_required = "inventory.change_equipment"
     model = Equipment
     form_class = EquipmentForm
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["equipmenttype_meta"] = list(EquipmentType.objects.values("id", "category"))
+        return ctx
+
     template_name = "inventory/equipment_form.html"
     success_url = reverse_lazy("inventory:equipment_list")
 
@@ -40,6 +48,29 @@ class EquipmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVie
     permission_required = "inventory.add_equipment"
     model = Equipment
     form_class = EquipmentForm
+
+    def get_initial(self):
+        ini = super().get_initial()
+
+        et = self.request.GET.get("equipment_type")
+        if et:
+            ini["equipment_type"] = et
+
+        emp = self.request.GET.get("assigned_to")
+        if emp:
+            ini["assigned_to"] = emp
+
+        org = self.request.GET.get("organization")
+        if org:
+            ini["organization"] = org
+
+        return ini
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["equipmenttype_meta"] = list(EquipmentType.objects.values("id", "category"))
+        return ctx
+
     template_name = "inventory/equipment_form.html"
     success_url = reverse_lazy("inventory:equipment_list")
 
@@ -201,3 +232,66 @@ def apply_document_view(request, pk: int):
     doc = get_object_or_404(InventoryDocument, pk=pk)
     apply_document(doc)
     return redirect("inventory:document_detail", pk=pk)
+
+def _append_query(url: str, **params) -> str:
+    parts = urlsplit(url)
+    q = dict(parse_qsl(parts.query, keep_blank_values=True))
+    for k, v in params.items():
+        q[k] = str(v)
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(q), parts.fragment))
+
+
+class EquipmentTypeListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = "inventory.view_equipmenttype"
+    template_name = "inventory/equipmenttype_list.html"
+    model = EquipmentType
+    paginate_by = 25
+    ordering = ["name"]
+
+
+class EquipmentTypeDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "inventory.view_equipmenttype"
+    template_name = "inventory/equipmenttype_detail.html"
+    model = EquipmentType
+
+
+class EquipmentTypeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "inventory.add_equipmenttype"
+    template_name = "inventory/equipmenttype_form.html"
+    model = EquipmentType
+    form_class = EquipmentTypeForm
+    success_url = reverse_lazy("inventory:equipmenttype_list")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["next"] = self.request.GET.get("next") or self.request.POST.get("next") or ""
+        return ctx
+
+    def get_success_url(self):
+        nxt = self.request.POST.get("next") or self.request.GET.get("next") or ""
+        if nxt:
+            # вернемся назад и подставим созданный тип в equipment_form
+            return _append_query(nxt, equipment_type=self.object.pk)
+        return super().get_success_url()
+
+
+class EquipmentTypeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "inventory.change_equipmenttype"
+    template_name = "inventory/equipmenttype_form.html"
+    model = EquipmentType
+    form_class = EquipmentTypeForm
+    success_url = reverse_lazy("inventory:equipmenttype_list")
+
+
+class EquipmentTypeDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "inventory.delete_equipmenttype"
+    template_name = "inventory/equipmenttype_confirm_delete.html"
+    model = EquipmentType
+    success_url = reverse_lazy("inventory:equipmenttype_list")
+
+    def form_valid(self, form):
+        try:
+            return super().form_valid(form)
+        except ProtectedError:
+            messages.error(self.request, "Нельзя удалить тип: он используется в оборудовании.")
+            return redirect("inventory:equipmenttype_detail", pk=self.object.pk)

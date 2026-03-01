@@ -1,0 +1,34 @@
+{% extends "layouts/base.html" %}
+{% block title %}Удаление типа{% endblock %}
+{% block content %}
+<div class="pc-container"><div class="pc-content">
+  <div class="page-header">
+    <div class="page-block">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="page-header-title"><h5 class="m-b-10">Удаление типа</h5></div>
+          <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'inventory:equipmenttype_list' %}">Типы оборудования</a></li>
+            <li class="breadcrumb-item" aria-current="page">Удаление</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="card">
+      <div class="card-body">
+        Удалить тип: <strong>{{ object.name }}</strong>?
+        <div class="text-muted mt-2">Если тип используется в оборудовании — удаление будет запрещено.</div>
+      </div>
+      <div class="card-footer text-end">
+        <button class="btn btn-danger" type="submit">Удалить</button>
+        <a class="btn btn-light" href="{% url 'inventory:equipmenttype_detail' object.pk %}">Отмена</a>
+      </div>
+    </div>
+  </form>
+</div></div>
+{% endblock %}
