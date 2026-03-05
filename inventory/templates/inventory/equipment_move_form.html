@@ -32,7 +32,11 @@
                                 <div><strong>Сейчас закреплено:</strong> {{ object.assigned_to|default:"—" }}</div>
                                 <div><strong>Статус:</strong> {{ object.get_status_display }}</div>
                             </div>
-                            <form method="post" novalidate> {% csrf_token %}
+                            <form method="post" novalidate>
+                                {% csrf_token %}
+                                {% if next %}
+                                    <input type="hidden" name="next" value="{{ next }}">
+                                {% endif %}
                                 {% if form.non_field_errors %}
 
                                     <div class="alert alert-danger">{{ form.non_field_errors }}</div> {% endif %}

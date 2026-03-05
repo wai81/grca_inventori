@@ -38,7 +38,6 @@ class EmployeeDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        # показываем список только тем, у кого есть право смотреть оборудование
         if self.request.user.has_perm("inventory.view_equipment"):
             qs = (
                 Equipment.objects

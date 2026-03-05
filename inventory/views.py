@@ -89,6 +89,13 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
         self.equipment = get_object_or_404(Equipment, pk=kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
+    def get_initial(self):
+        ini = super().get_initial()
+        to_emp = self.request.GET.get("to_employee")
+        if to_emp is not None:
+            ini["to_employee"] = to_emp  # пустая строка = “снять закрепление”
+        return ini
+
     def get_form_kwargs(self):
         kw = super().get_form_kwargs()
         kw["equipment"] = self.equipment
@@ -97,6 +104,7 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["object"] = self.equipment
+        ctx["next"] = self.request.GET.get("next") or self.request.POST.get("next") or ""
         return ctx
 
     def form_valid(self, form):
@@ -125,8 +133,12 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
             comment=comment,
         )
 
+        next_url = (self.request.POST.get("next") or "").strip()
+        if next_url:
+            return redirect(next_url)
+
         messages.success(self.request, "Перемещение сохранено.")
-        return redirect("inventory:equipment_detail", pk=eq.pk)
+        return redirect("inventory:equipment_detail", pk=self.equipment.pk)
 
 class EquipmentListPdfView(EquipmentListView):
     permission_required = "inventory.view_equipment"
