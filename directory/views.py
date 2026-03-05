@@ -4,13 +4,14 @@ from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import CreateView, UpdateView
+from django.views.generic import CreateView, UpdateView, DetailView
 from django_filters.views import FilterView
 
 from config.pdf import render_pdf_response
 from directory.filters import EmployeeFilter, OrganizationFilter, DepartmentFilter
 from directory.forms import OrganizationForm, DepartmentForm, EmployeeForm
 from directory.models import Employee, Organization, Department
+from inventory.models import Equipment
 from inventory.views import _append_query
 
 
@@ -29,6 +30,28 @@ class EmployeeListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
             .order_by("-active", "full_name")
         )
 
+class EmployeeDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "directory.view_employee"
+    model = Employee
+    template_name = "directory/employee_detail.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        # показываем список только тем, у кого есть право смотреть оборудование
+        if self.request.user.has_perm("inventory.view_equipment"):
+            qs = (
+                Equipment.objects
+                .filter(assigned_to=self.object)
+                .select_related("organization", "equipment_type", "assigned_to", "assigned_to__department")
+                .order_by("equipment_type__name", "name")
+            )
+        else:
+            qs = Equipment.objects.none()
+
+        ctx["assigned_equipment"] = qs
+        ctx["assigned_equipment_count"] = qs.count()
+        return ctx
 
 class EmployeeCreateView(LoginRequiredMixin, CreateView):
     model = Employee

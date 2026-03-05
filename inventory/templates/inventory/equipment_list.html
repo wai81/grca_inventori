@@ -22,14 +22,9 @@
                         </div>
                         <div class="col-auto">
                             <a class="btn btn-light-primary d-flex align-items-center gap-2"
-                               href="
-
-
-
-
-
-
-                                       {% url 'inventory:equipment_list_pdf' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}"
+                               href="{% url 'inventory:equipment_list_pdf' %}
+                                {% if request.GET.urlencode %}?{{ request.GET.urlencode }}
+                                {% endif %}"
                             >
                                 <i class="ti ti-printer"></i>
                                 PDF по текущему фильтру
@@ -330,6 +325,8 @@
 
 
 
+
+
                                                    {{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
                                             Назад
                                         </a>
@@ -340,6 +337,8 @@
                                     {% if page_obj.has_next %}
                                         <a class="btn btn-sm btn-outline-secondary"
                                            href="?page=
+
+
 
 
 

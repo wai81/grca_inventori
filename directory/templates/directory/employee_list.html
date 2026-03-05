@@ -124,7 +124,12 @@
                                     {% for obj in page_obj %}
                                         <tr>
                                             <td class="ps-4">
-                                                <div class="fw-semibold text-body">{{ obj.full_name }}</div>
+                                                <div class="d-flex flex-column">
+                                                    <a class="text-body fw-semibold"
+                                                       href="{% url 'directory:employee_detail' obj.pk %}">
+                                                        {{ obj.full_name }}
+                                                    </a>
+                                                </div>
                                             </td>
                                             <td>{{ obj.department }}</td>
                                             <td>{{ obj.organization }}</td>
@@ -151,6 +156,13 @@
                                             </td>
                                             <td class="text-end pe-4">
                                                 <ul class="list-inline mb-0">
+                                                    <li class="list-inline-item">
+                                                        <a class="btn btn-sm btn-success"
+                                                           href="{% url 'directory:employee_detail' obj.pk %}">
+                                                             <i class="ti ti-eye"></i>
+{#                                                            Открыть#}
+                                                        </a>
+                                                    </li>
                                                     <li class="list-inline-item">
                                                         <a class="avatar avatar-s btn-link-success btn-pc-default"
                                                            href="{% url 'directory:employee_edit' obj.pk %}">

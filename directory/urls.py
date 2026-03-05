@@ -6,6 +6,7 @@ app_name = "directory"
 urlpatterns = [
     path("employees/", views.EmployeeListView.as_view(), name="employee_list"),
     path("employees/create/", views.EmployeeCreateView.as_view(), name="employee_create"),
+    path("employees/<int:pk>/", views.EmployeeDetailView.as_view(), name="employee_detail"),
     path("employees/<int:pk>/edit/", views.EmployeeUpdateView.as_view(), name="employee_edit"),
     path("employees/<int:pk>/toggle-active/", views.EmployeeToggleActiveView.as_view(), name="employee_toggle_active"),
     path("employees/pdf/", views.EmployeeListPdfView.as_view(), name="employee_list_pdf"),

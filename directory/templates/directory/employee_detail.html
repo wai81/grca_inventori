@@ -1,0 +1,100 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Сотрудник — {{ object.full_name }}{% endblock %}
+
+{% block content %}
+<div class="pc-container">
+  <div class="pc-content">
+
+    <div class="page-header">
+      <div class="page-block">
+        <div class="row align-items-center">
+          <div class="col">
+            <div class="page-header-title">
+              <h5 class="m-b-10">Карточка сотрудника</h5>
+            </div>
+            <ul class="breadcrumb">
+              <li class="breadcrumb-item"><a href="{% url 'directory:employee_list' %}">Сотрудники</a></li>
+              <li class="breadcrumb-item" aria-current="page">{{ object.full_name }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="mb-2">{{ object.full_name }}</h5>
+        <div class="text-muted mb-3">
+          {{ object.organization }}{% if object.department %} · {{ object.department }}{% endif %}
+          · {% if object.active %}Активен{% else %}Неактивен{% endif %}
+        </div>
+
+        <div class="row g-2">
+          <div class="col-md-6"><strong>Email:</strong> {{ object.email|default:"—" }}</div>
+          <div class="col-md-6"><strong>Телефон:</strong> {{ object.phone|default:"—" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div>
+          <strong>Закреплённое оборудование</strong>
+          <span class="text-muted">({{ assigned_equipment_count }})</span>
+        </div>
+
+        {% if perms.inventory.view_equipment %}
+          <a class="btn btn-sm btn-outline-primary"
+             href="{% url 'inventory:equipment_list' %}?assigned_to={{ object.pk }}">
+            Открыть в списке
+          </a>
+        {% endif %}
+      </div>
+
+      <div class="card-body p-0">
+        {% if not perms.inventory.view_equipment %}
+          <div class="p-3 text-muted">Нет прав на просмотр оборудования.</div>
+        {% else %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Наименование</th>
+                  <th>Тип</th>
+                  <th>Инв. №</th>
+                  <th>Статус</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for eq in assigned_equipment %}
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">{{ eq.name }}</div>
+                      <div class="text-muted small">{{ eq.model|default:"" }} {{ eq.serial_number|default:"" }}</div>
+                    </td>
+                    <td>{{ eq.equipment_type }}</td>
+                    <td>{{ eq.inventory_number|default:"—" }}</td>
+                    <td>{{ eq.get_status_display }}</td>
+                    <td class="text-end">
+                      <a class="btn btn-sm btn-outline-secondary"
+                         href="{% url 'inventory:equipment_detail' eq.pk %}">
+                        Открыть
+                      </a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="5" class="text-muted p-3">Ничего не закреплено</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
