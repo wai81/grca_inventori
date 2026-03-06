@@ -8,6 +8,7 @@ from django.db.models import ProtectedError, Count
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import DetailView, UpdateView, FormView, CreateView, DeleteView, ListView
 from django_filters.views import FilterView
@@ -139,7 +140,11 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
         messages.success(self.request, "Перемещение сохранено.")
 
         next_url = (self.request.POST.get("next") or "").strip()
-        if next_url:
+        if next_url and url_has_allowed_host_and_scheme(
+                url=next_url,
+                allowed_hosts={self.request.get_host()},
+                require_https=self.request.is_secure(),
+        ):
             return redirect(next_url)
 
         return redirect("inventory:equipment_detail", pk=eq.pk)
