@@ -63,9 +63,11 @@
                                     </div>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Сохранить перемещение</button>
-                                <a href="{% url 'inventory:equipment_detail' object.pk %}"
-                                   class="btn btn-light">Отмена</a>
-
+                                {% if next %}
+                                    <a href="{{ next }}" class="btn btn-light">Отмена</a>
+                                {% else %}
+                                    <a href="{% url 'inventory:equipment_detail' object.pk %}" class="btn btn-light">Отмена</a>
+                                {% endif %}
                             </form>
                         </div>
                     </div>

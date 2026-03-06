@@ -1,4 +1,6 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db import transaction
 from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -9,9 +11,9 @@ from django_filters.views import FilterView
 
 from config.pdf import render_pdf_response
 from directory.filters import EmployeeFilter, OrganizationFilter, DepartmentFilter
-from directory.forms import OrganizationForm, DepartmentForm, EmployeeForm
+from directory.forms import OrganizationForm, DepartmentForm, EmployeeForm, EmployeeUnassignAllForm
 from directory.models import Employee, Organization, Department
-from inventory.models import Equipment
+from inventory.models import Equipment, EquipmentEvent, EquipmentEventType, EquipmentStatus
 from inventory.views import _append_query
 
 
@@ -50,7 +52,71 @@ class EmployeeDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
 
         ctx["assigned_equipment"] = qs
         ctx["assigned_equipment_count"] = qs.count()
+
+        ctx["unassign_form"] = ctx.get("unassign_form") or EmployeeUnassignAllForm()
+        ctx["show_unassign_modal"] = ctx.get("show_unassign_modal", False)
         return ctx
+
+class EmployeeUnassignAllView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = ("directory.view_employee", "inventory.change_equipment")
+
+    def post(self, request, pk):
+        employee = get_object_or_404(Employee, pk=pk)
+
+        form = EmployeeUnassignAllForm(request.POST)
+        if not form.is_valid():
+            # вернемся на карточку с ошибками и открытой модалкой
+            dv = EmployeeDetailView()
+            dv.request = request
+            dv.object = employee
+            ctx = dv.get_context_data(unassign_form=form, show_unassign_modal=True)
+            return dv.render_to_response(ctx)
+
+        # Найдём значение статуса "резерв" из choices (чтобы не зависеть от ключа)
+        reserve_value = None
+        for k, v in EquipmentStatus.choices:
+            if str(v).strip().lower().startswith("резерв"):
+                reserve_value = k
+                break
+        if reserve_value is None:
+            messages.error(request, "Статус “резерв” не найден в EquipmentStatus.")
+            return redirect("directory:employee_detail", pk=employee.pk)
+
+        doc_no = form.cleaned_data["document_number"].strip()
+        comment = form.cleaned_data["comment"].strip()
+
+        qs = Equipment.objects.filter(assigned_to=employee).select_for_update()
+
+        with transaction.atomic():
+            items = list(qs)
+
+            events = []
+            for eq in items:
+                old_status = eq.status
+                eq.assigned_to = None
+                eq.status = reserve_value
+                eq.save(update_fields=["assigned_to", "status"])
+
+                events.append(EquipmentEvent(
+                    equipment=eq,
+                    event_type=EquipmentEventType.MOVE,
+                    from_employee=employee,
+                    to_employee=None,
+                    old_status=old_status if old_status != reserve_value else "",
+                    new_status=reserve_value if old_status != reserve_value else "",
+                    document_number=doc_no,
+                    comment=comment,
+                ))
+
+            if events:
+                EquipmentEvent.objects.bulk_create(events)
+
+        if items:
+            messages.success(request, f"Снято в резерв: {len(items)}")
+        else:
+            messages.info(request, "У сотрудника нет закреплённого оборудования.")
+
+        return redirect("directory:employee_detail", pk=employee.pk)
 
 class EmployeeCreateView(LoginRequiredMixin, CreateView):
     model = Employee

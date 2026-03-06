@@ -71,3 +71,20 @@ class EmployeeForm(forms.ModelForm):
         if org and dept and dept.organization_id != org.id:
             self.add_error("department", "Подразделение не принадлежит выбранной организации")
         return cleaned
+
+class EmployeeUnassignAllForm(forms.Form):
+    document_number = forms.CharField(
+        label="Номер документа",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    comment = forms.CharField(
+        label="Комментарий",
+        required=False,
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3})
+    )
+    confirm = forms.BooleanField(
+        label="Понимаю последствия (снять всё в резерв)",
+        required=True,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
+    )

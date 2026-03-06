@@ -91,9 +91,12 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
 
     def get_initial(self):
         ini = super().get_initial()
-        to_emp = self.request.GET.get("to_employee")
-        if to_emp is not None:
-            ini["to_employee"] = to_emp  # пустая строка = “снять закрепление”
+
+        # предзаполнение "снять закрепление" или "кому передать"
+        if "to_employee" in self.request.GET:
+            raw = self.request.GET.get("to_employee", "")
+            ini["to_employee"] = None if raw == "" else raw
+
         return ini
 
     def get_form_kwargs(self):
@@ -133,12 +136,13 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
             comment=comment,
         )
 
+        messages.success(self.request, "Перемещение сохранено.")
+
         next_url = (self.request.POST.get("next") or "").strip()
         if next_url:
             return redirect(next_url)
 
-        messages.success(self.request, "Перемещение сохранено.")
-        return redirect("inventory:equipment_detail", pk=self.equipment.pk)
+        return redirect("inventory:equipment_detail", pk=eq.pk)
 
 class EquipmentListPdfView(EquipmentListView):
     permission_required = "inventory.view_equipment"
