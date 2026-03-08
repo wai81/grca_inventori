@@ -32,7 +32,7 @@ class EquipmentStatus(models.TextChoices):
     WRITTEN_OFF = "written_off", "списано"
 
 class Equipment(models.Model):
-    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="equipment", verbose_name="Организация")
+    organization = models.ForeignKey("directory.Organization", on_delete=models.PROTECT, related_name="equipment", verbose_name="Организация")
     equipment_type = models.ForeignKey(EquipmentType, on_delete=models.PROTECT, related_name="equipment", verbose_name="Тип оборудования")
 
     name = models.CharField(max_length=200, verbose_name="Наименование")  # коротко: "ПК Lenovo", "Принтер HP"
@@ -47,7 +47,7 @@ class Equipment(models.Model):
     status = models.CharField(max_length=20, choices=EquipmentStatus.choices, default=EquipmentStatus.IN_USE, verbose_name="Статус")
 
     assigned_to = models.ForeignKey(
-        Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_equipment",
+        "directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_equipment",
         verbose_name="Закреплен"
     )
 
@@ -108,10 +108,10 @@ class EquipmentEvent(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     from_employee = models.ForeignKey(
-        Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="events_from"
+        "directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="events_from"
     )
     to_employee = models.ForeignKey(
-        Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="events_to"
+        "directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="events_to"
     )
 
     old_status = models.CharField(max_length=20, choices=EquipmentStatus.choices, blank=True)
@@ -142,7 +142,7 @@ class InventoryDocument(models.Model):
     Документ (акт), который может содержать несколько единиц оборудования.
     """
     doc_type = models.CharField(max_length=20, choices=DocumentType.choices)
-    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="documents")
+    organization = models.ForeignKey("directory.Organization", on_delete=models.PROTECT, related_name="documents")
 
     number = models.CharField(max_length=60)  # номер акта/документа
     date = models.DateField(default=timezone.now)
