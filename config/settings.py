@@ -43,8 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_filters',
 
-    "directory",
-    'inventory',
+    "apps.directory",
+    'apps.inventory',
 ]
 
 AUTHENTICATION_BACKENDS = [

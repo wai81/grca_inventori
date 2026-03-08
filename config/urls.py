@@ -31,7 +31,7 @@ urlpatterns = [
     path('accounts/', include("django.contrib.auth.urls")),
     # path('', views.home, name='home'),
     path('', RedirectView.as_view(pattern_name="inventory:equipment_list", permanent=False), name="index"),
-    path("", include(("inventory.urls", "inventory"), namespace="inventory")),
-    path('', include(("directory.urls", "directory"), namespace="directory")),
+    path("", include(("apps.inventory.urls", "inventory"), namespace="inventory")),
+    path('', include(("apps.directory.urls", "directory"), namespace="directory")),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

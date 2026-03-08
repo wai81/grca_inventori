@@ -1,7 +1,7 @@
 import django_filters
 from django import forms
 from django.db import models
-from directory.models import Organization, Employee
+from apps.directory.models import Organization, Employee
 from .filters_mixins import BootstrapFilterFormMixin
 from .models import Equipment,  EquipmentStatus, EquipmentType
 

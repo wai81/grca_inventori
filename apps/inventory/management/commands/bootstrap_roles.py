@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from inventory.roles import bootstrap_roles
+from apps.inventory.roles import bootstrap_roles
 
 class Command(BaseCommand):
     help = "Создать роли (Groups) и назначить permissions для inventory"

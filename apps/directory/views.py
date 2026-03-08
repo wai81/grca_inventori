@@ -3,18 +3,18 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.db import transaction
 from django.db.models import Count
 from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, UpdateView, DetailView
 from django_filters.views import FilterView
 
 from config.pdf import render_pdf_response
-from directory.filters import EmployeeFilter, OrganizationFilter, DepartmentFilter
-from directory.forms import OrganizationForm, DepartmentForm, EmployeeForm, EmployeeUnassignAllForm
-from directory.models import Employee, Organization, Department
-from inventory.models import Equipment, EquipmentEvent, EquipmentEventType, EquipmentStatus
-from inventory.views import _append_query
+from apps.directory.filters import EmployeeFilter, OrganizationFilter, DepartmentFilter
+from apps.directory.forms import OrganizationForm, DepartmentForm, EmployeeForm, EmployeeUnassignAllForm
+from apps.directory.models import Employee, Organization, Department
+from apps.inventory.models import Equipment, EquipmentEvent, EquipmentEventType, EquipmentStatus
+from apps.inventory.views import _append_query
 
 
 # Create your views here.

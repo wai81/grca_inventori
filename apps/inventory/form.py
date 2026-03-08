@@ -1,6 +1,6 @@
 from django import forms
-from directory.models import Employee
-from inventory.models import Equipment, EquipmentStatus, EquipmentType
+from apps.directory.models import Employee
+from apps.inventory.models import Equipment, EquipmentStatus, EquipmentType
 
 
 class EquipmentForm(forms.ModelForm):

@@ -13,12 +13,12 @@ from django.views import View
 from django.views.generic import DetailView, UpdateView, FormView, CreateView, DeleteView, ListView
 from django_filters.views import FilterView
 
-from directory.models import Employee
-from inventory.filters import EquipmentFilter
-from inventory.form import EquipmentForm, EquipmentMoveForm, EquipmentTypeForm
-from inventory.models import InventoryDocument, Equipment, EquipmentEventType, EquipmentEvent, EquipmentType
+from apps.directory.models import Employee
+from apps.inventory.filters import EquipmentFilter
+from apps.inventory.form import EquipmentForm, EquipmentMoveForm, EquipmentTypeForm
+from apps.inventory.models import InventoryDocument, Equipment, EquipmentEventType, EquipmentEvent, EquipmentType
 from config.pdf import render_pdf_response
-from inventory.services import apply_document
+from apps.inventory.services import apply_document
 
 
 class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):

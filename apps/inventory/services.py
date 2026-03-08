@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.utils import timezone
 
-from inventory.models import InventoryDocument, DocumentType, EquipmentStatus, EquipmentEvent, EquipmentEventType
+from apps.inventory.models import InventoryDocument, DocumentType, EquipmentStatus, EquipmentEvent, EquipmentEventType
 
 
 def apply_document(doc: InventoryDocument):
