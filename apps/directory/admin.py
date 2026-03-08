@@ -12,5 +12,5 @@ class UserOrganizationAccessAdmin(admin.ModelAdmin):
 
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ("id","code", "name",)
+    list_display = ("id","code", "name","active")
     search_fields = ("code", "name",)

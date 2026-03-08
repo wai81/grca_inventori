@@ -43,19 +43,21 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_filters',
 
-    "apps.directory",
-    'apps.inventory',
+    'apps.users.apps.UsersConfig',
+    'apps.directory.apps.DirectoryConfig',
+    'apps.inventory.apps.InventoryConfig',
+
 ]
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-AUTH_USER_MODEL = "auth.User"
-# AUTH_USER_MODEL = 'apps.accounts.User'
+# AUTH_USER_MODEL = "auth.User"
+AUTH_USER_MODEL = 'users.User'
 MIDDLEWARE = []
 
-LOGIN_URL = "/accounts/login/"
+LOGIN_URL = "/users/login/"
 LOGIN_REDIRECT_URL = "/equipment/"
 LOGOUT_REDIRECT_URL = "login"
 
