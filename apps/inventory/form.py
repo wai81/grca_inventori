@@ -1,37 +1,50 @@
 from django import forms
-from apps.directory.models import Employee
+from apps.directory.models import Employee, Organization
 from apps.inventory.models import Equipment, EquipmentStatus, EquipmentType
-
+from apps.directory.access import get_allowed_organizations
 
 class EquipmentForm(forms.ModelForm):
-    class Meta:
-        model = Equipment
-        fields = [
-            "organization", "equipment_type", "name", "model",
-            "inventory_number", "pc_number", "serial_number",
-            "cpu", "ram_gb", "storageSDD_gb", "storageHDD_gb", "print_format", "print_mode",
-            "specs", "commissioning_date", "status", "assigned_to",
-        ]
-        widgets = {
-            "commissioning_date": forms.DateInput(attrs={"type": "date"}),
-            "specs": forms.Textarea(attrs={"rows": 4}),
-        }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        org_id = None
-        if self.is_bound:
-            org_id = self.data.get("organization") or None
-        elif self.instance and getattr(self.instance, "organization_id", None):
-            org_id = self.instance.organization_id
+        allowed_orgs = Organization.objects.none()
+        if user:
+            allowed_orgs = get_allowed_organizations(user)
 
+        if not user or not user.is_superuser:
+            self.fields["organization"].queryset = allowed_orgs.order_by("code", "name")
+
+        # org_id = None
+        # if self.is_bound:
+        #     org_id = self.data.get("organization") or None
+        # elif self.instance and getattr(self.instance, "organization_id", None):
+        #     org_id = self.instance.organization_id
+        # if org_id:
+        #     self.fields["assigned_to"].queryset = Employee.objects.filter(
+        #         organization_id=org_id, active=True
+        #     ).order_by("full_name")
+        # else:
+        #     self.fields["assigned_to"].queryset = Employee.objects.none()
+
+        org_id = None
+        if self.data.get("organization"):
+            org_id = self.data.get("organization")
+        elif self.instance.pk and self.instance.organization_id:
+            org_id = self.instance.organization_id
+        elif self.initial.get("organization"):
+            org_id = self.initial.get("organization")
+
+        emp_qs = Employee.objects.filter(active=True)
         if org_id:
-            self.fields["assigned_to"].queryset = Employee.objects.filter(
-                organization_id=org_id, active=True
-            ).order_by("full_name")
+            emp_qs = emp_qs.filter(organization_id=org_id)
         else:
-            self.fields["assigned_to"].queryset = Employee.objects.none()
+            emp_qs = Employee.objects.none()
+
+        if user and not user.is_superuser:
+            emp_qs = emp_qs.filter(organization__in=allowed_orgs)
+
+        self.fields["assigned_to"].queryset = emp_qs.select_related("department").order_by("full_name")
 
         self.fields["assigned_to"].empty_label = "— сначала выберите организацию —"
         self.fields["assigned_to"].required = False
@@ -78,6 +91,18 @@ class EquipmentForm(forms.ModelForm):
 
         return cleaned
 
+    class Meta:
+        model = Equipment
+        fields = [
+            "organization", "equipment_type", "name", "model",
+            "inventory_number", "pc_number", "serial_number",
+            "cpu", "ram_gb", "storageSDD_gb", "storageHDD_gb", "print_format", "print_mode",
+            "specs", "commissioning_date", "status", "assigned_to",
+        ]
+        widgets = {
+            "commissioning_date": forms.DateInput(attrs={"type": "date"}),
+            "specs": forms.Textarea(attrs={"rows": 4}),
+        }
 
 
 class EquipmentMoveForm(forms.Form):
@@ -99,9 +124,31 @@ class EquipmentMoveForm(forms.Form):
     document_number = forms.CharField(label="Номер документа", required=False)
     comment = forms.CharField(label="Комментарий", required=False, widget=forms.Textarea(attrs={"rows": 3}))
 
-    def __init__(self, *args, **kwargs):
-        self.equipment = kwargs.pop("equipment", None)
+    # def __init__(self, *args, **kwargs):
+    #     self.equipment = kwargs.pop("equipment", None)
+    #     super().__init__(*args, **kwargs)
+    #
+    #     if self.equipment:
+    #         self.fields["new_status"].initial = self.equipment.status
+    #         self.fields["to_employee"].initial = self.equipment.assigned_to_id
+    #
+    #     for _, field in self.fields.items():
+    #         field.widget.attrs["class"] = "form-control"
+
+    def __init__(self, *args, equipment=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.equipment = equipment
+        self.user = user
+
+        qs = Employee.objects.filter(active=True)
+
+        if equipment and equipment.organization_id:
+            qs = qs.filter(organization=equipment.organization)
+
+        if user and not user.is_superuser:
+            qs = qs.filter(organization__in=get_allowed_organizations(user))
+
+        self.fields["to_employee"].queryset = qs.select_related("department").order_by("full_name")
 
         if self.equipment:
             self.fields["new_status"].initial = self.equipment.status
@@ -113,8 +160,9 @@ class EquipmentMoveForm(forms.Form):
     def clean_to_employee(self):
         emp = self.cleaned_data.get("to_employee")
 
-        if emp and emp.organization_id != self.equipment.organization_id:
-            raise forms.ValidationError("Сотрудник не принадлежит организации оборудования.")
+        if emp and self.equipment and emp.organization_id != self.equipment.organization_id:
+            raise forms.ValidationError("Нельзя передать оборудование сотруднику другой организации.")
+
         return emp
 
 class EquipmentTypeForm(forms.ModelForm):

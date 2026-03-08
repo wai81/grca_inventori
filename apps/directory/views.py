@@ -15,7 +15,7 @@ from apps.directory.forms import OrganizationForm, DepartmentForm, EmployeeForm,
 from apps.directory.models import Employee, Organization, Department
 from apps.inventory.models import Equipment, EquipmentEvent, EquipmentEventType, EquipmentStatus
 from apps.inventory.views import _append_query
-
+from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access
 
 # Create your views here.
 class EmployeeListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
@@ -26,11 +26,13 @@ class EmployeeListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
     paginate_by = 25
 
     def get_queryset(self):
-        return (
+        qs = (
             Employee.objects
             .select_related("organization", "department")
             .order_by("-active", "full_name")
         )
+
+        return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
 
 class EmployeeDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     permission_required = "directory.view_employee"
@@ -121,6 +123,13 @@ class EmployeeUnassignAllView(LoginRequiredMixin, PermissionRequiredMixin, View)
 class EmployeeCreateView(LoginRequiredMixin, CreateView):
     model = Employee
     form_class = EmployeeForm
+    template_name = "directory/employee_form.html"
+    success_url = reverse_lazy("directory:employee_list")
+
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        kw["user"] = self.request.user
+        return kw
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -138,8 +147,7 @@ class EmployeeCreateView(LoginRequiredMixin, CreateView):
             return url
         return super().get_success_url()
 
-    template_name = "directory/employee_form.html"
-    success_url = reverse_lazy("directory:employee_list")
+
 
 
 class EmployeeUpdateView(LoginRequiredMixin, UpdateView):
@@ -148,11 +156,22 @@ class EmployeeUpdateView(LoginRequiredMixin, UpdateView):
     template_name = "directory/employee_form.html"
     success_url = reverse_lazy("directory:employee_list")
 
+    def get_queryset(self):
+        qs = Employee.objects.select_related("organization", "department")
+        return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
+
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        kw["user"] = self.request.user
+        return kw
+
 
 class EmployeeToggleActiveView(LoginRequiredMixin, View):
     # Используем как “Удалить” (active=False) и “Восстановить” (active=True)
     def post(self, request, pk):
-        obj = get_object_or_404(Employee, pk=pk)
+        qs = Employee.objects.select_related("organization")
+        qs = filter_queryset_by_user_orgs(qs, request.user, "organization")
+        obj = get_object_or_404(qs, pk=pk)
         obj.active = not obj.active
         obj.save(update_fields=["active"])
         return redirect(request.POST.get("next") or request.META.get("HTTP_REFERER") or "/employees/")
@@ -173,7 +192,7 @@ class OrganizationListView(FilterView):
     paginate_by = 20
 
     def get_queryset(self):
-        return (
+        qs = (
             Organization.objects
             .annotate(
                 departments_count=Count("departments", distinct=True),
@@ -181,6 +200,8 @@ class OrganizationListView(FilterView):
             )
             .order_by("-active", "code", "name")
         )
+
+        return filter_queryset_by_user_orgs(qs, self.request.user, "id")
 
 
 class OrganizationToggleActiveView(LoginRequiredMixin, View):
@@ -206,6 +227,9 @@ class OrganizationUpdateView(LoginRequiredMixin, UpdateView):
     template_name = "directory/organization_form.html"
     success_url = reverse_lazy("directory:organization_list")
 
+    def get_queryset(self):
+        return filter_queryset_by_user_orgs(Organization.objects.all(), self.request.user, "id")
+
 
 class DepartmentListView(LoginRequiredMixin, FilterView):
     template_name = "directory/department_list.html"
@@ -213,12 +237,13 @@ class DepartmentListView(LoginRequiredMixin, FilterView):
     paginate_by = 20
 
     def get_queryset(self):
-        return (
+        qs = (
             Department.objects
             .select_related("organization")
             .annotate(employees_count=Count("employees", distinct=True))
             .order_by("-active","organization__code", "name")
         )
+        return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
 
 class DepartmentsByOrganizationView(LoginRequiredMixin, View):
     permission_required = "directory.view_department"
@@ -226,6 +251,9 @@ class DepartmentsByOrganizationView(LoginRequiredMixin, View):
     def get(self, request):
         org_id = request.GET.get("organization_id")
         if not org_id:
+            return JsonResponse({"results": []})
+
+        if not user_has_org_access(request.user, org_id):
             return JsonResponse({"results": []})
 
         q = (request.GET.get("q") or "").strip()
@@ -246,6 +274,11 @@ class DepartmentCreateView(LoginRequiredMixin, CreateView):
     template_name = "directory/department_form.html"
     success_url = reverse_lazy("directory:department_list")
 
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        kw["user"] = self.request.user
+        return kw
+
 
 class DepartmentUpdateView(LoginRequiredMixin, UpdateView):
     model = Department
@@ -253,10 +286,21 @@ class DepartmentUpdateView(LoginRequiredMixin, UpdateView):
     template_name = "directory/department_form.html"
     success_url = reverse_lazy("directory:department_list")
 
+    def get_queryset(self):
+        qs = Department.objects.select_related("organization")
+        return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
+
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        kw["user"] = self.request.user
+        return kw
+
 
 class DepartmentToggleActiveView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        obj = get_object_or_404(Department, pk=pk)
+        qs = Department.objects.select_related("organization")
+        qs = filter_queryset_by_user_orgs(qs, request.user, "organization")
+        obj = get_object_or_404(qs, pk=pk)
         obj.active = not obj.active
         obj.save(update_fields=["active"])
         return redirect(request.POST.get("next") or request.META.get("HTTP_REFERER") or "/departments/")

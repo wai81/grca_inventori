@@ -2,6 +2,7 @@ from io import BytesIO
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import transaction
 from django.db.models import ProtectedError, Count
@@ -19,7 +20,7 @@ from apps.inventory.form import EquipmentForm, EquipmentMoveForm, EquipmentTypeF
 from apps.inventory.models import InventoryDocument, Equipment, EquipmentEventType, EquipmentEvent, EquipmentType
 from config.pdf import render_pdf_response
 from apps.inventory.services import apply_document
-
+from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access
 
 class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
     permission_required = "inventory.view_equipment"
@@ -35,26 +36,47 @@ class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView)
     paginate_by = 25
 
     def get_queryset(self):
-        return Equipment.objects.select_related("organization", "equipment_type", "assigned_to", "assigned_to__department")
+        qs = Equipment.objects.select_related(
+            "organization", "equipment_type", "assigned_to", "assigned_to__department"
+        )
+        return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
 
 
 class EquipmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     permission_required = "inventory.change_equipment"
     model = Equipment
     form_class = EquipmentForm
+    template_name = "inventory/equipment_form.html"
+    success_url = reverse_lazy("inventory:equipment_list")
+
+    def get_queryset(self):
+        qs = Equipment.objects.select_related(
+            "organization", "equipment_type", "assigned_to", "assigned_to__department"
+        )
+        return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
+
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        kw["user"] = self.request.user
+        return kw
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["equipmenttype_meta"] = list(EquipmentType.objects.values("id", "category"))
         return ctx
 
-    template_name = "inventory/equipment_form.html"
-    success_url = reverse_lazy("inventory:equipment_list")
 
 class EquipmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     permission_required = "inventory.add_equipment"
     model = Equipment
     form_class = EquipmentForm
+    template_name = "inventory/equipment_form.html"
+    success_url = reverse_lazy("inventory:equipment_list")
+
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        kw["user"] = self.request.user
+        return kw
 
     def get_initial(self):
         ini = super().get_initial()
@@ -78,8 +100,6 @@ class EquipmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVie
         ctx["equipmenttype_meta"] = list(EquipmentType.objects.values("id", "category"))
         return ctx
 
-    template_name = "inventory/equipment_form.html"
-    success_url = reverse_lazy("inventory:equipment_list")
 
 class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
     permission_required = "inventory.change_equipment"
@@ -87,7 +107,9 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
     form_class = EquipmentMoveForm
 
     def dispatch(self, request, *args, **kwargs):
-        self.equipment = get_object_or_404(Equipment, pk=kwargs["pk"])
+        qs = Equipment.objects.select_related("organization", "assigned_to")
+        qs = filter_queryset_by_user_orgs(qs, request.user, "organization")
+        self.equipment = get_object_or_404(qs, pk=kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_initial(self):
@@ -126,16 +148,16 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
             eq.status = new_status
             eq.save()
 
-        EquipmentEvent.objects.create(
-            equipment=eq,
-            event_type=EquipmentEventType.MOVE,
-            from_employee=from_emp,
-            to_employee=to_emp,
-            old_status=old_status if old_status != new_status else "",
-            new_status=new_status if old_status != new_status else "",
-            document_number=doc_no,
-            comment=comment,
-        )
+            EquipmentEvent.objects.create(
+                equipment=eq,
+                event_type=EquipmentEventType.MOVE,
+                from_employee=from_emp,
+                to_employee=to_emp,
+                old_status=old_status if old_status != new_status else "",
+                new_status=new_status if old_status != new_status else "",
+                document_number=doc_no,
+                comment=comment,
+            )
 
         messages.success(self.request, "Перемещение сохранено.")
 
@@ -165,7 +187,10 @@ class EquipmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVie
     model = Equipment
 
     def get_queryset(self):
-        return Equipment.objects.select_related("organization", "equipment_type", "assigned_to", "assigned_to__department").prefetch_related("events")
+        qs = Equipment.objects.select_related(
+            "organization", "equipment_type", "assigned_to", "assigned_to__department"
+        ).prefetch_related("events")
+        return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
 
 
 class DocumentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
@@ -174,7 +199,11 @@ class DocumentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
     model = InventoryDocument
 
     def get_queryset(self):
-        return InventoryDocument.objects.select_related("organization", "from_employee", "to_employee").prefetch_related("lines", "lines__equipment")
+        qs = InventoryDocument.objects.select_related(
+            "organization", "from_employee", "to_employee"
+        ).prefetch_related("lines", "lines__equipment")
+        # return InventoryDocument.objects.select_related("organization", "from_employee", "to_employee").prefetch_related("lines", "lines__equipment")
+        return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
 
 
 class DocumentPdfView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
@@ -182,7 +211,11 @@ class DocumentPdfView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     model = InventoryDocument
 
     def get_queryset(self):
-        return InventoryDocument.objects.select_related("organization", "from_employee", "to_employee").prefetch_related("lines")
+        qs = InventoryDocument.objects.select_related(
+            "organization", "from_employee", "to_employee"
+        ).prefetch_related("lines", "lines__equipment")
+        # return InventoryDocument.objects.select_related("organization", "from_employee", "to_employee").prefetch_related("lines")
+        return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
 
     def get(self, request, *args, **kwargs):
         doc = self.get_object()
@@ -203,12 +236,19 @@ class EmployeesByOrganizationView(LoginRequiredMixin, View):
         if not org_id:
             return JsonResponse({"results": []})
 
+        if not user_has_org_access(request.user, org_id):
+            return JsonResponse({"results": []})
+
         q = (request.GET.get("q") or "").strip()
 
-        qs = (Employee.objects.filter(
-            organization_id=org_id,
-            active=True
-        ).select_related("department").order_by("full_name"))
+        qs = (
+            Employee.objects.filter(
+                organization_id=org_id,
+                active=True
+            )
+            .select_related("department")
+            .order_by("full_name")
+        )
 
 
         if q:
@@ -221,11 +261,17 @@ class EmployeesByOrganizationView(LoginRequiredMixin, View):
         return JsonResponse({"results": data})
 
 
+@login_required
+@permission_required("inventory.view_equipment", raise_exception=True)
 def equipment_qr_png(request, pk: int):
-    """
-    PNG QR-код, который ведет на карточку оборудования.
-    """
-    equipment = get_object_or_404(Equipment, pk=pk)
+    equipment = get_object_or_404(
+        filter_queryset_by_user_orgs(
+            Equipment.objects.select_related("organization"),
+            request.user,
+            "organization",
+        ),
+        pk=pk,
+    )
     url = request.build_absolute_uri(reverse("inventory:equipment_detail", args=[equipment.pk]))
 
     import qrcode
@@ -235,28 +281,30 @@ def equipment_qr_png(request, pk: int):
     img.save(buf, format="PNG")
     return HttpResponse(buf.getvalue(), content_type="image/png")
 
-
+@login_required
+@permission_required("inventory.view_equipment", raise_exception=True)
 def equipment_qr_label(request, pk: int):
-    """
-    Страница-этикетка (шаблон) для печати: QR + ключевые поля.
-    """
-    equipment = get_object_or_404(Equipment, pk=pk)
-    # return render(request, "inventory/equipment_qr_label.html", {"object": equipment})
+    equipment = get_object_or_404(
+        filter_queryset_by_user_orgs(
+            Equipment.objects.select_related("organization", "assigned_to", "assigned_to__department"),
+            request.user,
+            "organization",
+        ),
+        pk=pk,
+    )
     return render(request, "inventory/equipment_qr_label_58x40.html", {"object": equipment})
 
-
+@login_required
+@permission_required("inventory.change_inventorydocument", raise_exception=True)
 def apply_document_view(request, pk: int):
-    """
-    Применение акта (обновляет закрепления/статусы по строкам).
-    Ограничиваем правом change_inventorydocument.
-    """
-    if not request.user.is_authenticated:
-        return redirect("login")
-
-    if not request.user.has_perm("inventory.change_inventorydocument"):
-        return redirect("inventory:document_detail", pk=pk)
-
-    doc = get_object_or_404(InventoryDocument, pk=pk)
+    doc = get_object_or_404(
+        filter_queryset_by_user_orgs(
+            InventoryDocument.objects.select_related("organization"),
+            request.user,
+            "organization",
+        ),
+        pk=pk,
+    )
     apply_document(doc)
     return redirect("inventory:document_detail", pk=pk)
 
