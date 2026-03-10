@@ -4,7 +4,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 
 from ..utils.db import (
-    get_employee_by_telegram,
+    get_user_by_telegram,
     get_device_by_code_or_id,
     is_admin
 )
@@ -14,9 +14,12 @@ router = Router()
 
 def get_status_text(status_code):
     status_map = {
-        'in_use': '✅ В эксплуатации',
-        'not_in_use': '❌ Не в эксплуатации',
-        'reserve': '🔸 Резерв',
+        'in_use': '✅ используется',
+        'reserve': '🔸 резерв',
+        'repair': '🛠 в ремонте',
+        'to_transfer' : '🔁 на передачу',
+        'to_write_off': '🙅 на списание',
+        'written_off' : '❌ списан',
     }
     return status_map.get(status_code, '❓ Неизвестно')
 
@@ -27,35 +30,46 @@ async def cmd_start(message: Message, command: CommandObject, state: FSMContext)
         # Если пришли с параметром (из QR-кода)
         device = await get_device_by_code_or_id(args)
         if device:
-            employee = await get_employee_by_telegram(message.from_user.id)
-            is_owner = employee and device.responsible and device.responsible.id == employee.id
-            if is_owner:
-                text = (
-                    f"✅ <b>Ваше устройство</b>\n"
-                    f"🔹 <b>{device.name}</b>\n"
-                    f"📌 Инв. номер: {device.inventory_number}\n"
-                    f"🏷 Тип: {device.device_type.name}\n"
-                    f"🏢 Отдел: {device.department.name if device.department else '—'}\n"
-                    f"👤 Ответственный: {device.responsible.full_name if device.responsible else '—'}\n"
-                    f"⚙️ Статус: {get_status_text(device.status)}\n"
-                    f"🔢 Серийный №: {device.serial_number or '—'}"
-                )
-                await message.answer(text)
-            else:
-                text = (
-                    f"ℹ️ <b>{device.name}</b>\n"
-                    f"Инв. номер: {device.inventory_number}\n"
-                    f"Отдел: {device.department.name if device.department else '—'}\n"
-                    f"Ответственный: {device.responsible.full_name if device.responsible else '—'}\n"
-                    f"Статус: {get_status_text(device.status)}"
-                )
-                await message.answer(text)
+            # user = await get_user_by_telegram(message.from_user.id)
+            # is_owner = user and device.responsible and device.responsible.id == user.id
+            # if is_owner:
+            #     text = (
+            #         f"✅ <b>Ваше устройство</b>\n"
+            #         f"🔹 <b>{device.name} {device.pc_number or ''}</b>\n"
+            #         f"📌 Инв. номер: {device.inventory_number}\n"
+            #         f"🏷 Тип: {device.device_type.name}\n"
+            #         f"🏢 Организация: {device.organization.name if device.organization else '—'}\n"
+            #         f"👤 Ответственный: {device.assigned_to.full_name if device.assigned_to else '—'}\n"
+            #         f"⚙️ Статус: {get_status_text(device.status)}\n"
+            #         f"🔢 Серийный №: {device.serial_number or '—'}"
+            #     )
+            #     await message.answer(text)
+            # else:
+            #     text = (
+            #         f"ℹ️ <b>{device.name}</b>\n"
+            #         f"Инв. номер: {device.inventory_number}\n"
+            #         f"Организация: {device.organization.name if device.organization else '—'}\n"
+            #         f"Ответственный: {device.assigned_to.full_name if device.assigned_to else '—'}\n"
+            #         f"Статус: {get_status_text(device.status)}"
+            #     )
+            #     await message.answer(text)
+            text = (
+                f"✅ <b>Ваше устройство</b>\n"
+                f"🔹 <b>{device.name} {device.pc_number or ''}</b>\n"
+                f"📌 Инв. номер: {device.inventory_number}\n"
+                f"🏷 Тип: {device.device_type.name}\n"
+                f"🏢 Организация: {device.organization.name if device.organization else '—'}\n"
+                f"👤 Ответственный: {device.assigned_to.full_name if device.assigned_to else '—'}\n"
+                f"⚙️ Статус: {get_status_text(device.status)}\n"
+                f"🔢 Серийный №: {device.serial_number or '—'}"
+            )
+            await message.answer(text)
         else:
             await message.answer("❌ Устройство с таким кодом не найдено.")
 
         # После ответа показываем соответствующее меню
-        employee = await get_employee_by_telegram(message.from_user.id)
-        if employee and employee.is_admin:
+        user = await get_user_by_telegram(message.from_user.id)
+        if user and user.is_admin:
             await message.answer(
                 "Выберите действие:",
                 reply_markup=main_menu_keyboard(True)
@@ -69,10 +83,10 @@ async def cmd_start(message: Message, command: CommandObject, state: FSMContext)
 
     # Обычный /start без параметра
     telegram_id = message.from_user.id
-    employee = await get_employee_by_telegram(telegram_id)
-    if employee and employee.is_admin:
+    user = await get_user_by_telegram(telegram_id)
+    if user and user.is_admin:
         await message.answer(
-            f"👋 Здравствуйте, {employee.full_name}!",
+            f"👋 Здравствуйте, {user.full_name}!",
             reply_markup=main_menu_keyboard(True)
         )
     else:

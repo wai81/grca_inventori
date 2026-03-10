@@ -15,7 +15,7 @@ def _telegram_method_url(method: str) -> str:
 
 
 @sync_to_async
-def get_admin_telegram_ids():
+def get_users_telegram_ids():
     from apps.users.models import User
     return User.objects.filter(is_active=True, telegram_id__isnull=False).values_list('telegram_id', flat=True)
     # from apps.core.models import Employee
@@ -23,7 +23,7 @@ def get_admin_telegram_ids():
 
 
 async def notify_admins_about_request(request):
-    admin_ids = await get_admin_telegram_ids()
+    admin_ids = await get_users_telegram_ids()
     if not admin_ids:
         logger.warning("No admin IDs found to notify about registration request")
         return

@@ -8,7 +8,7 @@ def register_all_handlers(dp: Dispatcher):
     dp.include_router(start.router)
     dp.include_router(my_devices.router)
     dp.include_router(list_devices.router)
-    dp.include_router(admin_create.router)
+    # dp.include_router(admin_create.router)
     register_admin_handlers(dp)
     dp.include_router(common.router)
     dp.include_router(qr_code.router)

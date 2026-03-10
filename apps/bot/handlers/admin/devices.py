@@ -10,7 +10,7 @@ from ...utils.db import (
     get_device_types,
     get_all_departments,
     get_all_employees_with_dept,
-    create_device,
+    # create_device,
     update_device_status,
     delete_device,
     get_device_data,
@@ -193,35 +193,35 @@ async def start_change_status(callback: CallbackQuery, state: FSMContext):
     await ask_status(callback, state)
 
 
-@router.callback_query(DeviceStates.waiting_for_status, F.data.regexp(r"^dev_st_.+$"))
-async def handle_status(callback: CallbackQuery, state: FSMContext):
-    status = callback.data.replace("dev_st_", "", 1)
-    data = await state.get_data()
-    flow = data.get("flow")
-
-    if flow == "status":
-        ok, msg = await update_device_status(data.get("device_id"), status, callback.from_user.id)
-        await callback.message.edit_text(("✅ " if ok else "❌ ") + msg)
-    else:
-        success, result = await create_device(
-            inventory_number=data["inventory_number"],
-            name=data["name"],
-            device_type_id=data["device_type_id"],
-            department_id=data["department_id"],
-            responsible_id=data.get("responsible_id"),
-            status=status,
-            admin_telegram_id=callback.from_user.id,
-        )
-        if not success:
-            await callback.message.edit_text(f"❌ Не удалось создать технику: {result}")
-        else:
-            await callback.message.edit_text(
-                f"✅ Техника создана: {result.inventory_number} — {result.name}\n"
-                "QR-код создан автоматически и доступен в Django admin."
-            )
-
-    await state.clear()
-    await back_to_main_menu(callback, callback.from_user.id)
+# @router.callback_query(DeviceStates.waiting_for_status, F.data.regexp(r"^dev_st_.+$"))
+# async def handle_status(callback: CallbackQuery, state: FSMContext):
+#     status = callback.data.replace("dev_st_", "", 1)
+#     data = await state.get_data()
+#     flow = data.get("flow")
+#
+#     if flow == "status":
+#         ok, msg = await update_device_status(data.get("device_id"), status, callback.from_user.id)
+#         await callback.message.edit_text(("✅ " if ok else "❌ ") + msg)
+#     else:
+#         success, result = await create_device(
+#             inventory_number=data["inventory_number"],
+#             name=data["name"],
+#             device_type_id=data["device_type_id"],
+#             department_id=data["department_id"],
+#             responsible_id=data.get("responsible_id"),
+#             status=status,
+#             admin_telegram_id=callback.from_user.id,
+#         )
+#         if not success:
+#             await callback.message.edit_text(f"❌ Не удалось создать технику: {result}")
+#         else:
+#             await callback.message.edit_text(
+#                 f"✅ Техника создана: {result.inventory_number} — {result.name}\n"
+#                 "QR-код создан автоматически и доступен в Django admin."
+#             )
+#
+#     await state.clear()
+#     await back_to_main_menu(callback, callback.from_user.id)
 
 
 @router.callback_query(F.data.regexp(r"^dev_del_\d+$"))

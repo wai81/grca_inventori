@@ -6,14 +6,14 @@ def main_menu_keyboard(is_admin: bool) -> InlineKeyboardMarkup:
     if is_admin:
         builder.row(InlineKeyboardButton(text="➕ Добавить сотрудника", callback_data="admin_add_employee"))
         builder.row(
-            InlineKeyboardButton(text="👥 Сотрудники", callback_data="admin_employees_menu"),
-            InlineKeyboardButton(text="🏢 Отделы", callback_data="admin_departments_menu")
+            InlineKeyboardButton(text="👤 Сотрудники", callback_data="admin_employees_menu"),
+            InlineKeyboardButton(text="👨‍👩‍👦 Подразделения", callback_data="admin_departments_menu")
         )
         builder.row(
-            InlineKeyboardButton(text="🔹 Управление QR", callback_data="admin_qr_menu"),
-            InlineKeyboardButton(text="🔄 Перемещение техники", callback_data="admin_move_device_menu")
+            # InlineKeyboardButton(text="🔹 Управление QR", callback_data="admin_qr_menu"),
+            InlineKeyboardButton(text="🔄 Перемещение оборудования", callback_data="admin_move_device_menu")
         )
-        builder.row(InlineKeyboardButton(text="🖥 Техника", callback_data="admin_devices_menu"))
+        builder.row(InlineKeyboardButton(text="🖥 Оборудование", callback_data="admin_devices_menu"))
     else:
         builder.row(InlineKeyboardButton(text="ℹ️ Как сканировать QR", callback_data="qr_info"))
     return builder.as_markup()
@@ -145,56 +145,56 @@ def device_list_keyboard(devices) -> InlineKeyboardMarkup:
     builder.adjust(1)
     builder.row(InlineKeyboardButton(text="❌ Отмена", callback_data="cancel"))
     return builder.as_markup()
+#
+# def qr_list_keyboard(qr_items, page, total_pages, action_prefix="qr") -> InlineKeyboardMarkup:
+#     builder = InlineKeyboardBuilder()
+#     for qr in qr_items:
+#         status = "✅" if qr['is_active'] else "❌"
+#         device = f" (устр.{qr['device_inventory']})" if qr['device_inventory'] else " (свободен)"
+#         builder.button(
+#             text=f"{status} {qr['code'][:8]}...{device}",
+#             callback_data=f"{action_prefix}_detail_{qr['id']}"
+#         )
+#     builder.adjust(1)
+#
+#     if total_pages > 1:
+#         nav_row = []
+#         if page > 1:
+#             nav_row.append(InlineKeyboardButton(text="◀️", callback_data=f"{action_prefix}_page_{page-1}"))
+#         nav_row.append(InlineKeyboardButton(text=f"{page}/{total_pages}", callback_data="ignore"))
+#         if page < total_pages:
+#             nav_row.append(InlineKeyboardButton(text="▶️", callback_data=f"{action_prefix}_page_{page+1}"))
+#         builder.row(*nav_row)
+#
+#     builder.row(InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_main"))
+#     return builder.as_markup()
+#
+# def free_qr_list_keyboard(qr_items, page, total_pages, action_prefix="freeqr") -> InlineKeyboardMarkup:
+#     builder = InlineKeyboardBuilder()
+#     for qr in qr_items:
+#         builder.button(
+#             text=f"ID {qr['id']}: {qr['code'][:12]}...",
+#             callback_data=f"{action_prefix}_select_{qr['id']}"
+#         )
+#     builder.adjust(1)
+#
+#     if total_pages > 1:
+#         nav_row = []
+#         if page > 1:
+#             nav_row.append(InlineKeyboardButton(text="◀️", callback_data=f"{action_prefix}_page_{page-1}"))
+#         nav_row.append(InlineKeyboardButton(text=f"{page}/{total_pages}", callback_data="ignore"))
+#         if page < total_pages:
+#             nav_row.append(InlineKeyboardButton(text="▶️", callback_data=f"{action_prefix}_page_{page+1}"))
+#         builder.row(*nav_row)
+#
+#     builder.row(InlineKeyboardButton(text="🔙 Отмена", callback_data="cancel"))
+#     return builder.as_markup()
 
-def qr_list_keyboard(qr_items, page, total_pages, action_prefix="qr") -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    for qr in qr_items:
-        status = "✅" if qr['is_active'] else "❌"
-        device = f" (устр.{qr['device_inventory']})" if qr['device_inventory'] else " (свободен)"
-        builder.button(
-            text=f"{status} {qr['code'][:8]}...{device}",
-            callback_data=f"{action_prefix}_detail_{qr['id']}"
-        )
-    builder.adjust(1)
-
-    if total_pages > 1:
-        nav_row = []
-        if page > 1:
-            nav_row.append(InlineKeyboardButton(text="◀️", callback_data=f"{action_prefix}_page_{page-1}"))
-        nav_row.append(InlineKeyboardButton(text=f"{page}/{total_pages}", callback_data="ignore"))
-        if page < total_pages:
-            nav_row.append(InlineKeyboardButton(text="▶️", callback_data=f"{action_prefix}_page_{page+1}"))
-        builder.row(*nav_row)
-
-    builder.row(InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_main"))
-    return builder.as_markup()
-
-def free_qr_list_keyboard(qr_items, page, total_pages, action_prefix="freeqr") -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    for qr in qr_items:
-        builder.button(
-            text=f"ID {qr['id']}: {qr['code'][:12]}...",
-            callback_data=f"{action_prefix}_select_{qr['id']}"
-        )
-    builder.adjust(1)
-
-    if total_pages > 1:
-        nav_row = []
-        if page > 1:
-            nav_row.append(InlineKeyboardButton(text="◀️", callback_data=f"{action_prefix}_page_{page-1}"))
-        nav_row.append(InlineKeyboardButton(text=f"{page}/{total_pages}", callback_data="ignore"))
-        if page < total_pages:
-            nav_row.append(InlineKeyboardButton(text="▶️", callback_data=f"{action_prefix}_page_{page+1}"))
-        builder.row(*nav_row)
-
-    builder.row(InlineKeyboardButton(text="🔙 Отмена", callback_data="cancel"))
-    return builder.as_markup()
-
-def qr_detail_keyboard(qr_id: int, is_free: bool) -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    if is_free:
-        builder.row(InlineKeyboardButton(text="🔗 Привязать к устройству", callback_data=f"qr_assign_{qr_id}"))
-    builder.row(InlineKeyboardButton(text="🔄 Перегенерировать", callback_data=f"qr_regenerate_{qr_id}"))
-    builder.row(InlineKeyboardButton(text="❌ Удалить", callback_data=f"qr_delete_{qr_id}"))
-    builder.row(InlineKeyboardButton(text="🔙 К списку", callback_data="admin_list_qrs"))
-    return builder.as_markup()
+# def qr_detail_keyboard(qr_id: int, is_free: bool) -> InlineKeyboardMarkup:
+#     builder = InlineKeyboardBuilder()
+#     if is_free:
+#         builder.row(InlineKeyboardButton(text="🔗 Привязать к устройству", callback_data=f"qr_assign_{qr_id}"))
+#     builder.row(InlineKeyboardButton(text="🔄 Перегенерировать", callback_data=f"qr_regenerate_{qr_id}"))
+#     builder.row(InlineKeyboardButton(text="❌ Удалить", callback_data=f"qr_delete_{qr_id}"))
+#     builder.row(InlineKeyboardButton(text="🔙 К списку", callback_data="admin_list_qrs"))
+#     return builder.as_markup()

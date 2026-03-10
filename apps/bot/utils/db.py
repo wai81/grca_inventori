@@ -1,16 +1,12 @@
 from asgiref.sync import sync_to_async
-from django.apps import apps
-from apps.core.models import RegistrationRequest
 from django.db import transaction
-from qrcode.main import QRCode
-
 from apps.directory.access import get_allowed_organizations
-from apps.directory.models import Department, Employee
-from apps.inventory.models import Equipment, EquipmentEvent, EquipmentEventType
+from apps.directory.models import Department, Employee, Organization
+from apps.inventory.models import Equipment, EquipmentEvent, EquipmentEventType, EquipmentType
 from apps.users.models import User
 
-
-def _region_filter_for_admin(telegram_id):
+# -----Список доступных организаций для User
+def access_orgs_for_user(telegram_id):
     user = User.objects.filter(telegram_id=telegram_id, is_active=True).first()
     if not user:
         return None
@@ -38,8 +34,9 @@ def _region_filter_for_admin(telegram_id):
     # return list(scope.allowed_regions.values_list('id', flat=True))
 
 # ---------- Базовые функции (используются в start.py и др.) ----------
+# получить по id телеграмма пользователя
 @sync_to_async
-def get_employee_by_telegram(telegram_id):
+def get_user_by_telegram(telegram_id):
     try:
         return User.objects.get(telegram_id=telegram_id, is_active=True)
     except User.DoesNotExist:
@@ -49,6 +46,7 @@ def get_employee_by_telegram(telegram_id):
     # except Employee.DoesNotExist:
     #     return None
 
+# получить по qr оборудование
 @sync_to_async
 def get_device_by_qr_code(code):
     try:
@@ -65,6 +63,7 @@ def get_device_by_qr_code(code):
     # except QRCode.DoesNotExist:
     #     return None
 
+# получить по qr или id оборудование
 @sync_to_async
 def get_device_by_code_or_id(identifier):
     qs = Equipment.objects.select_related(
@@ -80,7 +79,6 @@ def get_device_by_code_or_id(identifier):
             return equipment
     except (ValueError, TypeError):
         pass
-
     return qs.filter(qr_token=identifier).first()
     # try:
     #     qr_id = int(identifier)
@@ -95,6 +93,7 @@ def get_device_by_code_or_id(identifier):
     # except QRCode.DoesNotExist:
     #     return None
 
+# получить оборудование за пользователем
 @sync_to_async
 def get_employee_devices(employee):
     return list(employee.assigned_equipment.select_related(
@@ -103,6 +102,7 @@ def get_employee_devices(employee):
     ).all())
     # return list(employee.devices.select_related('device_type', 'department').all())
 
+# получить список оборудования по фильтру
 @sync_to_async
 def get_all_devices_filtered(organization_id=None, equipment_type_id=None, status=None, admin_telegram_id=None):
     qs = Equipment.objects.select_related(
@@ -112,7 +112,7 @@ def get_all_devices_filtered(organization_id=None, equipment_type_id=None, statu
     ).all()
 
     if admin_telegram_id is not None:
-        org_ids = _region_filter_for_admin(admin_telegram_id)
+        org_ids = access_orgs_for_user(admin_telegram_id)
         if org_ids is not None:
             qs = qs.filter(organization_id__in=org_ids)
 
@@ -140,11 +140,12 @@ def get_all_devices_filtered(organization_id=None, equipment_type_id=None, statu
     #     qs = qs.filter(status=(status == 'active'))
     # return list(qs)
 
+# получить список подразделений
 @sync_to_async
 def get_departments(admin_telegram_id=None):
     qs = Department.objects.all()
     if admin_telegram_id is not None:
-        region_ids = _region_filter_for_admin(admin_telegram_id)
+        region_ids = access_orgs_for_user(admin_telegram_id)
         if region_ids is not None:
             qs = qs.filter(region_id__in=region_ids)
     return list(qs)
@@ -154,41 +155,33 @@ def get_departments(admin_telegram_id=None):
     #     if region_ids is not None:
     #         qs = qs.filter(region_id__in=region_ids)
     # return list(qs)
+@sync_to_async
+def get_department_by_id(dept_id):
+    return Department.objects.get(id=dept_id)
 
+# получить список Типы оборудования
 @sync_to_async
 def get_device_types():
-    qs = Equipment.objects.all()
+    qs = EquipmentType.objects.all()
     return list(qs)
     # return list(DeviceType.objects.all())
 
+# проверка администратор ли пользователь
 @sync_to_async
 def is_admin(telegram_id):
     # return User.objects.filter(telegram_id=telegram_id, is_admin=True, is_approved=True).exists()
     return User.objects.filter(telegram_id=telegram_id, is_active=True).exists()
 
-# @sync_to_async
-# def create_registration_request(telegram_id, username, full_name):
-#     RegistrationRequest.objects.filter(telegram_id=telegram_id).delete()
-#     request = RegistrationRequest.objects.create(
-#         telegram_id=telegram_id,
-#         telegram_username=username,
-#         full_name=full_name
-#     )
-#     return request, True
-
-# @sync_to_async
-# def get_pending_registration_request(telegram_id):
-#     try:
-#         return RegistrationRequest.objects.get(telegram_id=telegram_id, is_processed=False)
-#     except RegistrationRequest.DoesNotExist:
-#         return None
 
 # ---------- Функции для сотрудников ----------
+# Создание сотрудника
 @sync_to_async
-def create_employee(full_name, department_id=None, is_approved=False, telegram_id=None, **kwargs):
+def create_employee(full_name, department_id=None, organization_id=None, **kwargs):
     employee = Employee.objects.create(
         full_name=full_name,
         department_id=department_id,
+        organization_id=organization_id,
+        is_active=True,
         # is_approved=is_approved,
         # telegram_id=telegram_id,
         **kwargs
@@ -203,16 +196,18 @@ def create_employee(full_name, department_id=None, is_approved=False, telegram_i
     # )
     # return employee
 
+# получение списка сотрудников
 @sync_to_async
 def get_all_employees():
     return list(Employee.objects.all().order_by('full_name'))
 
+# получение списка доступных сотрудников
 @sync_to_async
 def get_all_employees_data(admin_telegram_id=None):
     qs = Employee.objects.select_related("organization", "department")
 
     if admin_telegram_id is not None:
-        org_ids = _region_filter_for_admin(admin_telegram_id)
+        org_ids = access_orgs_for_user(admin_telegram_id)
         if org_ids is not None:
             qs = qs.filter(organization_id__in=org_ids)
 
@@ -232,6 +227,7 @@ def get_all_employees_data(admin_telegram_id=None):
     #         qs = qs.filter(department__region_id__in=region_ids)
     # return list(qs.order_by('full_name').values('id', 'full_name', 'is_approved', 'department__name'))
 
+# получение списка доступных сотрудников по подразделению
 @sync_to_async
 def get_all_employees_with_dept(admin_telegram_id=None, department_id=None):
     qs = Employee.objects.select_related("department", "organization").all()
@@ -240,7 +236,7 @@ def get_all_employees_with_dept(admin_telegram_id=None, department_id=None):
         qs = qs.filter(department_id=department_id)
 
     if admin_telegram_id is not None:
-        org_ids = _region_filter_for_admin(admin_telegram_id)
+        org_ids = access_orgs_for_user(admin_telegram_id)
         if org_ids is not None:
             qs = qs.filter(organization_id__in=org_ids)
 
@@ -254,11 +250,22 @@ def get_all_employees_with_dept(admin_telegram_id=None, department_id=None):
     #         qs = qs.filter(department__region_id__in=region_ids)
     # return list(qs.order_by('full_name'))
 
+# получение списка доступных организаций
+@sync_to_async
+def get_all_organization(admin_telegram_id=None):
+    qs = Organization.objects.filter(is_active=True)
+    if admin_telegram_id is not None:
+        org_ids = access_orgs_for_user(admin_telegram_id)
+        if org_ids is not None:
+            qs = qs.filter(organization_id__in=org_ids)
+    return list(qs.order_by("organization__name"))
+
+# получение списка доступных подразделений
 @sync_to_async
 def get_all_departments(admin_telegram_id=None):
     qs = Department.objects.filter(is_active=True)
     if admin_telegram_id is not None:
-        org_ids = _region_filter_for_admin(admin_telegram_id)
+        org_ids = access_orgs_for_user(admin_telegram_id)
         if org_ids is not None:
             qs = qs.filter(organization_id__in=org_ids)
     return list(qs.order_by("department__name"))
@@ -270,11 +277,13 @@ def get_all_departments(admin_telegram_id=None):
     #         qs = qs.filter(region_id__in=region_ids)
     # return list(qs)
 
+# получение списка доступных сотрудников по подразделению
+# есть get_all_employees_with_dept надо разобраться
 @sync_to_async
 def get_employees_by_department(department_id, admin_telegram_id=None):
     qs = Employee.objects.filter(department_id=department_id, active=True)
     if admin_telegram_id is not None:
-        org_ids = _region_filter_for_admin(admin_telegram_id)
+        org_ids = access_orgs_for_user(admin_telegram_id)
         if org_ids is not None:
             qs = qs.filter(department__organization_id__in=org_ids)
     return list(qs.order_by("full_name"))
@@ -286,13 +295,15 @@ def get_employees_by_department(department_id, admin_telegram_id=None):
     #         qs = qs.filter(department__region_id__in=region_ids)
     # return list(qs.order_by('full_name'))
 
-@sync_to_async
-def get_employee_data(employee_id):
-    try:
-        return Employee.objects.select_related("department", "organization").get(id=employee_id)
-    except Employee.DoesNotExist:
-        return None
+# возможно не надо
+# @sync_to_async
+# def get_employee_data(employee_id):
+#     try:
+#         return Employee.objects.select_related("department", "organization").get(id=employee_id)
+#     except Employee.DoesNotExist:
+#         return None
 
+# получаем сотрудника по employee_id
 @sync_to_async
 def get_employee_data_safe(employee_id):
     try:
@@ -313,6 +324,7 @@ def get_employee_data_safe(employee_id):
     except Employee.DoesNotExist:
         return None
 
+# редактируем сотрудника по employee_id
 @sync_to_async
 def update_employee(employee_id, full_name=None, department_id=None, organization_id=None, active=None, email=None, phone=None):
     try:
@@ -354,6 +366,7 @@ def update_employee(employee_id, full_name=None, department_id=None, organizatio
     # except Employee.DoesNotExist:
     #     return None
 
+# делаем не активным сотрудника по employee_id
 @sync_to_async
 def delete_employee(employee_id):
     try:
@@ -364,6 +377,7 @@ def delete_employee(employee_id):
     except Employee.DoesNotExist:
         return False
 
+# получаем список оборудования за сотрудником по employee_id
 @sync_to_async
 def get_employee_devices(employee_id):
     try:
@@ -372,22 +386,15 @@ def get_employee_devices(employee_id):
     except Employee.DoesNotExist:
         return []
 
-# ---------- Функции для QR-кодов ----------
-# @sync_to_async
-# def create_qr_code(admin_telegram_id=None):
-#     qr = QRCode.objects.create(is_active=True)
-#     qr.generate_simple_image()
-#     qr.refresh_from_db(fields=['image'])
-#     return qr
-#
-# @sync_to_async
-# def get_all_free_qr_codes():
-#     return list(QRCode.objects.filter(device__isnull=True, is_active=True).order_by('-created_at'))
-
+# получаем оборудование по id
 @sync_to_async
-def get_qr_by_id(qr_id):
+def get_device_by_id(id):
     try:
-        return Equipment.objects.get(id=qr_id)
+        return Equipment.objects.select_related(
+            'equipment_type',
+            'organization',
+            'assigned_to'
+        ).get(id=id)
     except Equipment.DoesNotExist:
         return None
     # try:
@@ -395,6 +402,7 @@ def get_qr_by_id(qr_id):
     # except QRCode.DoesNotExist:
     #     return None
 
+# получаем оборудование по qr или id
 @sync_to_async
 def get_qr_data(qr_id):
     try:
@@ -406,44 +414,12 @@ def get_qr_data(qr_id):
     except Equipment.DoesNotExist:
         return None
 
-    # try:
-    #     return QRCode.objects.select_related('device').get(id=qr_id)
-    # except QRCode.DoesNotExist:
-    #     return None
-
-# Что это?
-# @sync_to_async
-# def assign_qr_to_device(qr_id, device_id, admin_telegram_id=None):
-#     from apps.core.models import QRCode, Device
-#     try:
-#         qr = QRCode.objects.get(id=qr_id, is_active=True)
-#         device = Device.objects.get(id=device_id)
-#         if admin_telegram_id is not None:
-#             region_ids = _region_filter_for_admin(admin_telegram_id)
-#             if region_ids is not None and device.region_id and device.region_id not in region_ids:
-#                 return False, 'Нет доступа к региону этой техники'
-#
-#         # Разрешаем привязку только к свободной технике (без QR)
-#         try:
-#             existing_qr = device.qr_code
-#         except QRCode.DoesNotExist:
-#             existing_qr = None
-#
-#         if existing_qr and existing_qr != qr:
-#             return False, f"Устройство {device.inventory_number} уже имеет QR-код (ID {existing_qr.id})"
-#
-#         qr.device = device
-#         qr.save()
-#         qr.generate_image()
-#         return True, f"QR {qr.code} привязан к устройству {device.inventory_number}"
-#     except Exception as e:
-#         return False, str(e)
-
+# список оборудования
 @sync_to_async
 def get_all_devices(admin_telegram_id=None):
     qs = Equipment.objects.select_related('equipment_type', 'organization','assigned_to').all()
     if admin_telegram_id is not None:
-        org_ids = _region_filter_for_admin(admin_telegram_id)
+        org_ids = access_orgs_for_user(admin_telegram_id)
         if org_ids is not None:
             qs = qs.filter(organization_id__in=org_ids)
     return list(qs.order_by("full_name"))
@@ -456,11 +432,12 @@ def get_all_devices(admin_telegram_id=None):
     #         qs = qs.filter(region_id__in=region_ids)
     # return list(qs.order_by('inventory_number'))
 
+# оборудование по device_id
 @sync_to_async
 def get_device_data(device_id, admin_telegram_id=None):
     qs = Equipment.objects.select_related('equipment_type', 'organization', 'assigned_to').all()
     if admin_telegram_id is not None:
-        org_ids = _region_filter_for_admin(admin_telegram_id)
+        org_ids = access_orgs_for_user(admin_telegram_id)
         if org_ids is not None:
             qs = qs.filter(organization_id__in=org_ids)
     try:
@@ -478,12 +455,13 @@ def get_device_data(device_id, admin_telegram_id=None):
     # except Device.DoesNotExist:
     #     return None
 
+# перемещение оборудования
 @sync_to_async
 def change_device_responsible(device_id, new_responsible_id, admin_telegram_id=None, document_number="", comment=""):
     with transaction.atomic():
         try:
             equipment = Equipment.objects.select_related(
-                "organization", "department", "responsible"
+                "organization", "assigned_to"
             ).get(id=device_id)
 
             employee = Employee.objects.select_related(
@@ -494,7 +472,7 @@ def change_device_responsible(device_id, new_responsible_id, admin_telegram_id=N
             return False, "Оборудование или сотрудник не найдены", None
 
         if admin_telegram_id is not None:
-            org_ids = _region_filter_for_admin(admin_telegram_id)
+            org_ids = access_orgs_for_user(admin_telegram_id)
             if org_ids is not None:
                 if equipment.organization_id not in org_ids or employee.organization_id not in org_ids:
                     return False, "Нет доступа к выбранной организации", None
@@ -505,6 +483,7 @@ def change_device_responsible(device_id, new_responsible_id, admin_telegram_id=N
         old_responsible = equipment.assigned_to
         # old_department = equipment.department
         old_status = getattr(equipment, "status", "") or ""
+        event_type = EquipmentEventType.MOVE
 
         if equipment.assigned_to == employee.id:
             return True, "Ответственный уже назначен", {
@@ -527,7 +506,7 @@ def change_device_responsible(device_id, new_responsible_id, admin_telegram_id=N
 
         event = EquipmentEvent.objects.create(
             equipment=equipment,
-            event_type=EquipmentEventType.MOVE,  # замени на свой choice, если называется иначе
+            event_type=event_type,
             from_employee=old_responsible,
             to_employee=employee,
             old_status=old_status,
@@ -583,14 +562,16 @@ def change_device_responsible(device_id, new_responsible_id, admin_telegram_id=N
     # }
     # return True, 'Ответственный успешно изменён', movement_info
 
-@sync_to_async
-def get_devices_without_qr(admin_telegram_id=None):
-    qs = Equipment.objects.filter(qr_token__isnull=True).select_related('equipment_type','organization','assigned_to')
-    if admin_telegram_id is not None:
-        org_ids = _region_filter_for_admin(admin_telegram_id)
-        if org_ids is not None:
-            qs = qs.filter(organization_id__in=org_ids)
-    return list(qs.order_by("inventory_number"))
+# получить оборудование с qr
+# не надо
+# @sync_to_async
+# def get_devices_without_qr(admin_telegram_id=None):
+#     qs = Equipment.objects.filter(qr_token__isnull=True).select_related('equipment_type','organization','assigned_to')
+#     if admin_telegram_id is not None:
+#         org_ids = _access_orgs_for_user(admin_telegram_id)
+#         if org_ids is not None:
+#             qs = qs.filter(organization_id__in=org_ids)
+#     return list(qs.order_by("inventory_number"))
 
     # from apps.core.models import Device
     # qs = Device.objects.filter(qr_code__isnull=True).select_related('department', 'region', 'responsible')
@@ -600,173 +581,17 @@ def get_devices_without_qr(admin_telegram_id=None):
     #         qs = qs.filter(region_id__in=region_ids)
     # return list(qs.order_by('inventory_number'))
 
-# @sync_to_async
-# def get_all_qr_codes_with_pagination(page=1, page_size=10):
-#     from django.core.paginator import Paginator
-#     qs = QRCode.objects.select_related('device').order_by('-created_at')
-#     paginator = Paginator(qs, page_size)
-#     page_obj = paginator.get_page(page)
-#     return {
-#         'items': list(page_obj.object_list),
-#         'has_prev': page_obj.has_previous(),
-#         'has_next': page_obj.has_next(),
-#         'prev_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
-#         'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
-#         'total_pages': paginator.num_pages,
-#         'current_page': page,
-#     }
-
-# @sync_to_async
-# def get_all_qr_codes_data(page=1, page_size=10):
-#     from django.core.paginator import Paginator
-#     qs = QRCode.objects.select_related('device').order_by('-created_at')
-#     paginator = Paginator(qs, page_size)
-#     page_obj = paginator.get_page(page)
-#     items = []
-#     for qr in page_obj.object_list:
-#         items.append({
-#             'id': qr.id,
-#             'code': qr.code,
-#             'device_inventory': qr.device.inventory_number if qr.device else None,
-#             'is_active': qr.is_active,
-#             'created_at': qr.created_at,
-#         })
-#     return {
-#         'items': items,
-#         'has_prev': page_obj.has_previous(),
-#         'has_next': page_obj.has_next(),
-#         'prev_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
-#         'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
-#         'total_pages': paginator.num_pages,
-#         'current_page': page,
-#     }
-
-# @sync_to_async
-# def get_free_qr_codes_with_pagination(page=1, page_size=10):
-#     from django.core.paginator import Paginator
-#     qs = QRCode.objects.filter(device__isnull=True, is_active=True).select_related('device').order_by('-created_at')
-#     paginator = Paginator(qs, page_size)
-#     page_obj = paginator.get_page(page)
-#     return {
-#         'items': list(page_obj.object_list),
-#         'has_prev': page_obj.has_previous(),
-#         'has_next': page_obj.has_next(),
-#         'prev_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
-#         'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
-#         'total_pages': paginator.num_pages,
-#         'current_page': page,
-#     }
-
-# @sync_to_async
-# def get_free_qr_codes_data(page=1, page_size=10):
-#     from django.core.paginator import Paginator
-#     qs = QRCode.objects.filter(device__isnull=True, is_active=True).order_by('-created_at')
-#     paginator = Paginator(qs, page_size)
-#     page_obj = paginator.get_page(page)
-#     items = [{'id': qr.id, 'code': qr.code, 'created_at': qr.created_at} for qr in page_obj.object_list]
-#     return {
-#         'items': items,
-#         'has_prev': page_obj.has_previous(),
-#         'has_next': page_obj.has_next(),
-#         'prev_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
-#         'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
-#         'total_pages': paginator.num_pages,
-#         'current_page': page,
-#     }
-
-# @sync_to_async
-# def regenerate_qr_image(qr_id):
-#     try:
-#         qr = QRCode.objects.get(id=qr_id)
-#         qr.generate_simple_image()
-#         return True, f"Изображение для QR {qr.code} обновлено"
-#     except QRCode.DoesNotExist:
-#         return False, "QR-код не найден"
-#     except Exception as e:
-#         return False, str(e)
-
-# ---------- Функции для заявок на регистрацию ----------
-@sync_to_async
-def get_all_pending_requests():
-    from apps.core.models import RegistrationRequest
-    return list(RegistrationRequest.objects.filter(is_processed=False).order_by('-created_at'))
-
-@sync_to_async
-def get_all_pending_requests_data():
-    from apps.core.models import RegistrationRequest
-    return list(RegistrationRequest.objects.filter(is_processed=False).order_by('-created_at').values('id', 'full_name', 'telegram_username', 'telegram_id', 'created_at'))
-
-@sync_to_async
-def approve_request(request_id):
-    from apps.core.models import RegistrationRequest, Employee
-    try:
-        req = RegistrationRequest.objects.get(id=request_id, is_processed=False)
-        Employee.objects.create(
-            full_name=req.full_name,
-            telegram_id=req.telegram_id,
-            is_approved=True
-        )
-        req.is_processed = True
-        req.approved = True
-        req.save()
-        return True, req
-    except Exception as e:
-        return False, str(e)
-
-@sync_to_async
-def reject_request(request_id, comment=""):
-    from apps.core.models import RegistrationRequest
-    try:
-        req = RegistrationRequest.objects.get(id=request_id, is_processed=False)
-        req.is_processed = True
-        req.approved = False
-        req.comment = comment
-        req.save()
-        return True, req
-    except Exception as e:
-        return False, str(e)
-
-
-
-@sync_to_async
-def create_device(inventory_number, name, device_type_id, department_id=None, responsible_id=None, status='in_use', admin_telegram_id=None):
-    if Device.objects.filter(inventory_number=inventory_number).exists():
-        return False, 'Техника с таким инвентарным номером уже существует'
-
-    region_id = None
-    if department_id:
-        dept = Department.objects.filter(id=department_id).select_related('region').first()
-        if not dept:
-            return False, 'Отдел не найден'
-        region_id = dept.region_id
-
-    if admin_telegram_id is not None:
-        region_ids = _region_filter_for_admin(admin_telegram_id)
-        if region_ids is not None and region_id and region_id not in region_ids:
-            return False, 'Нет доступа к выбранному региону'
-
-    device = Device.objects.create(
-        inventory_number=inventory_number,
-        name=name,
-        device_type_id=device_type_id,
-        department_id=department_id,
-        responsible_id=responsible_id,
-        status=status,
-        region_id=region_id,
-    )
-    return True, device
-
 
 @sync_to_async
 def update_device_status(device_id, status, admin_telegram_id=None):
-    if status not in {'in_use', 'not_in_use', 'reserve'}:
+    if status not in {'in_use', 'repair', 'reserve', 'to_transfer', 'to_write_off', 'written_off'}:
         return False, 'Некорректный статус'
 
-    qs = Device.objects.all()
+    qs = Equipment.objects.all()
     if admin_telegram_id is not None:
-        region_ids = _region_filter_for_admin(admin_telegram_id)
-        if region_ids is not None:
-            qs = qs.filter(region_id__in=region_ids)
+        org_ids = access_orgs_for_user(admin_telegram_id)
+        if org_ids is not None:
+            qs = qs.filter(organization_id__in=org_ids)
 
     device = qs.filter(id=device_id).first()
     if not device:
@@ -775,78 +600,3 @@ def update_device_status(device_id, status, admin_telegram_id=None):
     device.status = status
     device.save(update_fields=['status'])
     return True, f'Статус обновлён: {device.inventory_number} — {device.get_status_display()}'
-
-
-@sync_to_async
-def delete_device(device_id, admin_telegram_id=None):
-    qs = Device.objects.all()
-    if admin_telegram_id is not None:
-        region_ids = _region_filter_for_admin(admin_telegram_id)
-        if region_ids is not None:
-            qs = qs.filter(region_id__in=region_ids)
-
-    device = qs.filter(id=device_id).first()
-    if not device:
-        return False, 'Техника не найдена или нет доступа'
-
-    inv = device.inventory_number
-    name = device.name
-    device.delete()
-    return True, f'Удалена техника: {inv} — {name}'
-
-@sync_to_async
-def create_device_with_qr(code, name, inventory_number, device_type_id, department_id=None, responsible_id=None):
-    region_id = None
-    if department_id:
-        dept = Department.objects.filter(id=department_id).select_related('region').first()
-        region_id = dept.region_id if dept else None
-    device = Device.objects.create(
-        name=name,
-        inventory_number=inventory_number,
-        device_type_id=device_type_id,
-        department_id=department_id,
-        region_id=region_id,
-        responsible_id=responsible_id,
-        status='in_use'
-    )
-    QRCode.objects.create(device=device, code=code, is_active=True)
-    return device
-
-@sync_to_async
-def send_movement_card_to_print(card_id, admin_telegram_id):
-    import requests
-    from requests.exceptions import SSLError
-    admin_emp = Employee.objects.filter(telegram_id=admin_telegram_id, is_admin=True, is_approved=True).first()
-    if not admin_emp:
-        return False, 'Администратор не найден'
-
-    try:
-        admin_scope_model = apps.get_model('core', 'AdminScope')
-    except LookupError:
-        return False, 'Модель прав администратора недоступна'
-
-    scope = admin_scope_model.objects.filter(employee=admin_emp).first()
-    if not scope or not scope.can_print_from_bot:
-        return False, 'Печать из бота отключена в настройках Django'
-    if scope.printer_backend != 'http' or not scope.printer_endpoint:
-        return False, 'Не настроен endpoint принтера'
-
-    try:
-        endpoint = scope.printer_endpoint
-        if 'movement-card/print' not in endpoint:
-            endpoint = endpoint.rstrip('/') + '/api/movement-card/print/'
-
-        payload = {'movement_card_id': card_id}
-        try:
-            response = requests.post(endpoint, json=payload, timeout=7)
-        except SSLError:
-            # Локальные принт-серверы часто работают с self-signed сертификатами.
-            # Повторяем запрос без валидации SSL только для внутреннего endpoint.
-            requests.packages.urllib3.disable_warnings()  # type: ignore[attr-defined]
-            response = requests.post(endpoint, json=payload, timeout=7, verify=False)
-
-        if response.status_code >= 400:
-            return False, f'Ошибка принтера: HTTP {response.status_code}'
-        return True, 'Карточка отправлена на печать'
-    except Exception as exc:
-        return False, f'Ошибка отправки на печать: {exc}'

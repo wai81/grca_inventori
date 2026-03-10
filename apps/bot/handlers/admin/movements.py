@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from ...utils.db import (
     is_admin, get_all_devices, get_all_employees_with_dept,
     change_device_responsible, get_device_data, get_all_departments,
-    send_movement_card_to_print,
+    # send_movement_card_to_print,
 )
 from .common import back_to_main_menu, MoveDeviceStates
 
@@ -110,8 +110,8 @@ async def set_new_responsible(callback: CallbackQuery, state: FSMContext):
             f"Ответственный: {movement['from_responsible']} → {movement['to_responsible']}"
         )
         kb = InlineKeyboardBuilder()
-        if movement.get('card_id'):
-            kb.row(InlineKeyboardButton(text="🖨 Отправить карточку на печать", callback_data=f"move_print_{movement['card_id']}"))
+        # if movement.get('card_id'):
+        #     kb.row(InlineKeyboardButton(text="🖨 Отправить карточку на печать", callback_data=f"move_print_{movement['card_id']}"))
         kb.row(InlineKeyboardButton(text="🔙 Главное меню", callback_data="back_to_main"))
         await callback.message.edit_text(text, reply_markup=kb.as_markup())
     else:
@@ -120,16 +120,16 @@ async def set_new_responsible(callback: CallbackQuery, state: FSMContext):
 
     await state.clear()
 
-
-@router.callback_query(F.data.startswith("move_print_"))
-async def print_movement_card(callback: CallbackQuery):
-    if not await is_admin(callback.from_user.id):
-        await callback.answer("⛔ Нет прав", show_alert=True)
-        return
-
-    card_id = int(callback.data.split("_")[-1])
-    success, msg = await send_movement_card_to_print(card_id, callback.from_user.id)
-    safe_msg = (msg or '')[:180]
-    await callback.answer(safe_msg, show_alert=not success)
-    if len(msg or '') > 180:
-        await callback.message.answer((msg or '')[:3500])
+#
+# @router.callback_query(F.data.startswith("move_print_"))
+# async def print_movement_card(callback: CallbackQuery):
+#     if not await is_admin(callback.from_user.id):
+#         await callback.answer("⛔ Нет прав", show_alert=True)
+#         return
+#
+#     card_id = int(callback.data.split("_")[-1])
+#     success, msg = await send_movement_card_to_print(card_id, callback.from_user.id)
+#     safe_msg = (msg or '')[:180]
+#     await callback.answer(safe_msg, show_alert=not success)
+#     if len(msg or '') > 180:
+#         await callback.message.answer((msg or '')[:3500])
