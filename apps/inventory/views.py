@@ -38,7 +38,7 @@ class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView)
     def get_queryset(self):
         qs = Equipment.objects.select_related(
             "organization", "equipment_type", "assigned_to", "assigned_to__department"
-        )
+        ).order_by('-created_at')
         return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
 
 

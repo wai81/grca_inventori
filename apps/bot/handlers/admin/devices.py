@@ -12,7 +12,7 @@ from ...utils.db import (
     get_all_employees_with_dept,
     # create_device,
     update_device_status,
-    delete_device,
+    # delete_device,
     get_device_data,
 )
 from .common import back_to_main_menu
@@ -224,30 +224,30 @@ async def start_change_status(callback: CallbackQuery, state: FSMContext):
 #     await back_to_main_menu(callback, callback.from_user.id)
 
 
-@router.callback_query(F.data.regexp(r"^dev_del_\d+$"))
-async def delete_device_start(callback: CallbackQuery, state: FSMContext):
-    device_id = int(callback.data.split("_")[-1])
-    device = await get_device_data(device_id, callback.from_user.id)
-    if not device:
-        await callback.answer("Техника не найдена", show_alert=True)
-        return
-    kb = InlineKeyboardBuilder()
-    kb.row(
-        InlineKeyboardButton(text="Да, удалить", callback_data=f"dev_del_yes_{device_id}"),
-        InlineKeyboardButton(text="Нет", callback_data=f"dev_{device_id}"),
-    )
-    await callback.message.edit_text(
-        f"Удалить технику {device.inventory_number} — {device.name}?",
-        reply_markup=kb.as_markup(),
-    )
-    await state.set_state(DeviceStates.waiting_for_delete_confirm)
-    await callback.answer()
-
-
-@router.callback_query(DeviceStates.waiting_for_delete_confirm, F.data.regexp(r"^dev_del_yes_\d+$"))
-async def delete_device_confirm(callback: CallbackQuery, state: FSMContext):
-    device_id = int(callback.data.split("_")[-1])
-    ok, msg = await delete_device(device_id, callback.from_user.id)
-    await callback.message.edit_text(("✅ " if ok else "❌ ") + msg)
-    await state.clear()
-    await back_to_main_menu(callback, callback.from_user.id)
+# @router.callback_query(F.data.regexp(r"^dev_del_\d+$"))
+# async def delete_device_start(callback: CallbackQuery, state: FSMContext):
+#     device_id = int(callback.data.split("_")[-1])
+#     device = await get_device_data(device_id, callback.from_user.id)
+#     if not device:
+#         await callback.answer("Техника не найдена", show_alert=True)
+#         return
+#     kb = InlineKeyboardBuilder()
+#     kb.row(
+#         InlineKeyboardButton(text="Да, удалить", callback_data=f"dev_del_yes_{device_id}"),
+#         InlineKeyboardButton(text="Нет", callback_data=f"dev_{device_id}"),
+#     )
+#     await callback.message.edit_text(
+#         f"Удалить технику {device.inventory_number} — {device.name}?",
+#         reply_markup=kb.as_markup(),
+#     )
+#     await state.set_state(DeviceStates.waiting_for_delete_confirm)
+#     await callback.answer()
+#
+#
+# @router.callback_query(DeviceStates.waiting_for_delete_confirm, F.data.regexp(r"^dev_del_yes_\d+$"))
+# async def delete_device_confirm(callback: CallbackQuery, state: FSMContext):
+#     device_id = int(callback.data.split("_")[-1])
+#     ok, msg = await delete_device(device_id, callback.from_user.id)
+#     await callback.message.edit_text(("✅ " if ok else "❌ ") + msg)
+#     await state.clear()
+#     await back_to_main_menu(callback, callback.from_user.id)

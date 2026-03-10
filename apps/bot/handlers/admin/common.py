@@ -23,8 +23,6 @@ class EditEmployeeStates(StatesGroup):
     waiting_for_new_department = State()
     confirmation = State()
 
-# class QrCreateStates(StatesGroup):
-#     confirmation = State()
 
 class QrAssignStates(StatesGroup):
     waiting_for_qr_id = State()

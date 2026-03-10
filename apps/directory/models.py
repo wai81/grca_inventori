@@ -11,6 +11,7 @@ class Organization(models.Model):
     class Meta:
         verbose_name = "Организация"
         verbose_name_plural = "Организации"
+        ordering = ["code"]
 
     def __str__(self):
         return f"{self.code} {self.name}"
@@ -47,6 +48,7 @@ class Department(models.Model):
         verbose_name = "Подразделение"
         verbose_name_plural = "Подразделения"
         unique_together = [("organization", "name")]
+        ordering = ["name"]
 
     def __str__(self):
         return f"{self.organization} / {self.name}"
@@ -67,6 +69,7 @@ class Employee(models.Model):
             models.Index(fields=["full_name"]),
             models.Index(fields=["organization", "department"]),
         ]
+        ordering = ["full_name"]
 
     def __str__(self):
         return self.full_name

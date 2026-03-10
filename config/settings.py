@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from decouple import config
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,12 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_y*b2ww9)d8025c@f#x&o^ss=en)hchl59jp^b91=uavf@0x(_'
+SECRET_KEY = config('SECRET_KEY') # 'django-insecure-_y*b2ww9)d8025c@f#x&o^ss=en)hchl59jp^b91=uavf@0x(_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
 
 
 # Application definition
@@ -42,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_filters',
-
+    'apps.bot',
     'apps.users.apps.UsersConfig',
     'apps.directory.apps.DirectoryConfig',
     'apps.inventory.apps.InventoryConfig',
@@ -147,7 +148,21 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',     # Looks in STATICFILES_DIRS
     'django.contrib.staticfiles.finders.AppDirectoriesFinder', # Looks in app/static/
 ]
+
+TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN')
+TELEGRAM_BOT_USERNAME = config('TELEGRAM_BOT_USERNAME')
+TELEGRAM_LOG_GROUP_ID = config('TELEGRAM_LOG_GROUP_ID', default=None, cast=int)
+
+# Celery settings
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://redis:6379/0')
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE

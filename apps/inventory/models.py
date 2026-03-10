@@ -79,8 +79,10 @@ class Equipment(models.Model):
             models.Index(fields=["inventory_number"]),
             models.Index(fields=["pc_number"]),
             models.Index(fields=["status"]),
+            models.Index(fields=["qr_token"]),
             models.Index(fields=["organization", "equipment_type"]),
         ]
+        ordering = ["-created_at"]
 
     def __str__(self):
         inv = f" (инв. {self.inventory_number})" if self.inventory_number else ""

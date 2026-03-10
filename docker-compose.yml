@@ -1,18 +1,18 @@
 services:
-  db:
-    image: postgres:14-alpine
-    container_name: inventory_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    env_file:
-      - .env
+#  db:
+#    image: postgres:14-alpine
+#    container_name: inventory_db
+#    restart: unless-stopped
+#    environment:
+#      POSTGRES_DB: ${DB_NAME}
+#      POSTGRES_USER: ${DB_USER}
+#      POSTGRES_PASSWORD: ${DB_PASSWORD}
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    ports:
+#      - "5432:5432"
+#    env_file:
+#      - .env
 
   redis:
     image: redis:7-alpine
@@ -37,7 +37,7 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+#      - db
       - redis
     env_file:
       - .env
@@ -50,7 +50,7 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - db
+#      - db
       - web
       - redis
     env_file:
@@ -60,18 +60,18 @@ services:
     build: .
     container_name: inventory_celery
     restart: unless-stopped
-    command: celery -A inventory worker --loglevel=info
+    command: ["./entrypoint.sh", "celery", "-A", "inventory", "worker", "--loglevel=info"]
     volumes:
       - .:/app
       - media_volume:/app/media
     depends_on:
       - redis
-      - db
+#      - db
     env_file:
       - .env
 
 volumes:
-  postgres_data:
+#  postgres_data:
   static_volume:
   media_volume:
   redis_data:
