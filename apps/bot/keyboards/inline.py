@@ -121,6 +121,7 @@ def status_keyboard(action_prefix="list_filter_status") -> InlineKeyboardMarkup:
     builder.button(text="❌ Не в эксплуатации", callback_data=f"{action_prefix}_inactive")
     builder.button(text="Все", callback_data=f"{action_prefix}_all")
     builder.adjust(1)
+    builder.row(InlineKeyboardButton(text="🔙 Назад к списку", callback_data="my_devices"))
     return builder.as_markup()
 
 def confirm_keyboard(yes_data: str, no_data: str) -> InlineKeyboardMarkup:

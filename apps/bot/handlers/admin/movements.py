@@ -106,7 +106,7 @@ async def set_new_responsible(callback: CallbackQuery, state: FSMContext):
             "✅ Ответственный изменён.\n\n"
             f"Техника: {movement['device'].name}\n"
             f"Инвентарник: {movement['device'].inventory_number}\n"
-            f"Отдел: {movement['from_department']} → {movement['to_department']}\n"
+            # f"Отдел: {movement['from_department']} → {movement['to_department']}\n"
             f"Ответственный: {movement['from_responsible']} → {movement['to_responsible']}"
         )
         kb = InlineKeyboardBuilder()

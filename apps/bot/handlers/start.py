@@ -57,7 +57,7 @@ async def cmd_start(message: Message, command: CommandObject, state: FSMContext)
                 f"✅ <b>Ваше устройство</b>\n"
                 f"🔹 <b>{device.name} {device.pc_number or ''}</b>\n"
                 f"📌 Инв. номер: {device.inventory_number}\n"
-                f"🏷 Тип: {device.device_type.name}\n"
+                f"🏷 Тип: {device.equipment_type.name}\n"
                 f"🏢 Организация: {device.organization.name if device.organization else '—'}\n"
                 f"👤 Ответственный: {device.assigned_to.full_name if device.assigned_to else '—'}\n"
                 f"⚙️ Статус: {get_status_text(device.status)}\n"
@@ -65,18 +65,18 @@ async def cmd_start(message: Message, command: CommandObject, state: FSMContext)
             )
             await message.answer(text)
         else:
-            await message.answer("❌ Устройство с таким кодом не найдено.")
+            await message.answer(f"❌ Устройство с таким кодом не найдено.")
 
         # После ответа показываем соответствующее меню
         user = await get_user_by_telegram(message.from_user.id)
-        if user and user.is_admin:
+        if user and user.is_active:
             await message.answer(
-                "Выберите действие:",
+                f"Выберите действие:",
                 reply_markup=main_menu_keyboard(True)
             )
         else:
             await message.answer(
-                "Вы можете сканировать QR-коды и получать информацию об устройствах.",
+                f"Вы можете сканировать QR-коды и получать информацию об устройствах.",
                 reply_markup=main_menu_keyboard(False)
             )
         return
@@ -84,14 +84,14 @@ async def cmd_start(message: Message, command: CommandObject, state: FSMContext)
     # Обычный /start без параметра
     telegram_id = message.from_user.id
     user = await get_user_by_telegram(telegram_id)
-    if user and user.is_admin:
+    if user and user.is_active:
         await message.answer(
-            f"👋 Здравствуйте, {user.full_name}!",
+            f"👋 Здравствуйте, {user.get_full_name()}!",
             reply_markup=main_menu_keyboard(True)
         )
     else:
         await message.answer(
-            "👋 Добро пожаловать!\n\n"
+            f"👋 Добро пожаловать!\n\n"
             "Этот бот предназначен для инвентаризации оборудования.\n"
             "Вы можете сканировать QR-коды, наклеенные на технику, и получать информацию о ней.\n\n"
             "Просто отправьте код с QR-кода (или перейдите по ссылке) – и бот покажет данные об устройстве.",
@@ -102,7 +102,7 @@ async def cmd_start(message: Message, command: CommandObject, state: FSMContext)
 async def callback_qr_info(callback: CallbackQuery):
     await callback.answer()
     await callback.message.answer(
-        "📌 Для получения информации о технике просто отсканируйте QR-код камерой телефона.\n"
+        f"📌 Для получения информации о технике просто отсканируйте QR-код камерой телефона.\n"
         "После сканирования откроется диалог с ботом, и вы увидите данные об устройстве.\n"
         "Если техника закреплена за вами, вы увидите подробные данные, иначе – общую информацию."
     )

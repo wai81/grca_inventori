@@ -73,9 +73,9 @@ async def device_card(callback: CallbackQuery, state: FSMContext):
     text = (
         f"🖥 <b>{device.name}</b>\n"
         f"Инв. №: <code>{device.inventory_number}</code>\n"
-        f"Тип: {device.device_type.name if device.device_type else '—'}\n"
-        f"Отдел: {device.department.name if device.department else '—'}\n"
-        f"Ответственный: {device.responsible.full_name if device.responsible else '—'}\n"
+        f"Тип: {device.equipment_type.name if device.equipment_type else '—'}\n"
+        f"Организация: {device.organization.name if device.organization else '—'}\n"
+        f"Ответственный: {device.assigned_to.full_name if device.assigned_to else '—'}\n"
         f"Статус: {device.get_status_display()}"
     )
     kb = InlineKeyboardBuilder()

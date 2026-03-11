@@ -18,6 +18,7 @@ from apps.directory.models import Employee
 from apps.inventory.filters import EquipmentFilter
 from apps.inventory.form import EquipmentForm, EquipmentMoveForm, EquipmentTypeForm
 from apps.inventory.models import InventoryDocument, Equipment, EquipmentEventType, EquipmentEvent, EquipmentType
+from django.conf import settings
 from config.pdf import render_pdf_response
 from apps.inventory.services import apply_document
 from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access
@@ -272,8 +273,8 @@ def equipment_qr_png(request, pk: int):
         ),
         pk=pk,
     )
-    url = request.build_absolute_uri(reverse("inventory:equipment_detail", args=[equipment.pk]))
-
+    # url = request.build_absolute_uri(reverse("inventory:equipment_detail", args=[equipment.pk]))
+    url = f"https://t.me/{settings.TELEGRAM_BOT_USERNAME}?start={equipment.qr_token}"
     import qrcode
     img = qrcode.make(url)
 

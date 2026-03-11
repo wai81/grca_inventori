@@ -263,12 +263,12 @@ def get_all_organization(admin_telegram_id=None):
 # получение списка доступных подразделений
 @sync_to_async
 def get_all_departments(admin_telegram_id=None):
-    qs = Department.objects.filter(is_active=True)
+    qs = Department.objects.filter(active=True)
     if admin_telegram_id is not None:
         org_ids = access_orgs_for_user(admin_telegram_id)
         if org_ids is not None:
             qs = qs.filter(organization_id__in=org_ids)
-    return list(qs.order_by("department__name"))
+    return list(qs.order_by("name"))
 
     # qs = Department.objects.all()
     # if admin_telegram_id is not None:
@@ -422,7 +422,7 @@ def get_all_devices(admin_telegram_id=None):
         org_ids = access_orgs_for_user(admin_telegram_id)
         if org_ids is not None:
             qs = qs.filter(organization_id__in=org_ids)
-    return list(qs.order_by("full_name"))
+    return list(qs.order_by("pk"))
 
     # from apps.core.models import Device
     # qs = Device.objects.select_related('department', 'responsible').all()
@@ -487,7 +487,7 @@ def change_device_responsible(device_id, new_responsible_id, admin_telegram_id=N
 
         if equipment.assigned_to == employee.id:
             return True, "Ответственный уже назначен", {
-                "equipment": equipment,
+                "device": equipment,
                 # "from_department": old_department.name if old_department else "—",
                 # "to_department": equipment.department.name if equipment.department else "—",
                 "from_responsible": old_responsible.full_name if old_responsible else "—",
@@ -516,7 +516,7 @@ def change_device_responsible(device_id, new_responsible_id, admin_telegram_id=N
         )
 
         movement_info = {
-            "equipment": equipment,
+            "device": equipment,
             # "from_department": old_department.name if old_department else "—",
             # "to_department": equipment.department.name if equipment.department else "—",
             "from_responsible": old_responsible.full_name if old_responsible else "—",

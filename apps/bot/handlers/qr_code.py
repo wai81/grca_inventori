@@ -23,9 +23,9 @@ async def handle_qr_code(message: Message, state: FSMContext):
             f"✅ <b>Ваше устройство</b>\n"
             f"🔹 <b>{device.name}</b>\n"
             f"📌 Инв. номер: {device.inventory_number}\n"
-            f"🏷 Тип: {device.device_type.name}\n"
-            f"🏢 Отдел: {device.department.name if device.department else '—'}\n"
-            f"👤 Ответственный: {device.responsible.full_name if device.responsible else '—'}\n"
+            f"🏷 Тип: {device.equipment_type.name}\n"
+            f"🏢 Организация: {device.organization.name if device.organization else '—'}\n"
+            f"👤 Ответственный: {device.assigned_to.full_name if device.assigned_to else '—'}\n"
             f"⚙️ Статус: {get_status_text(device.status)}\n"
             f"🔢 Серийный №: {device.serial_number or '—'}"
         )
