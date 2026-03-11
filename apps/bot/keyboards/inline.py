@@ -36,7 +36,7 @@ def employees_by_department_keyboard(employees, department_id, page=1, items_per
     builder = InlineKeyboardBuilder()
     for emp in page_emps:
         builder.button(
-            text=f"{emp.full_name} {'✅' if emp.is_approved else '⏳'}",
+            text=f"{emp.full_name} {'✅' if emp.active else '❌'}",
             callback_data=f"emp_edit_{emp.id}"
         )
     builder.adjust(1)

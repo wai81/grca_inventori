@@ -181,7 +181,7 @@ def create_employee(full_name, department_id=None, organization_id=None, **kwarg
         full_name=full_name,
         department_id=department_id,
         organization_id=organization_id,
-        is_active=True,
+        # active=True,
         # is_approved=is_approved,
         # telegram_id=telegram_id,
         **kwargs

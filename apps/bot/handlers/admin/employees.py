@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from asgiref.sync import sync_to_async
 from aiogram.exceptions import TelegramBadRequest
 
+from apps.directory.models import Department
 from ...utils.db import (
     is_admin, create_employee, get_all_departments,
     get_employees_by_department, get_employee_data_safe,
@@ -23,7 +24,6 @@ router = Router()
 
 @sync_to_async
 def get_department_by_id(dept_id):
-    from apps.core.models import Department
     try:
         return Department.objects.get(id=dept_id)
     except Department.DoesNotExist:
@@ -44,7 +44,7 @@ async def employee_edit_card(callback: CallbackQuery):
     text = (
         f"👤 <b>{emp_data['full_name']}</b>\n"
         f"Отдел: {emp_data['department_name'] or '—'}\n"
-        f"Статус: {'✅ Подтверждён' if emp_data['is_approved'] else '⏳ Ожидает'}\n"
+        f"Статус: {'✅ Подтверждён' if emp_data['active'] else '⏳ Ожидает'}\n"
         f"ID: {emp_data['id']}"
     )
     kb = employee_edit_keyboard(emp_id)
@@ -122,7 +122,7 @@ async def approve_employee(callback: CallbackQuery):
         await callback.answer("⛔ Нет прав", show_alert=True)
         return
     emp_id = int(callback.data.split("_")[-1])
-    emp = await update_employee(emp_id, is_approved=True)
+    emp = await update_employee(emp_id, active=True)
     if emp:
         await callback.message.edit_text(f"✅ Сотрудник {emp.full_name} подтверждён.")
     else:
@@ -267,7 +267,7 @@ async def confirm_create_employee(callback: CallbackQuery, state: FSMContext):
     full_name = data['full_name']
     dept_id = data['department_id']
     # Создаём сотрудника сразу подтверждённым
-    emp = await create_employee(full_name=full_name, department_id=dept_id, is_approved=True)
+    emp = await create_employee(full_name=full_name, department_id=dept_id, active=True)
     await callback.message.edit_text(f"✅ Сотрудник {full_name} создан и подтверждён.")
     await state.clear()
     await back_to_main_menu(callback, callback.from_user.id)
@@ -292,7 +292,7 @@ async def show_all_employees(callback: CallbackQuery):
     lines = []
     for emp in employees:
         dept = emp['department__name'] if emp['department__name'] else '—'
-        status = '✅' if emp['is_approved'] else '⏳'
+        status = '✅' if emp['active'] else '❌ '
         lines.append(f"{status} {emp['full_name']} – {dept} (ID {emp['id']})")
     text = "📋 Список всех сотрудников:\n" + "\n".join(lines)
     await callback.message.delete()
