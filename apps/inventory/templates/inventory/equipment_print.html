@@ -11,7 +11,6 @@
       <th>Наименование</th>
       <th>Тип</th>
       <th>Инв. №</th>
-      <th>№ ПК</th>
       <th>Дата ввода</th>
       <th>Статус</th>
       <th>Закреплено</th>
@@ -24,7 +23,6 @@
       <td>{{ obj.name }}</td>
       <td>{{ obj.equipment_type }}</td>
       <td>{{ obj.inventory_number|default:"—" }}</td>
-      <td>{{ obj.pc_number|default:"—" }}</td>
       <td>{{ obj.commissioning_date|date:"Y-m-d"|default:"—" }}</td>
       <td>{{ obj.get_status_display }}</td>
       <td>{{ obj.assigned_to|default:"—" }}</td>

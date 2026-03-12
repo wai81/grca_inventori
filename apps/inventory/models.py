@@ -31,11 +31,17 @@ class EquipmentStatus(models.TextChoices):
     TO_WRITE_OFF = "to_write_off", "на списание"
     WRITTEN_OFF = "written_off", "списано"
 
+# Принтеры/МФУ
+class PrintMode(models.TextChoices):
+    MONO = "mono", "Монохромная"
+    COLOR = "color", "Цветная"
+
+
 class Equipment(models.Model):
     organization = models.ForeignKey("directory.Organization", on_delete=models.PROTECT, related_name="equipment", verbose_name="Организация")
     equipment_type = models.ForeignKey(EquipmentType, on_delete=models.PROTECT, related_name="equipment", verbose_name="Тип оборудования")
 
-    name = models.CharField(max_length=200, verbose_name="Наименование")  # коротко: "ПК Lenovo", "Принтер HP"
+    name = models.CharField(max_length=200, verbose_name="Наименование")  # коротко: : PC400-001 "ПК Lenovo", "Принтер HP"
     inventory_number = models.CharField(max_length=100, blank=True, verbose_name="Инв. №")  # если есть
     pc_number = models.CharField(max_length=50, blank=True, verbose_name="Номер ПК")  # если есть: PC400-001
 
@@ -60,10 +66,6 @@ class Equipment(models.Model):
     storageHDD_gb = models.PositiveIntegerField(verbose_name="HDD, Гб", null=True, blank=True)
     storageSDD_gb = models.PositiveIntegerField(verbose_name="SDD, Гб", null=True, blank=True)
 
-    # Принтеры/МФУ
-    class PrintMode(models.TextChoices):
-        MONO = "mono", "Монохромная"
-        COLOR = "color", "Цветная"
 
     print_format = models.CharField("Формат печати", max_length=50, blank=True)  # например: A4/A3
     print_mode = models.CharField("Печать", max_length=10, choices=PrintMode.choices, blank=True)
@@ -192,3 +194,37 @@ class InventoryDocumentLine(models.Model):
         if not self.pc_number_snapshot:
             self.pc_number_snapshot = self.equipment.pc_number or ""
         super().save(*args, **kwargs)
+
+
+class EquipmentImportLog(models.Model):
+    STATUS_CHOICES = (
+        ("success", "Успешно"),
+        ("partial", "Частично"),
+        ("failed", "Ошибка"),
+    )
+
+    created_at = models.DateTimeField("Дата", auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="Пользователь",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    filename = models.CharField("Файл", max_length=255)
+    status = models.CharField("Статус", max_length=20, choices=STATUS_CHOICES, default="success")
+
+    total_rows = models.PositiveIntegerField("Всего строк", default=0)
+    created_count = models.PositiveIntegerField("Создано", default=0)
+    updated_count = models.PositiveIntegerField("Обновлено", default=0)
+    skipped_count = models.PositiveIntegerField("Пропущено", default=0)
+
+    details = models.JSONField("Детали", default=list, blank=True)
+
+    class Meta:
+        verbose_name = "Лог импорта оборудования"
+        verbose_name_plural = "Логи импорта оборудования"
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Импорт {self.filename} ({self.created_at:%d.%m.%Y %H:%M})"

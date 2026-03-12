@@ -1,3 +1,6 @@
+import csv
+import io
+from datetime import datetime
 from io import BytesIO
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
@@ -14,14 +17,19 @@ from django.views import View
 from django.views.generic import DetailView, UpdateView, FormView, CreateView, DeleteView, ListView
 from django_filters.views import FilterView
 
-from apps.directory.models import Employee
+from apps.directory.models import Employee, Organization
 from apps.inventory.filters import EquipmentFilter
-from apps.inventory.form import EquipmentForm, EquipmentMoveForm, EquipmentTypeForm
-from apps.inventory.models import InventoryDocument, Equipment, EquipmentEventType, EquipmentEvent, EquipmentType
+from apps.inventory.form import (
+    EquipmentForm, EquipmentMoveForm, EquipmentTypeForm, EquipmentCSVImportForm)
+from apps.inventory.models import (
+    InventoryDocument, Equipment, EquipmentEventType,
+    EquipmentEvent, EquipmentType, EquipmentStatus)
 from django.conf import settings
 from config.pdf import render_pdf_response
-from apps.inventory.services import apply_document
+
 from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access
+
+
 
 class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
     permission_required = "inventory.view_equipment"
@@ -379,3 +387,372 @@ class EquipmentTypeDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delet
         except ProtectedError:
             messages.error(self.request, "Нельзя удалить тип: он используется в оборудовании.")
             return redirect("inventory:equipmenttype_detail", pk=self.object.pk)
+
+class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
+    permission_required = "inventory.add_equipment"
+    template_name = "inventory/equipment_import_csv.html"
+    form_class = EquipmentCSVImportForm
+    success_url = reverse_lazy("inventory:equipment_list")
+
+    required_columns = {"organization", "equipment_type", "name"}
+
+    header_aliases = {
+        "organization_code": {
+            "organization_code",
+            "org_code",
+            "код_организации",
+            "код организации",
+            "код",
+            "organization",
+            "организация",
+        },
+        "equipment_type": {
+            "equipment_type",
+            "тип",
+            "тип оборудования",
+            "вид оборудования",
+        },
+        "name": {
+            "name",
+            "наименование",
+            "название",
+        },
+        "inventory_number": {
+            "inventory_number",
+            "инвентарный номер",
+            "инв_номер",
+            "инв. №",
+            "инв №",
+        },
+        # "pc_number": {
+        #     "pc_number",
+        #     "номер пк",
+        #     "пк",
+        #     "№ пк",
+        # },
+        "serial_number": {
+            "serial_number",
+            "серийный номер",
+            "серийник",
+        },
+        "model": {
+            "model",
+            "модель",
+        },
+        "specs": {
+            "specs",
+            "характеристики",
+            "описание",
+        },
+        "commissioning_date": {
+            "commissioning_date",
+            "дата поступления",
+            "дата ввода",
+        },
+        "status": {
+            "status",
+            "статус",
+        },
+        "assigned_to": {
+            "assigned_to",
+            "закреплено",
+            "сотрудник",
+            "ответственный",
+            "фио",
+        },
+        "cpu": {
+            "cpu",
+            "процессор",
+        },
+        "ram_gb": {
+            "ram_gb",
+            "озу",
+            "озу гб",
+            "ram",
+            "ram gb",
+        },
+        "storageHDD_gb": {
+            "storagehdd_gb",
+            "hdd",
+            "hdd гб",
+        },
+        "storageSDD_gb": {
+            "storagesdd_gb",
+            "sdd",
+            "ssd",
+            "ssd гб",
+            "sdd гб",
+        },
+        "print_format": {
+            "print_format",
+            "формат печати",
+        },
+        "print_mode": {
+            "print_mode",
+            "тип печати",
+            "печать",
+        },
+    }
+
+    def _normalize_header(self, value):
+        return " ".join((value or "").strip().lower().replace("_", " ").split())
+
+    def _map_row_keys(self, row):
+        mapped = {}
+        for raw_key, value in row.items():
+            if not raw_key:
+                continue
+            normalized = self._normalize_header(raw_key)
+
+            canonical = None
+            for field_name, aliases in self.header_aliases.items():
+                normalized_aliases = {self._normalize_header(a) for a in aliases}
+                if normalized in normalized_aliases:
+                    canonical = field_name
+                    break
+
+            if canonical:
+                mapped[canonical] = (value or "").strip()
+
+        return mapped
+
+    def _parse_int(self, value):
+        value = (value or "").strip()
+        if not value:
+            return None
+        return int(value)
+
+    def _parse_date(self, value):
+        value = (value or "").strip()
+        if not value:
+            return None
+
+        for fmt in ("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y"):
+            try:
+                return datetime.strptime(value, fmt).date()
+            except ValueError:
+                continue
+
+        raise ValueError(f"Неверная дата: {value}")
+
+    def _build_choice_map(self, choices):
+        result = {}
+        for code, label in choices:
+            result[self._normalize_header(code)] = code
+            result[self._normalize_header(label)] = code
+        return result
+
+    def form_valid(self, form):
+        upload = form.cleaned_data["csv_file"]
+        update_existing = form.cleaned_data.get("update_existing", False)
+
+        try:
+            dialect = csv.Sniffer().sniff(raw[:2048], delimiters=";,\t")
+        except csv.Error:
+            dialect = csv.excel
+            dialect.delimiter = ";"
+
+        raw = upload.read().decode("utf-8-sig")
+
+        reader = csv.DictReader(io.StringIO(raw), dialect=dialect)
+
+        if not reader.fieldnames:
+            form.add_error("csv_file", "CSV файл пустой или не содержит заголовков.")
+            return self.form_invalid(form)
+
+        normalized_headers = set()
+
+        for h in reader.fieldnames:
+            if h:
+                mapped_name = self._map_row_keys({h: ""}).keys()
+                normalized_headers.update(mapped_name)
+
+        missing = self.required_columns - normalized_headers
+        if missing:
+            human_names = {
+                "organization_code": "Код организации",
+                "equipment_type": "Тип",
+                "name": "Наименование",
+            }
+            form.add_error(
+                "csv_file",
+                "Отсутствуют обязательные колонки: " + ", ".join(human_names[x] for x in sorted(missing))
+            )
+            return self.form_invalid(form)
+
+        status_map = self._build_choice_map(EquipmentStatus.choices)
+        print_mode_map = self._build_choice_map(PrintMode.choices)
+
+        created_count = 0
+        updated_count = 0
+        errors = []
+
+        for row_number, row in enumerate(reader, start=2):
+            try:
+                row = self._map_row_keys(row)
+
+                if not any(row.values()):
+                    continue
+
+                org_code = row.get("organization_code", "")
+                type_name = row.get("equipment_type", "")
+                name = row.get("name", "")
+
+                if not org_code or not type_name or not name:
+                    raise ValueError("Обязательные поля: Код организации, Тип, Наименование")
+
+                organization = Organization.objects.filter(code__iexact=org_code).first()
+                if not organization:
+                    raise ValueError(f"Организация не найдена по коду: {org_name}")
+
+                if not user_has_org_access(self.request.user, organization.id):
+                    raise ValueError(f"Нет доступа к организации: {org_name}")
+
+                equipment_type = EquipmentType.objects.filter(name__iexact=type_name).first()
+                if not equipment_type:
+                    raise ValueError(f"Тип оборудования не найден: {type_name}")
+
+                assigned_to = None
+                assigned_name = row.get("assigned_to", "")
+                if assigned_name:
+                    assigned_to = Employee.objects.filter(
+                        organization=organization,
+                        full_name__iexact=assigned_name,
+                        active=True,
+                    ).first()
+                    if not assigned_to:
+                        raise ValueError(f"Сотрудник не найден: {assigned_name}")
+
+                inventory_number = row.get("inventory_number", "")
+                serial_number = row.get("serial_number", "")
+
+                equipment = None
+                action = "create"
+
+                if update_existing:
+                    if inventory_number:
+                        equipment = Equipment.objects.filter(
+                            organization=organization,
+                            inventory_number=inventory_number
+                        ).first()
+                    elif serial_number:
+                        equipment = Equipment.objects.filter(
+                            organization=organization,
+                            serial_number=serial_number
+                        ).first()
+
+                    if equipment:
+                        action = "update"
+
+                if not equipment:
+                    equipment = Equipment(organization=organization)
+
+                status_value = row.get("status", "")
+                if status_value:
+                    status_value = status_map.get(self._normalize_header(status_value))
+                    if not status_value:
+                        raise ValueError(f"Неизвестный статус: {row.get('status')}")
+                else:
+                    status_value = EquipmentStatus.IN_USE
+
+                print_mode_value = row.get("print_mode", "")
+                if print_mode_value:
+                    print_mode_value = print_mode_map.get(self._normalize_header(print_mode_value))
+                    if not print_mode_value:
+                        raise ValueError(f"Неизвестный тип печати: {row.get('print_mode')}")
+                else:
+                    print_mode_value = ""
+
+                equipment.organization = organization
+                equipment.equipment_type = equipment_type
+                equipment.name = name
+                equipment.inventory_number = inventory_number
+                equipment.serial_number = row.get("serial_number", "")
+                equipment.model = row.get("model", "")
+                equipment.specs = row.get("specs", "")
+                equipment.commissioning_date = self._parse_date(row.get("commissioning_date", ""))
+                equipment.status = status_value
+                equipment.assigned_to = assigned_to
+                equipment.cpu = row.get("cpu", "")
+                equipment.ram_gb = self._parse_int(row.get("ram_gb", ""))
+                equipment.storageHDD_gb = self._parse_int(row.get("storageHDD_gb", ""))
+                equipment.storageSDD_gb = self._parse_int(row.get("storageSDD_gb", ""))
+                equipment.print_format = row.get("print_format", "")
+                equipment.print_mode = print_mode_value
+
+                equipment.save()
+
+                if action == "create":
+                    created_count += 1
+                else:
+                    updated_count += 1
+
+            except Exception as e:
+                errors.append(f"Строка {row_number}: {e}")
+
+        if errors:
+            messages.warning(
+                self.request,
+                f"Импорт завершён с ошибками. Создано: {created_count}, обновлено: {updated_count}, ошибок: {len(errors)}"
+            )
+            return self.render_to_response(
+                self.get_context_data(
+                    form=form,
+                    import_errors=errors,
+                    created_count=created_count,
+                    updated_count=updated_count,
+                )
+            )
+
+        messages.success(
+            self.request,
+            f"Импорт выполнен успешно. Создано: {created_count}, обновлено: {updated_count}"
+        )
+        return super().form_valid(form)
+
+
+@login_required
+@permission_required("inventory.add_equipment", raise_exception=True)
+def equipment_csv_template(request):
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="equipment_import_template_ru.csv"'
+    response.write("\ufeff")
+
+    writer = csv.writer(response, delimiter=";")
+    writer.writerow([
+        "Код организации",
+        "Тип",
+        "Наименование",
+        "Инвентарный номер",
+        "Серийный номер",
+        "Модель",
+        "Характеристики",
+        "Дата поступления",
+        "Статус",
+        "Сотрудник",
+        "Процессор",
+        "ОЗУ",
+        "HDD",
+        "SSD",
+        "Формат печати",
+        "Тип печати",
+    ])
+    writer.writerow([
+        "400",
+        "Ноутбук",
+        "Lenovo ThinkPad T14",
+        "INV-001",
+        "SN123",
+        "T14",
+        "Core i5, 16GB RAM",
+        "2024-01-10",
+        "используется",
+        "Иванов Иван Иванович",
+        "Intel Core i5",
+        "16",
+        "512",
+        "",
+        "A4",
+        "Монохромная",
+    ])
+    return response

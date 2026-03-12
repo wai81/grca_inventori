@@ -55,7 +55,7 @@ async def cmd_start(message: Message, command: CommandObject, state: FSMContext)
             #     await message.answer(text)
             text = (
                 f"✅ <b>Ваше устройство</b>\n"
-                f"🔹 <b>{device.name} {device.pc_number or ''}</b>\n"
+                f"🔹 <b>{device.name}</b>\n"
                 f"📌 Инв. номер: {device.inventory_number}\n"
                 f"🏷 Тип: {device.equipment_type.name}\n"
                 f"🏢 Организация: {device.organization.name if device.organization else '—'}\n"

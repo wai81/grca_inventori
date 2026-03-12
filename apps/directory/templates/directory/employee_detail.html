@@ -52,6 +52,7 @@
                                 <tr>
                                     <th>Наименование</th>
                                     <th>Тип</th>
+                                    <th>Серийный №</th>
                                     <th>Инв. №</th>
                                     <th>Статус</th>
                                     <th class="text-end">Действия</th>
@@ -65,6 +66,7 @@
                                             <div class="text-muted small">{{ eq.model|default:"" }} {{ eq.serial_number|default:"" }}</div>
                                         </td>
                                         <td>{{ eq.equipment_type }}</td>
+                                        <td>{{ eq.serial_number|default:"—" }}</td>
                                         <td>{{ eq.inventory_number|default:"—" }}</td>
                                         <td>{{ eq.get_status_display }}</td>
                                         <td class="text-end">

@@ -213,6 +213,12 @@
                         <div class="card-header d-flex align-items-center justify-content-between">
                             <h5 class="mb-0">Список</h5>
                             <div class="text-muted">Найдено: {{ page_obj.paginator.count }}</div>
+                            <a href="{% url 'inventory:equipment_import_csv' %}" class="btn btn-success">
+                                Импорт CSV
+                            </a>
+                            <a href="{% url 'inventory:equipment_csv_template' %}" class="btn btn-outline-secondary">
+                                Шаблон CSV
+                            </a>
                             <a class="btn btn-light-primary d-flex align-items-center gap-2"
                                href="{% url 'inventory:equipment_create' %}">
                                 <i class="ti ti-plus"></i>
@@ -229,7 +235,6 @@
                                         <th class="ps-4">Наименование</th>
                                         <th>Тип</th>
                                         <th>Инв. №</th>
-                                        <th>№ ПК</th>
                                         <th>Статус</th>
                                         <th>Закреплено</th>
                                         <th>Организация</th>
@@ -244,15 +249,15 @@
                                                 <div class="d-flex flex-column">
                                                     <a class="text-body fw-semibold"
                                                        href="{% url 'inventory:equipment_detail' obj.pk %}">
-                                                        {{ obj.name }}
+                                                        {{ obj.name }} {{ obj.model }}
                                                     </a>
-                                                    <small class="text-muted">{{ obj.model }} {{ obj.serial_number }}</small>
+                                                    <small class="text-muted">Серийный № {{ obj.serial_number }} Инв.№ {{ obj.inventory_number}}</small>
                                                 </div>
                                             </td>
 
                                             <td>{{ obj.equipment_type }}</td>
                                             <td>{{ obj.inventory_number|default:"—" }}</td>
-                                            <td>{{ obj.pc_number|default:"—" }}</td>
+
 
                                             <td>
                                             <span class="badge bg-light-secondary text-secondary">
@@ -327,6 +332,7 @@
 
 
 
+
                                                    {{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
                                             Назад
                                         </a>
@@ -337,6 +343,7 @@
                                     {% if page_obj.has_next %}
                                         <a class="btn btn-sm btn-outline-secondary"
                                            href="?page=
+
 
 
 

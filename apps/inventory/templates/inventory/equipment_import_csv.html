@@ -1,0 +1,72 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block title %}Импорт оборудования из CSV{% endblock %}
+
+{% block content %}
+    <div class="pc-container">
+        <div class="pc-content">
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="page-header-title">
+                                <h5 class="m-b-10">
+                                    Импорт оборудования из CSV
+                                </h5>
+                            </div>
+                            <ul class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+                                <li class="breadcrumb-item"><a
+                                        href="{% url 'inventory:equipment_list' %}">Оборудование</a></li>
+                                <li class="breadcrumb-item" aria-current="page">
+                                        Импорт оборудования из CSV
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <a class="btn btn-light" href="{% url 'inventory:equipment_list' %}">Отмена</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <form method="post" enctype="multipart/form-data" class="mb-4">
+                {% csrf_token %}
+                <div class="card">
+                    <div class="card-body">
+                        {{ form.as_p }}
+                        <div class="card-footer text-end">
+                            <button type="submit" class="btn btn-primary">Загрузить</button>
+                            <a href="{% url 'inventory:equipment_csv_template' %}" class="btn btn-outline-secondary">
+                                Скачать шаблон CSV
+                            </a>
+                            <a href="{% url 'inventory:equipment_list' %}" class="btn btn-secondary">Назад</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <h3>Формат CSV</h3>
+            <p>Обязательные колонки: <code>organization</code>, <code>equipment_type</code>, <code>name</code>
+            </p>
+
+            <pre>organization;equipment_type;name;inventory_number;serial_number;model;specs;commissioning_date;status;assigned_to;cpu;ram_gb;storageHDD_gb;storageSDD_gb;print_format;print_mode
+ООО Ромашка;Ноутбук;PC400-001 Lenovo ThinkPad;INV-001;SN123;T14;Core i5, 16GB RAM;2024-01-10;in_use;Иванов Иван Иванович;Intel Core i5;16;512;;A4;mono</pre>
+
+            {% if import_errors %}
+                <div class="alert alert-warning mt-4">
+                    <p><strong>Создано:</strong> {{ created_count }}</p>
+                    <p><strong>Обновлено:</strong> {{ updated_count }}</p>
+                    <p><strong>Ошибки:</strong></p>
+                    <ul>
+                        {% for err in import_errors %}
+                            <li>{{ err }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+{% endblock %}

@@ -70,7 +70,7 @@ async def device_detail(message: Message, callback: CallbackQuery):
     device = await get_device_by_id(id=device_id)
 
     text = (
-        f"🔹 <b>{device.name} {device.pc_number or ''}</b>\n"
+        f"🔹 <b>{device.name}</b>\n"
         f"📌 Инв. номер: {device.inventory_number}\n"
         f"🏷 Тип: {device.device_type.name}\n"
         f"🏢 Организация: {device.organization.name if device.organization else '—'}\n"

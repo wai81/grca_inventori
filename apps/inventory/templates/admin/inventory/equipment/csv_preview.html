@@ -1,0 +1,61 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+    <h1>Предпросмотр импорта CSV</h1>
+
+    <p><strong>Файл:</strong> {{ meta.filename }}</p>
+    <p><strong>Всего строк:</strong> {{ preview.total_rows }}</p>
+
+    {% if preview.unknown_headers %}
+        <div class="messagelist">
+            <div class="warning">
+                Неизвестные столбцы будут проигнорированы:
+                {{ preview.unknown_headers|join:", " }}
+            </div>
+        </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Строка</th>
+                <th>Организация</th>
+                <th>Тип</th>
+                <th>Наименование</th>
+                <th>Инвентарный номер</th>
+                <th>Действие</th>
+                <th>Ошибки</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in preview.rows %}
+                <tr>
+                    <td>{{ row.line }}</td>
+                    <td>{{ row.data.organization }}</td>
+                    <td>{{ row.data.device_type }}</td>
+                    <td>{{ row.data.name }}</td>
+                    <td>{{ row.data.inventory_number }}</td>
+                    <td>
+                        {% if row.action == "create" %}Создание{% endif %}
+                        {% if row.action == "update" %}Обновление{% endif %}
+                        {% if row.action == "skip" %}Пропуск{% endif %}
+                    </td>
+                    <td>
+                        {% if row.errors %}
+                            {{ row.errors|join:", " }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <form method="post" action="{% url 'admin:inventory_equipment_import_csv_confirm' %}">
+        {% csrf_token %}
+        <div class="submit-row">
+            <input type="submit" value="Подтвердить импорт" class="default">
+        </div>
+    </form>
+{% endblock %}

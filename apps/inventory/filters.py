@@ -3,7 +3,7 @@ from django import forms
 from django.db import models
 from apps.directory.models import Organization, Employee
 from .filters_mixins import BootstrapFilterFormMixin
-from .models import Equipment,  EquipmentStatus, EquipmentType
+from .models import Equipment, EquipmentStatus, EquipmentType, PrintMode
 
 
 class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
@@ -47,7 +47,7 @@ class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
         widget=forms.TextInput(attrs={"placeholder": "A4, A3..."})
     )
     print_mode = django_filters.ChoiceFilter(
-        field_name="print_mode", choices=Equipment.PrintMode.choices, label="Печать"
+        field_name="print_mode", choices=PrintMode.choices, label="Печать"
     )
 
     class Meta:
@@ -66,7 +66,6 @@ class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
         return queryset.filter(
             models.Q(name__icontains=value)
             | models.Q(inventory_number__icontains=value)
-            | models.Q(pc_number__icontains=value)
             | models.Q(serial_number__icontains=value)
             | models.Q(model__icontains=value)
             | models.Q(specs__icontains=value)

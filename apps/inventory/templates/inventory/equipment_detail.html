@@ -57,10 +57,10 @@
                             </div>
 
                             <div class="row">
-                                <div class="col-md-6 mb-2"><strong>Инв.
-                                    №:</strong> {{ object.inventory_number|default:"—" }}</div>
-                                <div class="col-md-6 mb-2"><strong>№ ПК:</strong> {{ object.pc_number|default:"—" }}
+                                <div class="col-md-6 mb-2">
+                                    <strong>Инв.№:</strong> {{ object.inventory_number|default:"—" }}
                                 </div>
+
                                 <div class="col-md-6 mb-2"><strong>Модель:</strong> {{ object.model|default:"—" }}</div>
                                 <div class="col-md-6 mb-2"><strong>Серийный
                                     №:</strong> {{ object.serial_number|default:"—" }}</div>
@@ -81,13 +81,14 @@
                                                 <span class="text-muted">{{ object.ram_gb|default_if_none:"—" }}</span>
                                             </li>
                                             <li class="list-group-item d-flex justify-content-between">
-                                                <span>HDD (ГБ)</span>
-                                                <span class="text-muted">{{ object.storageHDD_gb|default_if_none:"—" }}</span>
-                                            </li>
-                                            <li class="list-group-item d-flex justify-content-between">
                                                 <span>SSD (ГБ)</span>
                                                 <span class="text-muted">{{ object.storageSDD_gb|default_if_none:"—" }}</span>
                                             </li>
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>HDD (ГБ)</span>
+                                                <span class="text-muted">{{ object.storageHDD_gb|default_if_none:"—" }}</span>
+                                            </li>
+
                                         </ul>
                                     </div>
                                 {% elif object.equipment_type.category == "print" %}

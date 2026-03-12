@@ -95,7 +95,7 @@ class EquipmentForm(forms.ModelForm):
         model = Equipment
         fields = [
             "organization", "equipment_type", "name", "model",
-            "inventory_number", "pc_number", "serial_number",
+            "inventory_number", "serial_number",
             "cpu", "ram_gb", "storageSDD_gb", "storageHDD_gb", "print_format", "print_mode",
             "specs", "commissioning_date", "status", "assigned_to",
         ]
@@ -165,6 +165,7 @@ class EquipmentMoveForm(forms.Form):
 
         return emp
 
+
 class EquipmentTypeForm(forms.ModelForm):
     class Meta:
         model = EquipmentType
@@ -174,3 +175,20 @@ class EquipmentTypeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for _, field in self.fields.items():
             field.widget.attrs["class"] = "form-control"
+
+
+class EquipmentCSVImportForm(forms.Form):
+    csv_file = forms.FileField(label="CSV файл")
+    # delimiter = forms.ChoiceField(
+    #     label="Разделитель",
+    #     choices=(
+    #         (";", "Точка с запятой (;)"),
+    #         (",", "Запятая (,)"),
+    #     ),
+    #     initial=";",
+    # )
+    update_existing = forms.BooleanField(
+        label="Обновлять существующие записи по инвентарному номеру",
+        required=False,
+        initial=True,
+    )
