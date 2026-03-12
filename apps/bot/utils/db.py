@@ -176,7 +176,9 @@ def is_admin(telegram_id):
 # ---------- Функции для сотрудников ----------
 # Создание сотрудника
 @sync_to_async
-def create_employee(full_name, department_id=None, organization_id=None, **kwargs):
+def create_employee(full_name, department_id=None, **kwargs):
+    department = Department.objects.get(id=department_id)
+    organization_id = department.organization_id
     employee = Employee.objects.create(
         full_name=full_name,
         department_id=department_id,
@@ -329,13 +331,14 @@ def get_employee_data_safe(employee_id):
 def update_employee(employee_id, full_name=None, department_id=None, organization_id=None, active=None, email=None, phone=None):
     try:
         emp = Employee.objects.get(id=employee_id)
-
+        dept = Department.objects.get(id=department_id)
+        org = Organization.objects.get(id=dept.organization_id)
         if full_name is not None:
             emp.full_name = full_name
         if department_id is not None:
-            emp.department_id = department_id
-        if organization_id is not None:
-            emp.organization_id = organization_id
+            emp.department = dept
+        if org is not None:
+            emp.organization = org
         if active is not None:
             emp.active = active
         if email is not None:

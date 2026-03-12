@@ -198,7 +198,7 @@ async def back_to_dept_employees(callback: CallbackQuery):
         await callback.message.edit_text("Сотрудник не найден или не имеет отдела.")
         await callback.answer()
         return
-    from apps.core.models import Department
+
     dept = await sync_to_async(Department.objects.get)(name=emp_data['department_name'])
     employees = await get_employees_by_department(dept.id, callback.from_user.id)
     kb = employees_by_department_keyboard(employees, dept.id, page=1)
