@@ -6,73 +6,107 @@
 
     <div class="pc-container">
         <div class="pc-content">
-
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">{% if object %}Редактирование сотрудника{% else %}Создание
-                        сотрудника{% endif %}</h5>
-                    <a class="btn btn-outline-secondary" href="{% url 'directory:employee_list' %}">Назад</a>
-                </div>
-
-                <div class="card-body">
-                    <form method="post" class="row g-3">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{{ next }}">
-                        <input type="hidden" name="org_id" value="{{ org_id }}">
-                        <div class="col-12 col-md-6">
-                            <label class="form-label" for="{{ form.organization.id_for_label }}">Организация</label>
-                            {{ form.organization }}
-                            {% if form.organization.errors %}
-                                <div class="invalid-feedback d-block">{{ form.organization.errors|striptags }}</div>{% endif %}
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label class="form-label" for="{{ form.department.id_for_label }}">Подразделение</label>
-                            {{ form.department }}
-                            {% if form.department.errors %}
-                                <div class="invalid-feedback d-block">{{ form.department.errors|striptags }}</div>{% endif %}
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label class="form-label" for="{{ form.full_name.id_for_label }}">ФИО</label>
-                            {{ form.full_name }}
-                            {% if form.full_name.errors %}
-                                <div class="invalid-feedback d-block">{{ form.full_name.errors|striptags }}</div>{% endif %}
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="invalid-feedback d-block">{{ form.email.errors|striptags }}</div>{% endif %}
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label class="form-label" for="{{ form.phone.id_for_label }}">Телефон</label>
-                            {{ form.phone }}
-                            {% if form.phone.errors %}
-                                <div class="invalid-feedback d-block">{{ form.phone.errors|striptags }}</div>{% endif %}
-                        </div>
-
-                        <div class="col-12">
-                            <div class="form-check">
-                                {{ form.active }}
-                                <label class="form-check-label" for="{{ form.active.id_for_label }}">Активен</label>
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="page-header-title">
+                                <h5 class="m-b-10">{% if object %}Редактирование сотрудника{% else %}Создание
+                                    сотрудника{% endif %}</h5>
                             </div>
-                            {% if form.active.errors %}
-                                <div class="invalid-feedback d-block">{{ form.active.errors|striptags }}</div>{% endif %}
+                            <ul class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'directory:employee_list' %}"></a>Сотрудники
+                                </li>
+                                <li class="breadcrumb-item" aria-current="page">{% if object %}Редактирование{% else %}
+                                    Создание{% endif %}</li>
+                            </ul>
                         </div>
-
-                        <div class="col-12 d-flex gap-2">
-                            <button class="btn btn-primary" type="submit">Сохранить</button>
-                            <a class="btn btn-outline-secondary" href="{% url 'directory:employee_list' %}">Отмена</a>
+                        <div class="col-md-4 text-md-end">
+                            <a class="btn btn-light" href="{% url 'directory:employee_list' %}">Отмена</a>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
 
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+                <input type="hidden" name="org_id" value="{{ org_id }}">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <label class="form-label mb-0"
+                                           for="{{ form.organization.id_for_label }}">Организация</label>
+                                </div>
+                                {{ form.organization }}
+                                {% if form.organization.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.organization.errors|striptags }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0"
+                                           for="{{ form.department.id_for_label }}">Подразделение</label>
+                                    <a id="create-department-link"
+                                       class="btn btn-sm-light-primary d-flex align-items-center gap-2"
+                                       href="{% url 'directory:department_create' %}?next={{ request.path }}&org_id={{ form.organization.value|default:'' }}"
+                                    >
+                                        <i class="ti ti-plus"></i> Подразделение
+                                    </a>
+                                </div>
+                                {{ form.department }}
+
+                                {% if form.department.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.department.errors|striptags }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="{{ form.full_name.id_for_label }}">ФИО</label>
+                                {{ form.full_name }}
+                                {% if form.full_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.full_name.errors|striptags }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.email.errors|striptags }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="{{ form.phone.id_for_label }}">Телефон</label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.phone.errors|striptags }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-check">
+                                    {{ form.active }}
+                                    <label class="form-check-label" for="{{ form.active.id_for_label }}">Активен</label>
+                                </div>
+                                {% if form.active.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.active.errors|striptags }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-12 d-flex gap-2">
+                            <button class="btn btn-primary" type="submit">Сохранить</button>
+                            <a class="btn btn-outline-secondary"
+                               href="{% url 'directory:employee_list' %}">Отмена</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
+
+
+
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const orgEl = document.getElementById("id_organization");
@@ -114,6 +148,22 @@
             if (initialOrg) reloadDepartments(initialOrg, initialDep);
 
             orgTS.on("change", (value) => reloadDepartments(value, null));
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const orgSelect = document.getElementById("id_organization");
+            const link = document.getElementById("create-department-link");
+
+            function updateDepartmentLink() {
+                const orgId = orgSelect ? orgSelect.value : "";
+                link.href = "{% url 'directory:department_create' %}?next={{ request.path }}&org_id=" + encodeURIComponent(orgId);
+            }
+
+            if (orgSelect && link) {
+                orgSelect.addEventListener("change", updateDepartmentLink);
+                updateDepartmentLink();
+            }
         });
     </script>
 {% endblock %}

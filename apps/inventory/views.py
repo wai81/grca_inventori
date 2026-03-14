@@ -17,7 +17,7 @@ from django.views import View
 from django.views.generic import DetailView, UpdateView, FormView, CreateView, DeleteView, ListView
 from django_filters.views import FilterView
 
-from apps.directory.models import Employee, Organization
+from apps.directory.models import Employee, Organization, Department
 from apps.inventory.filters import EquipmentFilter
 from apps.inventory.form import (
     EquipmentForm, EquipmentMoveForm, EquipmentTypeForm, EquipmentCSVImportForm)
@@ -28,7 +28,6 @@ from django.conf import settings
 from config.pdf import render_pdf_response
 
 from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access
-
 
 
 class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
@@ -182,6 +181,7 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
 
         return redirect("inventory:equipment_detail", pk=eq.pk)
 
+
 class EquipmentListPdfView(EquipmentListView):
     permission_required = "inventory.view_equipment"
 
@@ -261,12 +261,11 @@ class EmployeesByOrganizationView(LoginRequiredMixin, View):
             .order_by("full_name")
         )
 
-
         if q:
             qs = qs.filter(full_name__icontains=q)
 
         data = [
-            {"id": e.id, "name": e.full_name,  "department": (e.department.name if e.department else "")}
+            {"id": e.id, "name": e.full_name, "department": (e.department.name if e.department else "")}
             for e in qs[:200]
         ]
         return JsonResponse({"results": data})
@@ -292,6 +291,7 @@ def equipment_qr_png(request, pk: int):
     img.save(buf, format="PNG")
     return HttpResponse(buf.getvalue(), content_type="image/png")
 
+
 @login_required
 @permission_required("inventory.view_equipment", raise_exception=True)
 def equipment_qr_label(request, pk: int):
@@ -304,6 +304,7 @@ def equipment_qr_label(request, pk: int):
         pk=pk,
     )
     return render(request, "inventory/equipment_qr_label_58x40.html", {"object": equipment})
+
 
 @login_required
 @permission_required("inventory.change_inventorydocument", raise_exception=True)
@@ -319,6 +320,7 @@ def apply_document_view(request, pk: int):
     apply_document(doc)
     return redirect("inventory:document_detail", pk=pk)
 
+
 def _append_query(url: str, **params) -> str:
     parts = urlsplit(url)
     q = dict(parse_qsl(parts.query, keep_blank_values=True))
@@ -331,6 +333,7 @@ class EquipmentTypeListView(LoginRequiredMixin, PermissionRequiredMixin, ListVie
     permission_required = "inventory.view_equipmenttype"
     template_name = "inventory/equipmenttype_list.html"
     model = EquipmentType
+
     def get_queryset(self):
         return (
             EquipmentType.objects
@@ -390,6 +393,7 @@ class EquipmentTypeDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delet
             messages.error(self.request, "Нельзя удалить тип: он используется в оборудовании.")
             return redirect("inventory:equipmenttype_detail", pk=self.object.pk)
 
+
 class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
     permission_required = "inventory.add_equipment"
     template_name = "inventory/equipment_import_csv.html"
@@ -426,6 +430,12 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
             "сотрудник",
             "ответственный",
             "фио",
+        },
+        "department_name": {
+            "подразделение",
+            "отдел",
+            "department",
+            "department_name"
         },
         "equipment_type": {
             "equipment_type",
@@ -493,22 +503,37 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
     def _normalize_header(self, value):
         return " ".join((value or "").strip().lower().replace("_", " ").split())
 
+    def _map_headers(self, fieldnames):
+        mapped = set()
+        for header in fieldnames:
+            normalized = self._normalize_header(header)
+            for canonical, aliases in self.header_aliases.items():
+                if normalized in {self._normalize_header(a) for a in aliases}:
+                    mapped.add(canonical)
+                    break
+        return mapped
+
     def _map_row_keys(self, row):
         mapped = {}
         for raw_key, value in row.items():
             if not raw_key:
                 continue
+
             normalized = self._normalize_header(raw_key)
-
-            canonical = None
-            for field_name, aliases in self.header_aliases.items():
-                normalized_aliases = {self._normalize_header(a) for a in aliases}
-                if normalized in normalized_aliases:
-                    canonical = field_name
+            normalized = self._normalize_header(raw_key)
+            for canonical, aliases in self.header_aliases.items():
+                if normalized in {self._normalize_header(a) for a in aliases}:
+                    mapped[canonical] = (value or "").strip()
                     break
-
-            if canonical:
-                mapped[canonical] = (value or "").strip()
+            # canonical = None
+            # for field_name, aliases in self.header_aliases.items():
+            #     normalized_aliases = {self._normalize_header(a) for a in aliases}
+            #     if normalized in normalized_aliases:
+            #         canonical = field_name
+            #         break
+            #
+            # if canonical:
+            #     mapped[canonical] = (value or "").strip()
 
         return mapped
 
@@ -538,13 +563,71 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
             result[self._normalize_header(label)] = code
         return result
 
+    def _get_or_create_department(self, organization, department_name):
+        if not department_name:
+            return None
+
+        department = Department.objects.filter(
+            organization=organization,
+            name__iexact=department_name,
+        ).first()
+
+        if department:
+            if not department.active:
+                department.active = True
+                department.save(update_fields=["active"])
+            return department
+
+        return Department.objects.create(
+            organization=organization,
+            name=department_name,
+            active=True,
+        )
+
+    def _get_or_create_employee(self, organization, employee_name, department=None):
+        if not employee_name:
+            return None
+
+        employee = Employee.objects.filter(
+            organization=organization,
+            full_name__iexact=employee_name,
+        ).first()
+
+        if employee:
+            update_fields = []
+
+            if not employee.active:
+                employee.active = True
+                update_fields.append("active")
+
+            if department and employee.department_id != department.id:
+                employee.department = department
+                update_fields.append("department")
+
+            if update_fields:
+                employee.save(update_fields=update_fields)
+
+            return employee
+
+        return Employee.objects.create(
+            organization=organization,
+            full_name=employee_name,
+            department=department,
+            active=True,
+        )
+
     def form_valid(self, form):
         upload = form.cleaned_data["csv_file"]
         update_existing = form.cleaned_data.get("update_existing", False)
         delimiter = form.cleaned_data.get("delimiter", ";")
-        raw = upload.read().decode("utf-8-sig")
-        reader = csv.DictReader(io.StringIO(raw), delimiter=delimiter)
 
+        raw_bytes = upload.read()
+        try:
+            raw = raw_bytes.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            raw = raw_bytes.decode("cp1251")
+
+        reader = csv.DictReader(io.StringIO(raw), delimiter=delimiter)
 
         if not reader.fieldnames:
             form.add_error("csv_file", "CSV файл пустой или не содержит заголовков.")
@@ -587,6 +670,8 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
                 org_code = row.get("organization_code", "")
                 type_name = row.get("equipment_type", "")
                 name = row.get("name", "")
+                department_name = row.get("department_name", "")
+                employee_name = row.get("assigned_to", "")
 
                 if not org_code or not type_name or not name:
                     raise ValueError("Обязательные поля: Код организации, Тип, Наименование")
@@ -602,80 +687,67 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
                 if not equipment_type:
                     raise ValueError(f"Тип оборудования не найден: {type_name}")
 
-                assigned_to = None
-                assigned_name = row.get("assigned_to", "")
-                if assigned_name:
-                    assigned_to = Employee.objects.filter(
+                with transaction.atomic():
+                    department = self._get_or_create_department(organization, department_name)
+                    assigned_to = self._get_or_create_employee(
                         organization=organization,
-                        full_name__iexact=assigned_name,
-                        active=True,
-                    ).first()
-                    if not assigned_to:
-                        raise ValueError(f"Сотрудник не найден: {assigned_name}")
+                        employee_name=employee_name,
+                        department=department,
+                    )
 
-                inventory_number = row.get("inventory_number", "")
-                serial_number = row.get("serial_number", "")
-
-                equipment = None
-                action = "create"
-
-                if update_existing:
-                    if inventory_number:
+                    inventory_number = row.get("inventory_number", "")
+                    equipment = None
+                    action = "create"
+                    if update_existing and inventory_number:
                         equipment = Equipment.objects.filter(
                             organization=organization,
-                            inventory_number=inventory_number
-                        ).first()
-                    elif serial_number:
-                        equipment = Equipment.objects.filter(
-                            organization=organization,
-                            serial_number=serial_number
+                            inventory_number=inventory_number,
                         ).first()
 
                     if equipment:
                         action = "update"
+                    else:
+                        equipment = Equipment(organization=organization)
 
-                if not equipment:
-                    equipment = Equipment(organization=organization)
+                    status_value = row.get("status", "")
+                    if status_value:
+                        status_value = status_map.get(self._normalize_header(status_value))
+                        if not status_value:
+                            raise ValueError(f"Неизвестный статус: {row.get('status')}")
+                    else:
+                        status_value = EquipmentStatus.IN_USE
 
-                status_value = row.get("status", "")
-                if status_value:
-                    status_value = status_map.get(self._normalize_header(status_value))
-                    if not status_value:
-                        raise ValueError(f"Неизвестный статус: {row.get('status')}")
-                else:
-                    status_value = EquipmentStatus.IN_USE
+                    print_mode_value = row.get("print_mode", "")
+                    if print_mode_value:
+                        print_mode_value = print_mode_map.get(self._normalize_header(print_mode_value))
+                        if not print_mode_value:
+                            raise ValueError(f"Неизвестный тип печати: {row.get('print_mode')}")
+                    else:
+                        print_mode_value = ""
 
-                print_mode_value = row.get("print_mode", "")
-                if print_mode_value:
-                    print_mode_value = print_mode_map.get(self._normalize_header(print_mode_value))
-                    if not print_mode_value:
-                        raise ValueError(f"Неизвестный тип печати: {row.get('print_mode')}")
-                else:
-                    print_mode_value = ""
+                    equipment.organization = organization
+                    equipment.equipment_type = equipment_type
+                    equipment.name = name
+                    equipment.inventory_number = inventory_number
+                    equipment.serial_number = row.get("serial_number", "")
+                    equipment.model = row.get("model", "")
+                    equipment.specs = row.get("specs", "")
+                    equipment.commissioning_date = self._parse_date(row.get("commissioning_date", ""))
+                    equipment.status = status_value
+                    equipment.assigned_to = assigned_to
+                    equipment.cpu = row.get("cpu", "")
+                    equipment.ram_gb = self._parse_int(row.get("ram_gb", ""))
+                    equipment.storageHDD_gb = self._parse_int(row.get("storageHDD_gb", ""))
+                    equipment.storageSDD_gb = self._parse_int(row.get("storageSDD_gb", ""))
+                    equipment.print_format = row.get("print_format", "")
+                    equipment.print_mode = print_mode_value
 
-                equipment.organization = organization
-                equipment.equipment_type = equipment_type
-                equipment.name = name
-                equipment.inventory_number = inventory_number
-                equipment.serial_number = row.get("serial_number", "")
-                equipment.model = row.get("model", "")
-                equipment.specs = row.get("specs", "")
-                equipment.commissioning_date = self._parse_date(row.get("commissioning_date", ""))
-                equipment.status = status_value
-                equipment.assigned_to = assigned_to
-                equipment.cpu = row.get("cpu", "")
-                equipment.ram_gb = self._parse_int(row.get("ram_gb", ""))
-                equipment.storageHDD_gb = self._parse_int(row.get("storageHDD_gb", ""))
-                equipment.storageSDD_gb = self._parse_int(row.get("storageSDD_gb", ""))
-                equipment.print_format = row.get("print_format", "")
-                equipment.print_mode = print_mode_value
+                    equipment.save()
 
-                equipment.save()
-
-                if action == "create":
-                    created_count += 1
-                else:
-                    updated_count += 1
+                    if action == "create":
+                        created_count += 1
+                    else:
+                        updated_count += 1
 
             except Exception as e:
                 errors.append(f"Строка {row_number}: {e}")
@@ -700,6 +772,105 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
         )
         return super().form_valid(form)
 
+        #
+        #         assigned_to = None
+        #         assigned_name = row.get("assigned_to", "")
+        #         if assigned_name:
+        #             assigned_to = Employee.objects.filter(
+        #                 organization=organization,
+        #                 full_name__iexact=assigned_name,
+        #                 active=True,
+        #             ).first()
+        #             if not assigned_to:
+        #                 raise ValueError(f"Сотрудник не найден: {assigned_name}")
+        #
+        #         inventory_number = row.get("inventory_number", "")
+        #         serial_number = row.get("serial_number", "")
+        #
+        #         equipment = None
+        #         action = "create"
+        #
+        #         if update_existing:
+        #             if inventory_number:
+        #                 equipment = Equipment.objects.filter(
+        #                     organization=organization,
+        #                     inventory_number=inventory_number
+        #                 ).first()
+        #             elif serial_number:
+        #                 equipment = Equipment.objects.filter(
+        #                     organization=organization,
+        #                     serial_number=serial_number
+        #                 ).first()
+        #
+        #             if equipment:
+        #                 action = "update"
+        #
+        #         if not equipment:
+        #             equipment = Equipment(organization=organization)
+        #
+        #         status_value = row.get("status", "")
+        #         if status_value:
+        #             status_value = status_map.get(self._normalize_header(status_value))
+        #             if not status_value:
+        #                 raise ValueError(f"Неизвестный статус: {row.get('status')}")
+        #         else:
+        #             status_value = EquipmentStatus.IN_USE
+        #
+        #         print_mode_value = row.get("print_mode", "")
+        #         if print_mode_value:
+        #             print_mode_value = print_mode_map.get(self._normalize_header(print_mode_value))
+        #             if not print_mode_value:
+        #                 raise ValueError(f"Неизвестный тип печати: {row.get('print_mode')}")
+        #         else:
+        #             print_mode_value = ""
+        #
+        #         equipment.organization = organization
+        #         equipment.equipment_type = equipment_type
+        #         equipment.name = name
+        #         equipment.inventory_number = inventory_number
+        #         equipment.serial_number = row.get("serial_number", "")
+        #         equipment.model = row.get("model", "")
+        #         equipment.specs = row.get("specs", "")
+        #         equipment.commissioning_date = self._parse_date(row.get("commissioning_date", ""))
+        #         equipment.status = status_value
+        #         equipment.assigned_to = assigned_to
+        #         equipment.cpu = row.get("cpu", "")
+        #         equipment.ram_gb = self._parse_int(row.get("ram_gb", ""))
+        #         equipment.storageHDD_gb = self._parse_int(row.get("storageHDD_gb", ""))
+        #         equipment.storageSDD_gb = self._parse_int(row.get("storageSDD_gb", ""))
+        #         equipment.print_format = row.get("print_format", "")
+        #         equipment.print_mode = print_mode_value
+        #
+        #         equipment.save()
+        #
+        #         if action == "create":
+        #             created_count += 1
+        #         else:
+        #             updated_count += 1
+        #
+        #     except Exception as e:
+        #         errors.append(f"Строка {row_number}: {e}")
+        #
+        # if errors:
+        #     messages.warning(
+        #         self.request,
+        #         f"Импорт завершён с ошибками. Создано: {created_count}, обновлено: {updated_count}, ошибок: {len(errors)}"
+        #     )
+        #     return self.render_to_response(
+        #         self.get_context_data(
+        #             form=form,
+        #             import_errors=errors,
+        #             created_count=created_count,
+        #             updated_count=updated_count,
+        #         )
+        #     )
+        #
+        # messages.success(
+        #     self.request,
+        #     f"Импорт выполнен успешно. Создано: {created_count}, обновлено: {updated_count}"
+        # )
+        # return super().form_valid(form)
+
 
 @login_required
 @permission_required("inventory.add_equipment", raise_exception=True)
@@ -714,6 +885,7 @@ def equipment_csv_template(request):
         "Инвентарный номер",
         "Наименование",
         "Сотрудник",
+        "Подразделение",
         "Тип",
         "Серийный номер",
         "Модель",
@@ -732,6 +904,7 @@ def equipment_csv_template(request):
         "INV-001",
         "Lenovo ThinkPad T14",
         "Иванов Иван Иванович",
+        "Служба по работе с заказчиками",
         "Ноутбук",
         "SN123",
         "T14",

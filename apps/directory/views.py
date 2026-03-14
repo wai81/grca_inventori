@@ -131,6 +131,18 @@ class EmployeeCreateView(LoginRequiredMixin, CreateView):
         kw["user"] = self.request.user
         return kw
 
+    def get_initial(self):
+        initial = super().get_initial()
+        org_id = self.request.GET.get("org_id") or self.request.POST.get("org_id")
+        department_id = self.request.GET.get("department") or self.request.POST.get("department")
+
+        if org_id:
+            initial["organization"] = org_id
+        if department_id:
+            initial["department"] = department_id
+
+        return initial
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["next"] = self.request.GET.get("next") or self.request.POST.get("next") or ""
@@ -278,6 +290,29 @@ class DepartmentCreateView(LoginRequiredMixin, CreateView):
         kw = super().get_form_kwargs()
         kw["user"] = self.request.user
         return kw
+
+    def get_initial(self):
+        initial = super().get_initial()
+        org_id = self.request.GET.get("org_id") or self.request.POST.get("org_id")
+        if org_id:
+            initial["organization"] = org_id
+        return initial
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["next"] = self.request.GET.get("next") or self.request.POST.get("next") or ""
+        ctx["org_id"] = self.request.GET.get("org_id") or self.request.POST.get("org_id") or ""
+        return ctx
+
+    def get_success_url(self):
+        nxt = self.request.POST.get("next") or self.request.GET.get("next") or ""
+        if nxt:
+            return _append_query(
+                nxt,
+                org_id=self.object.organization_id,
+                department=self.object.pk,
+            )
+        return super().get_success_url()
 
 
 class DepartmentUpdateView(LoginRequiredMixin, UpdateView):

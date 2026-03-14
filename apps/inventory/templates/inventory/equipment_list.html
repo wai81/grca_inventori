@@ -249,10 +249,18 @@
                                                 <div class="d-flex flex-column">
                                                     <a class="text-body fw-semibold"
                                                        href="{% url 'inventory:equipment_detail' obj.pk %}">
+                                                        {% if obj.name == obj.model %}
+                                                        {{ obj.name }}
+                                                        {% else %}
                                                         {{ obj.name }} {{ obj.model }}
+                                                        {% endif %}
                                                     </a>
-                                                    <small class="text-muted">Серийный № {{ obj.serial_number }}
-                                                        Инв.№ {{ obj.inventory_number }}</small>
+                                                    <small class="text-muted">
+                                                        Инв.№ {{ obj.inventory_number }}
+                                                        {% if obj.serial_number != "" %}
+                                                        / Серийный № {{ obj.serial_number }}
+                                                        {% endif %}
+                                                        </small>
                                                 </div>
                                             </td>
 

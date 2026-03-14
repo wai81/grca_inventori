@@ -65,20 +65,6 @@ class EmployeeForm(forms.ModelForm):
                 dept_qs = dept_qs.filter(organization__in=allowed_orgs)
 
         self.fields["department"].queryset = dept_qs.order_by("name")
-
-        # if self.is_bound:
-        #     org_id = self.data.get("organization") or None
-        # elif self.instance and getattr(self.instance, "organization_id", None):
-        #     org_id = self.instance.organization_id
-        #
-        # if org_id:
-        #     self.fields["department"].queryset = Department.objects.filter(
-        #         organization_id=org_id,
-        #         active=True,
-        #     ).order_by("name")
-        # else:
-        #     self.fields["department"].queryset = Department.objects.none()
-        #
         self.fields["department"].empty_label = "— сначала выберите организацию —"
 
 

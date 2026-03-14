@@ -6,7 +6,7 @@ from config import settings
 class Organization(models.Model):
     code = models.CharField(max_length=3, unique=True)
     name = models.CharField(max_length=200, unique=True)
-    active = models.BooleanField(default=False, verbose_name="Активна")
+    active = models.BooleanField(default=True, verbose_name="Активна")
 
     class Meta:
         verbose_name = "Организация"
@@ -42,7 +42,7 @@ class UserOrganizationAccess(models.Model):
 class Department(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="departments")
     name = models.CharField(max_length=200)
-    active = models.BooleanField(default=False, verbose_name="Активно")
+    active = models.BooleanField(default=True, verbose_name="Активно")
 
     class Meta:
         verbose_name = "Подразделение"
