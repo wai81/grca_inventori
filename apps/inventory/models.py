@@ -43,7 +43,7 @@ class Equipment(models.Model):
 
     name = models.CharField(max_length=200, verbose_name="Наименование")  # коротко: : PC400-001 "ПК Lenovo", "Принтер HP"
     inventory_number = models.CharField(max_length=100, blank=True, verbose_name="Инв. №")  # если есть
-    pc_number = models.CharField(max_length=50, blank=True, verbose_name="Номер ПК")  # если есть: PC400-001
+    # pc_number = models.CharField(max_length=50, blank=True, verbose_name="Номер ПК")  # если есть: PC400-001
 
     serial_number = models.CharField(max_length=120, blank=True, verbose_name="Серийный №")
     model = models.CharField(max_length=120, blank=True, verbose_name="Модель")
@@ -79,7 +79,7 @@ class Equipment(models.Model):
         verbose_name_plural = "Оборудование"
         indexes = [
             models.Index(fields=["inventory_number"]),
-            models.Index(fields=["pc_number"]),
+            # models.Index(fields=["pc_number"]),
             models.Index(fields=["status"]),
             models.Index(fields=["qr_token"]),
             models.Index(fields=["organization", "equipment_type"]),
@@ -177,7 +177,7 @@ class InventoryDocumentLine(models.Model):
 
     # снимок на момент формирования (для печати)
     inventory_number_snapshot = models.CharField(max_length=100, blank=True)
-    pc_number_snapshot = models.CharField(max_length=50, blank=True)
+    # pc_number_snapshot = models.CharField(max_length=50, blank=True)
     name_snapshot = models.CharField(max_length=200)
     type_snapshot = models.CharField(max_length=120, blank=True)
 
@@ -191,8 +191,8 @@ class InventoryDocumentLine(models.Model):
             self.type_snapshot = str(self.equipment.equipment_type)
         if not self.inventory_number_snapshot:
             self.inventory_number_snapshot = self.equipment.inventory_number or ""
-        if not self.pc_number_snapshot:
-            self.pc_number_snapshot = self.equipment.pc_number or ""
+        # if not self.pc_number_snapshot:
+        #     self.pc_number_snapshot = self.equipment.pc_number or ""
         super().save(*args, **kwargs)
 
 

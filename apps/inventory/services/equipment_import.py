@@ -8,46 +8,95 @@ from apps.directory.models import Organization
 from apps.inventory.models import Equipment, EquipmentImportLog, EquipmentType
 
 HEADER_ALIASES = {
-    "organization": {
+    "organization_code": {
+        "organization_code",
+        "org_code",
+        "код_организации",
+        "код организации",
+        "код",
         "organization",
         "организация",
-        "орг",
     },
-    "device_type": {
-        "device_type",
-        "type",
-        "тип",
-        "тип_устройства",
-        "вид",
+    "inventory_number": {
+        "inventory_number",
+        "инвентарный номер",
+        "инв_номер",
+        "инв. №",
+        "инв №",
     },
     "name": {
         "name",
         "наименование",
         "название",
     },
-    "inventory_number": {
-        "inventory_number",
-        "inventory",
-        "инвентарный_номер",
-        "инвномер",
-        "инв_номер",
+    "assigned_to": {
+        "assigned_to",
+        "закреплено",
+        "сотрудник",
+        "ответственный",
+        "фио",
+    },
+    "equipment_type": {
+        "equipment_type",
+        "тип",
+        "тип оборудования",
+        "вид оборудования",
     },
     "serial_number": {
         "serial_number",
-        "serial",
-        "серийный_номер",
+        "серийный номер",
         "серийник",
+    },
+    "model": {
+        "model",
+        "модель",
+    },
+    "specs": {
+        "specs",
+        "характеристики",
+        "описание",
+    },
+    "cpu": {
+        "cpu",
+        "процессор",
+    },
+    "ram_gb": {
+        "ram_gb",
+        "озу",
+        "озу гб",
+        "ram",
+        "ram gb",
+    },
+    "storageHDD_gb": {
+        "storagehdd_gb",
+        "hdd",
+        "hdd гб",
+    },
+    "storageSDD_gb": {
+        "storagesdd_gb",
+        "sdd",
+        "ssd",
+        "ssd гб",
+        "sdd гб",
+    },
+    "print_format": {
+        "print_format",
+        "формат печати",
+    },
+    "print_mode": {
+        "print_mode",
+        "тип печати",
+        "печать",
     },
     "status": {
         "status",
         "статус",
     },
-    # "qr_token": {
-    #     "qr_token",
-    #     "qr",
-    #     "qrтокен",
-    #     "токен",
-    # },
+    "commissioning_date": {
+        "commissioning_date",
+        "дата поступления",
+        "дата ввода",
+    },
 }
 
 REQUIRED_COLUMNS = ("organization", "device_type", "name")
@@ -171,8 +220,6 @@ def parse_csv_preview(uploaded_file, delimiter=";", update_existing=True):
         "unknown_headers": unknown_headers,
         "total_rows": len(rows),
     }
-
-
 
 
 def import_preview_rows(rows, user=None, filename="import.csv", update_existing=True):

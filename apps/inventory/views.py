@@ -23,7 +23,7 @@ from apps.inventory.form import (
     EquipmentForm, EquipmentMoveForm, EquipmentTypeForm, EquipmentCSVImportForm)
 from apps.inventory.models import (
     InventoryDocument, Equipment, EquipmentEventType,
-    EquipmentEvent, EquipmentType, EquipmentStatus)
+    EquipmentEvent, EquipmentType, EquipmentStatus, PrintMode)
 from django.conf import settings
 from config.pdf import render_pdf_response
 
@@ -35,14 +35,16 @@ class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView)
     permission_required = "inventory.view_equipment"
     template_name = "inventory/equipment_list.html"
     model = Equipment
+    filterset_class = EquipmentFilter
+    paginate_by = 10
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["equipmenttype_meta"] = list(EquipmentType.objects.values("id", "category"))
+        params = self.request.GET.copy()
+        params.pop("page", None)
+        ctx["querystring"] = params.urlencode()
         return ctx
-
-    filterset_class = EquipmentFilter
-    paginate_by = 25
 
     def get_queryset(self):
         qs = Equipment.objects.select_related(
@@ -394,28 +396,17 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
     form_class = EquipmentCSVImportForm
     success_url = reverse_lazy("inventory:equipment_list")
 
-    required_columns = {"organization", "equipment_type", "name"}
+    required_columns = {"organization_code", "equipment_type", "name"}
 
     header_aliases = {
         "organization_code": {
             "organization_code",
             "org_code",
             "код_организации",
-            "код организации",
+            "Код организации",
             "код",
             "organization",
             "организация",
-        },
-        "equipment_type": {
-            "equipment_type",
-            "тип",
-            "тип оборудования",
-            "вид оборудования",
-        },
-        "name": {
-            "name",
-            "наименование",
-            "название",
         },
         "inventory_number": {
             "inventory_number",
@@ -424,12 +415,24 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
             "инв. №",
             "инв №",
         },
-        # "pc_number": {
-        #     "pc_number",
-        #     "номер пк",
-        #     "пк",
-        #     "№ пк",
-        # },
+        "name": {
+            "name",
+            "наименование",
+            "название",
+        },
+        "assigned_to": {
+            "assigned_to",
+            "закреплено",
+            "сотрудник",
+            "ответственный",
+            "фио",
+        },
+        "equipment_type": {
+            "equipment_type",
+            "тип",
+            "тип оборудования",
+            "вид оборудования",
+        },
         "serial_number": {
             "serial_number",
             "серийный номер",
@@ -443,22 +446,6 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
             "specs",
             "характеристики",
             "описание",
-        },
-        "commissioning_date": {
-            "commissioning_date",
-            "дата поступления",
-            "дата ввода",
-        },
-        "status": {
-            "status",
-            "статус",
-        },
-        "assigned_to": {
-            "assigned_to",
-            "закреплено",
-            "сотрудник",
-            "ответственный",
-            "фио",
         },
         "cpu": {
             "cpu",
@@ -491,6 +478,15 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
             "print_mode",
             "тип печати",
             "печать",
+        },
+        "status": {
+            "status",
+            "статус",
+        },
+        "commissioning_date": {
+            "commissioning_date",
+            "дата поступления",
+            "дата ввода",
         },
     }
 
@@ -545,16 +541,10 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
     def form_valid(self, form):
         upload = form.cleaned_data["csv_file"]
         update_existing = form.cleaned_data.get("update_existing", False)
-
-        try:
-            dialect = csv.Sniffer().sniff(raw[:2048], delimiters=";,\t")
-        except csv.Error:
-            dialect = csv.excel
-            dialect.delimiter = ";"
-
+        delimiter = form.cleaned_data.get("delimiter", ";")
         raw = upload.read().decode("utf-8-sig")
+        reader = csv.DictReader(io.StringIO(raw), delimiter=delimiter)
 
-        reader = csv.DictReader(io.StringIO(raw), dialect=dialect)
 
         if not reader.fieldnames:
             form.add_error("csv_file", "CSV файл пустой или не содержит заголовков.")
@@ -603,10 +593,10 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
 
                 organization = Organization.objects.filter(code__iexact=org_code).first()
                 if not organization:
-                    raise ValueError(f"Организация не найдена по коду: {org_name}")
+                    raise ValueError(f"Организация не найдена по коду: {org_code}")
 
                 if not user_has_org_access(self.request.user, organization.id):
-                    raise ValueError(f"Нет доступа к организации: {org_name}")
+                    raise ValueError(f"Нет доступа к организации: {org_code}")
 
                 equipment_type = EquipmentType.objects.filter(name__iexact=type_name).first()
                 if not equipment_type:
@@ -721,38 +711,39 @@ def equipment_csv_template(request):
     writer = csv.writer(response, delimiter=";")
     writer.writerow([
         "Код организации",
-        "Тип",
-        "Наименование",
         "Инвентарный номер",
+        "Наименование",
+        "Сотрудник",
+        "Тип",
         "Серийный номер",
         "Модель",
         "Характеристики",
-        "Дата поступления",
-        "Статус",
-        "Сотрудник",
         "Процессор",
         "ОЗУ",
         "HDD",
         "SSD",
         "Формат печати",
         "Тип печати",
+        "Статус",
+        "Дата поступления",
     ])
     writer.writerow([
         "400",
-        "Ноутбук",
-        "Lenovo ThinkPad T14",
         "INV-001",
+        "Lenovo ThinkPad T14",
+        "Иванов Иван Иванович",
+        "Ноутбук",
         "SN123",
         "T14",
         "Core i5, 16GB RAM",
-        "2024-01-10",
-        "используется",
-        "Иванов Иван Иванович",
         "Intel Core i5",
         "16",
         "512",
         "",
         "A4",
         "Монохромная",
+        "используется",
+        "2024-01-10",
+
     ])
     return response
