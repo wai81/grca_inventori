@@ -132,7 +132,11 @@ class EquipmentEvent(models.Model):
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name="events")
     event_type = models.CharField(max_length=20, choices=EquipmentEventType.choices)
     created_at = models.DateTimeField(default=timezone.now)
-
+    # кто создал событие
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name="Создал",
+        related_name="equipment_events",
+    )
     from_employee = models.ForeignKey(
         "directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="events_from"
     )
@@ -145,7 +149,6 @@ class EquipmentEvent(models.Model):
 
     document_number = models.CharField(max_length=120, blank=True)  # акт/накладная/заявка
     comment = models.TextField(blank=True)
-
 
     class Meta:
         verbose_name = "Событие оборудования"

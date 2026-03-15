@@ -135,12 +135,12 @@
                                             <div>
                                                 <small class="text-muted d-block">Создал</small>
                                                 <span>
-                        {% if object.created_by %}
-                            {{ object.created_by.get_full_name|default:object.created_by.username }}
-                        {% else %}
-                            —
-                        {% endif %}
-                    </span>
+                                                    {% if object.created_by %}
+                                                        {{ object.created_by.get_full_name|default:object.created_by.username }}
+                                                    {% else %}
+                                                        —
+                                                    {% endif %}
+                                                </span>
                                                 <small class="text-muted ms-1">
                                                     {{ object.created_at|date:"d.m.Y H:i" }}
                                                 </small>
@@ -153,12 +153,12 @@
                                             <div>
                                                 <small class="text-muted d-block">Последнее изменение</small>
                                                 <span>
-                        {% if object.updated_by %}
-                            {{ object.updated_by.get_full_name|default:object.updated_by.username }}
-                        {% else %}
-                            —
-                        {% endif %}
-                    </span>
+                                                    {% if object.updated_by %}
+                                                        {{ object.updated_by.get_full_name|default:object.updated_by.username }}
+                                                    {% else %}
+                                                        —
+                                                    {% endif %}
+                                                </span>
                                                 {% if object.updated_at %}
                                                     <small class="text-muted ms-1">
                                                         {{ object.updated_at|date:"d.m.Y H:i" }}
@@ -203,6 +203,7 @@
                                 <th>Кому</th>
                                 <th>Статус</th>
                                 <th>Документ</th>
+                                <th>Создал</th>
                                 <th>Комментарий</th>
                             </tr>
                             </thead>
@@ -224,6 +225,13 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ e.document_number|default:"—" }}</td>
+                                    <td>
+                                        {% if e.created_by %}
+                                            {{ e.created_by.get_full_name|default:e.created_by.username }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
                                     <td>{{ e.comment|default:"" }}</td>
                                 </tr>
                             {% empty %}

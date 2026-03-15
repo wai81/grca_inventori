@@ -232,8 +232,8 @@
                                     <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th class="ps-4">Наименование</th>
-                                        <th>Тип</th>
+                                        <th class="ps-4">Тип | Наименование</th>
+{#                                        <th>Тип</th>#}
                                         <th>Инв. №</th>
                                         <th>Статус</th>
                                         <th>Закреплено</th>
@@ -251,9 +251,9 @@
                                                     <a class="text-body fw-semibold"
                                                        href="{% url 'inventory:equipment_detail' obj.pk %}">
                                                         {% if obj.name == obj.model %}
-                                                            {{ obj.name }}
+                                                            {{ obj.equipment_type }} {{ obj.name }}
                                                         {% else %}
-                                                            {{ obj.name }} {{ obj.model }}
+                                                            {{ obj.equipment_type }} {{ obj.name }} {{ obj.model }}
                                                         {% endif %}
                                                     </a>
                                                     <small class="text-muted">
@@ -265,10 +265,8 @@
                                                 </div>
                                             </td>
 
-                                            <td>{{ obj.equipment_type }}</td>
+{#                                            <td>{{ obj.equipment_type }}</td>#}
                                             <td>{{ obj.inventory_number|default:"—" }}</td>
-
-
                                             <td>
                                             <span class="badge bg-light-secondary text-secondary">
                                               {{ obj.get_status_display }}

@@ -181,6 +181,7 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
             EquipmentEvent.objects.create(
                 equipment=eq,
                 event_type=EquipmentEventType.MOVE,
+                created_by=self.request.user,
                 from_employee=from_emp,
                 to_employee=to_emp,
                 old_status=old_status if old_status != new_status else "",
@@ -219,8 +220,15 @@ class EquipmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVie
 
     def get_queryset(self):
         qs = Equipment.objects.select_related(
-            "organization", "equipment_type", "assigned_to", "assigned_to__department"
-        ).prefetch_related("events")
+            "organization", "equipment_type",
+            "assigned_to", "assigned_to__department",
+            "created_by", "updated_by",
+        ).prefetch_related(
+            "events",
+            "events__from_employee",
+            "events__to_employee",
+            "events__created_by",
+        )
         return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
 
 
