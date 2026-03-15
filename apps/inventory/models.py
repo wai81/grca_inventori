@@ -5,7 +5,6 @@ from apps.directory.models import Employee, Organization
 from config import settings
 
 
-
 class EquipmentType(models.Model):
     class Category(models.TextChoices):
         COMPUTER = "computer", "Компьютер"
@@ -31,6 +30,7 @@ class EquipmentStatus(models.TextChoices):
     TO_WRITE_OFF = "to_write_off", "на списание"
     WRITTEN_OFF = "written_off", "списано"
 
+
 # Принтеры/МФУ
 class PrintMode(models.TextChoices):
     MONO = "mono", "Монохромная"
@@ -38,19 +38,24 @@ class PrintMode(models.TextChoices):
 
 
 class Equipment(models.Model):
-    organization = models.ForeignKey("directory.Organization", on_delete=models.PROTECT, related_name="equipment", verbose_name="Организация")
-    equipment_type = models.ForeignKey(EquipmentType, on_delete=models.PROTECT, related_name="equipment", verbose_name="Тип оборудования")
+    organization = models.ForeignKey("directory.Organization", on_delete=models.PROTECT, related_name="equipment",
+                                     verbose_name="Организация")
+    equipment_type = models.ForeignKey(EquipmentType, on_delete=models.PROTECT, related_name="equipment",
+                                       verbose_name="Тип оборудования")
 
-    name = models.CharField(max_length=200, verbose_name="Наименование")  # коротко: : PC400-001 "ПК Lenovo", "Принтер HP"
+    name = models.CharField(max_length=200,
+                            verbose_name="Наименование")  # коротко: : PC400-001 "ПК Lenovo", "Принтер HP"
     inventory_number = models.CharField(max_length=100, blank=True, verbose_name="Инв. №")  # если есть
     # pc_number = models.CharField(max_length=50, blank=True, verbose_name="Номер ПК")  # если есть: PC400-001
 
     serial_number = models.CharField(max_length=120, blank=True, verbose_name="Серийный №")
     model = models.CharField(max_length=120, blank=True, verbose_name="Модель")
 
-    specs = models.TextField(blank=True, verbose_name="Характеристики")  # характеристики в свободном виде (или позже вынести в JSON)
+    specs = models.TextField(blank=True,
+                             verbose_name="Характеристики")  # характеристики в свободном виде (или позже вынести в JSON)
     commissioning_date = models.DateField(null=True, blank=True, verbose_name="Дата поступления")
-    status = models.CharField(max_length=20, choices=EquipmentStatus.choices, default=EquipmentStatus.IN_USE, verbose_name="Статус")
+    status = models.CharField(max_length=20, choices=EquipmentStatus.choices, default=EquipmentStatus.IN_USE,
+                              verbose_name="Статус")
 
     assigned_to = models.ForeignKey(
         "directory.Employee", on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_equipment",
@@ -66,13 +71,29 @@ class Equipment(models.Model):
     storageHDD_gb = models.PositiveIntegerField(verbose_name="HDD, Гб", null=True, blank=True)
     storageSDD_gb = models.PositiveIntegerField(verbose_name="SDD, Гб", null=True, blank=True)
 
-
     print_format = models.CharField("Формат печати", max_length=50, blank=True)  # например: A4/A3
     print_mode = models.CharField("Печать", max_length=10, choices=PrintMode.choices, blank=True)
 
+    created_at = models.DateTimeField(default=timezone.now, verbose_name="Создан")
 
-
-    created_at = models.DateTimeField(default=timezone.now,verbose_name="Создан")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="equipment_created",
+        verbose_name="Создал",
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="equipment_updated",
+        verbose_name="Изменил",
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Обновлён",
+    )
 
     class Meta:
         verbose_name = "Оборудование"
@@ -96,6 +117,7 @@ class Equipment(models.Model):
             import secrets
             self.qr_token = secrets.token_hex(16)
         super().save(*args, **kwargs)
+
 
 class EquipmentEventType(models.TextChoices):
     ASSIGN = "assign", "закрепление"
@@ -124,6 +146,7 @@ class EquipmentEvent(models.Model):
     document_number = models.CharField(max_length=120, blank=True)  # акт/накладная/заявка
     comment = models.TextField(blank=True)
 
+
     class Meta:
         verbose_name = "Событие оборудования"
         verbose_name_plural = "События оборудования"
@@ -151,7 +174,8 @@ class InventoryDocument(models.Model):
     number = models.CharField(max_length=60)  # номер акта/документа
     date = models.DateField(default=timezone.now)
 
-    from_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="docs_from")
+    from_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True,
+                                      related_name="docs_from")
     to_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="docs_to")
 
     created_by = models.ForeignKey(
@@ -194,37 +218,3 @@ class InventoryDocumentLine(models.Model):
         # if not self.pc_number_snapshot:
         #     self.pc_number_snapshot = self.equipment.pc_number or ""
         super().save(*args, **kwargs)
-
-
-class EquipmentImportLog(models.Model):
-    STATUS_CHOICES = (
-        ("success", "Успешно"),
-        ("partial", "Частично"),
-        ("failed", "Ошибка"),
-    )
-
-    created_at = models.DateTimeField("Дата", auto_now_add=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        verbose_name="Пользователь",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-    )
-    filename = models.CharField("Файл", max_length=255)
-    status = models.CharField("Статус", max_length=20, choices=STATUS_CHOICES, default="success")
-
-    total_rows = models.PositiveIntegerField("Всего строк", default=0)
-    created_count = models.PositiveIntegerField("Создано", default=0)
-    updated_count = models.PositiveIntegerField("Обновлено", default=0)
-    skipped_count = models.PositiveIntegerField("Пропущено", default=0)
-
-    details = models.JSONField("Детали", default=list, blank=True)
-
-    class Meta:
-        verbose_name = "Лог импорта оборудования"
-        verbose_name_plural = "Логи импорта оборудования"
-        ordering = ("-created_at",)
-
-    def __str__(self):
-        return f"Импорт {self.filename} ({self.created_at:%d.%m.%Y %H:%M})"

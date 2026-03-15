@@ -215,7 +215,16 @@
             </form>
 
         </div>
-    {{ equipmenttype_meta|json_script:"equipmenttype-meta" }}
+
+        {{ equipmenttype_meta|json_script:"equipmenttype-meta" }}
+
+        {# URL для AJAX-загрузки сотрудников #}
+        <script type="application/json" id="ajax-employees-url">{% url 'inventory:ajax_employees_by_org' %}</script>
+
+        {# Данные текущего сотрудника для восстановления при редактировании #}
+        {% if initial_employee %}
+            {{ initial_employee|json_script:"initial-employee-data" }}
+        {% endif %}
     </div>
 {% endblock content %}
 
@@ -229,24 +238,28 @@
             const btn = document.getElementById("add-employee-btn");
 
             if (!orgEl || !empEl) return;
-            if (!orgEl || !btn) return;
 
-            // чтобы не было конфликтов рамок Bootstrap и TomSelect
+            // убираем конфликты Bootstrap + TomSelect
             orgEl.classList.remove("form-select", "form-control");
             empEl.classList.remove("form-select", "form-control");
 
             // защита от повторной инициализации
             if (orgEl.tomselect || empEl.tomselect) return;
 
-            const endpoint = "{% url 'inventory:ajax_employees_by_org' %}";
-            const base = btn.getAttribute("href").split("&org_id=")[0];
+            const endpoint = document.getElementById("ajax-employees-url").textContent.trim();
 
+            // ── данные текущего сотрудника (при редактировании) ──
+            const initialDataEl = document.getElementById("initial-employee-data");
+            const initialEmployee = initialDataEl ? JSON.parse(initialDataEl.textContent) : null;
+
+            // ── TomSelect для организации ──
             const orgTS = new TomSelect(orgEl, {
                 create: false,
                 allowEmptyOption: true,
                 placeholder: "Выберите организацию"
             });
 
+            // ── TomSelect для сотрудника ──
             const empTS = new TomSelect(empEl, {
                 create: false,
                 allowEmptyOption: true,
@@ -254,10 +267,12 @@
                 valueField: "id",
                 labelField: "name",
                 searchField: ["name", "department"],
-                preload: true,
+                preload: false,
                 render: {
                     option: (item, escape) => {
-                        const dept = item.department ? ` <span class="text-muted">(${escape(item.department)})</span>` : "";
+                        const dept = item.department
+                            ? ` <span class="text-muted">(${escape(item.department)})</span>`
+                            : "";
                         return `<div>${escape(item.name)}${dept}</div>`;
                     },
                     item: (item, escape) => `<div>${escape(item.name)}</div>`
@@ -277,28 +292,73 @@
                 }
             });
 
-            function reloadEmployees() {
+            // ── Перезагрузка сотрудников с сохранением текущего значения ──
+            function reloadEmployees(restoreId) {
                 empTS.clear(true);
                 empTS.clearOptions();
-                empTS.addOption({id: "", name: "— не закреплять —"});
+
+                // пустая опция «не закреплять»
+                empTS.addOption({id: "", name: "— не закреплять —", department: ""});
+
                 empTS.refreshOptions(false);
-                empTS.load(""); // перезагрузка по выбранной организации
+
+                // загружаем список по организации
+                const orgId = orgEl.value;
+                if (!orgId) return;
+
+                const url = endpoint
+                    + "?organization_id=" + encodeURIComponent(orgId)
+                    + "&q=";
+
+                fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}})
+                    .then(r => r.json())
+                    .then(data => {
+                        const results = (data && data.results) ? data.results : [];
+                        results.forEach(item => empTS.addOption(item));
+                        empTS.refreshOptions(false);
+
+                        // восстанавливаем выбранное значение
+                        if (restoreId) {
+                            empTS.setValue(String(restoreId), true);
+                        }
+                    })
+                    .catch(() => {
+                    });
             }
 
-            orgTS.on("change", reloadEmployees);
+            // ── При смене организации — перезагрузить без восстановления ──
+            orgTS.on("change", () => {
+                reloadEmployees(null);
+            });
 
-            // если организация уже выбрана (например, при ошибках валидации) — подгрузим сразу
-            if (orgEl.value) reloadEmployees();
+            // ── При загрузке страницы — подгрузить и восстановить ──
+            if (orgEl.value) {
+                // Если есть initial_employee — сначала добавим его в опции,
+                // чтобы TomSelect сразу мог его показать
+                if (initialEmployee && initialEmployee.id) {
+                    empTS.addOption(initialEmployee);
+                    empTS.setValue(String(initialEmployee.id), true);
+                }
 
-            function sync() {
-                const orgId = orgEl.value || "";
-                btn.setAttribute("href", base + "&org_id=" + encodeURIComponent(orgId));
-                btn.classList.toggle("disabled", !orgId);
-                btn.setAttribute("aria-disabled", orgId ? "false" : "true");
+                // подгружаем полный список и восстанавливаем
+                const restoreId = initialEmployee ? initialEmployee.id : null;
+                reloadEmployees(restoreId);
             }
 
-            orgEl.addEventListener("change", sync);
-            sync();
+            // ── Синхронизация ссылки «+ Сотрудник» ──
+            if (btn) {
+                const base = btn.getAttribute("href").split("&org_id=")[0];
+
+                function sync() {
+                    const orgId = orgEl.value || "";
+                    btn.setAttribute("href", base + "&org_id=" + encodeURIComponent(orgId));
+                    btn.classList.toggle("disabled", !orgId);
+                    btn.setAttribute("aria-disabled", orgId ? "false" : "true");
+                }
+
+                orgEl.addEventListener("change", sync);
+                sync();
+            }
         });
     </script>
     <script>

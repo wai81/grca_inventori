@@ -1,7 +1,10 @@
+
 from django import forms
+from django.db.models import Q
 from apps.directory.models import Employee, Organization
 from apps.inventory.models import Equipment, EquipmentStatus, EquipmentType
 from apps.directory.access import get_allowed_organizations
+
 
 class EquipmentForm(forms.ModelForm):
 
@@ -15,18 +18,7 @@ class EquipmentForm(forms.ModelForm):
         if not user or not user.is_superuser:
             self.fields["organization"].queryset = allowed_orgs.order_by("code", "name")
 
-        # org_id = None
-        # if self.is_bound:
-        #     org_id = self.data.get("organization") or None
-        # elif self.instance and getattr(self.instance, "organization_id", None):
-        #     org_id = self.instance.organization_id
-        # if org_id:
-        #     self.fields["assigned_to"].queryset = Employee.objects.filter(
-        #         organization_id=org_id, active=True
-        #     ).order_by("full_name")
-        # else:
-        #     self.fields["assigned_to"].queryset = Employee.objects.none()
-
+        # ── определяем org_id ──
         org_id = None
         if self.data.get("organization"):
             org_id = self.data.get("organization")
@@ -35,9 +27,18 @@ class EquipmentForm(forms.ModelForm):
         elif self.initial.get("organization"):
             org_id = self.initial.get("organization")
 
-        emp_qs = Employee.objects.filter(active=True)
+        # ── текущий assigned_to (для редактирования) ──
+        current_assigned_id = self.instance.assigned_to_id if self.instance.pk else None
+
+        # ── queryset сотрудников ──
         if org_id:
-            emp_qs = emp_qs.filter(organization_id=org_id)
+            emp_qs = Employee.objects.filter(organization_id=org_id)
+
+            # включаем текущего сотрудника, даже если он неактивный
+            if current_assigned_id:
+                emp_qs = emp_qs.filter(Q(active=True) | Q(pk=current_assigned_id))
+            else:
+                emp_qs = emp_qs.filter(active=True)
         else:
             emp_qs = Employee.objects.none()
 
@@ -45,9 +46,10 @@ class EquipmentForm(forms.ModelForm):
             emp_qs = emp_qs.filter(organization__in=allowed_orgs)
 
         self.fields["assigned_to"].queryset = emp_qs.select_related("department").order_by("full_name")
-
-        self.fields["assigned_to"].empty_label = "— сначала выберите организацию —"
         self.fields["assigned_to"].required = False
+        self.fields["assigned_to"].empty_label = (
+            "— не закреплять —" if org_id else "— сначала выберите организацию —"
+        )
 
         for _, field in self.fields.items():
             if getattr(field.widget, "input_type", "") == "checkbox":
@@ -124,17 +126,6 @@ class EquipmentMoveForm(forms.Form):
     document_number = forms.CharField(label="Номер документа", required=False)
     comment = forms.CharField(label="Комментарий", required=False, widget=forms.Textarea(attrs={"rows": 3}))
 
-    # def __init__(self, *args, **kwargs):
-    #     self.equipment = kwargs.pop("equipment", None)
-    #     super().__init__(*args, **kwargs)
-    #
-    #     if self.equipment:
-    #         self.fields["new_status"].initial = self.equipment.status
-    #         self.fields["to_employee"].initial = self.equipment.assigned_to_id
-    #
-    #     for _, field in self.fields.items():
-    #         field.widget.attrs["class"] = "form-control"
-
     def __init__(self, *args, equipment=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.equipment = equipment
@@ -169,7 +160,7 @@ class EquipmentMoveForm(forms.Form):
 class EquipmentTypeForm(forms.ModelForm):
     class Meta:
         model = EquipmentType
-        fields = ["name",  "category"]
+        fields = ["name", "category"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -179,14 +170,6 @@ class EquipmentTypeForm(forms.ModelForm):
 
 class EquipmentCSVImportForm(forms.Form):
     csv_file = forms.FileField(label="CSV файл")
-    # delimiter = forms.ChoiceField(
-    #     label="Разделитель",
-    #     choices=(
-    #         (";", "Точка с запятой (;)"),
-    #         (",", "Запятая (,)"),
-    #     ),
-    #     initial=";",
-    # )
     update_existing = forms.BooleanField(
         label="Обновлять существующие записи по инвентарному номеру",
         required=False,

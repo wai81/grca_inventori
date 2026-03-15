@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import transaction
-from django.db.models import ProtectedError, Count
+from django.db.models import ProtectedError, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -73,7 +73,22 @@ class EquipmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["equipmenttype_meta"] = list(EquipmentType.objects.values("id", "category"))
+
+        # данные текущего сотрудника для TomSelect
+        emp = self.object.assigned_to
+        if emp:
+            ctx["initial_employee"] = {
+                "id": emp.id,
+                "name": emp.full_name,
+                "department": emp.department.name if emp.department else "",
+            }
+        else:
+            ctx["initial_employee"] = None
         return ctx
+
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user
+        return super().form_valid(form)
 
 
 class EquipmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
@@ -109,6 +124,11 @@ class EquipmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVie
         ctx = super().get_context_data(**kwargs)
         ctx["equipmenttype_meta"] = list(EquipmentType.objects.values("id", "category"))
         return ctx
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        form.instance.updated_by = self.request.user
+        return super().form_valid(form)
 
 
 class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
@@ -250,22 +270,34 @@ class EmployeesByOrganizationView(LoginRequiredMixin, View):
         if not user_has_org_access(request.user, org_id):
             return JsonResponse({"results": []})
 
+        # q = (request.GET.get("q") or "").strip()
         q = (request.GET.get("q") or "").strip()
+        current_id = request.GET.get("current")  # ← текущий assigned_to
 
         qs = (
             Employee.objects.filter(
                 organization_id=org_id,
-                active=True
+                # active=True
             )
             .select_related("department")
             .order_by("full_name")
         )
 
+        # Включаем текущего + всех активных
+        if current_id:
+            qs = qs.filter(Q(active=True) | Q(pk=current_id))
+        else:
+            qs = qs.filter(active=True)
+
         if q:
             qs = qs.filter(full_name__icontains=q)
 
         data = [
-            {"id": e.id, "name": e.full_name, "department": (e.department.name if e.department else "")}
+            {
+                "id": e.id,
+                "name": e.full_name,
+                "department": (e.department.name if e.department else ""),
+            }
             for e in qs[:200]
         ]
         return JsonResponse({"results": data})
@@ -741,6 +773,10 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
                     equipment.storageSDD_gb = self._parse_int(row.get("storageSDD_gb", ""))
                     equipment.print_format = row.get("print_format", "")
                     equipment.print_mode = print_mode_value
+
+                    if action == "create":
+                        equipment.created_by = self.request.user
+                    equipment.updated_by = self.request.user
 
                     equipment.save()
 

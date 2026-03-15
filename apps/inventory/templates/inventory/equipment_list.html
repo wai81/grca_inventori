@@ -238,6 +238,7 @@
                                         <th>Статус</th>
                                         <th>Закреплено</th>
                                         <th>Организация</th>
+                                        <th>Создал</th>
                                         <th class="text-end pe-4">Действия</th>
                                     </tr>
                                     </thead>
@@ -250,17 +251,17 @@
                                                     <a class="text-body fw-semibold"
                                                        href="{% url 'inventory:equipment_detail' obj.pk %}">
                                                         {% if obj.name == obj.model %}
-                                                        {{ obj.name }}
+                                                            {{ obj.name }}
                                                         {% else %}
-                                                        {{ obj.name }} {{ obj.model }}
+                                                            {{ obj.name }} {{ obj.model }}
                                                         {% endif %}
                                                     </a>
                                                     <small class="text-muted">
                                                         Инв.№ {{ obj.inventory_number }}
                                                         {% if obj.serial_number != "" %}
-                                                        / Серийный № {{ obj.serial_number }}
+                                                            / Серийный № {{ obj.serial_number }}
                                                         {% endif %}
-                                                        </small>
+                                                    </small>
                                                 </div>
                                             </td>
 
@@ -276,6 +277,15 @@
 
                                             <td>{{ obj.assigned_to|default:"—" }}</td>
                                             <td>{{ obj.organization }}</td>
+                                            <td>
+                                                {% if eq.created_by %}
+                                                    {{ eq.created_by.get_full_name|default:eq.created_by.username }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                                <br>
+                                                <small class="text-muted">{{ eq.created_at|date:"d.m.Y" }}</small>
+                                            </td>
 
                                             <td class="text-end pe-4">
                                                 <ul class="list-inline mb-0">
@@ -335,6 +345,7 @@
                                         <li class="page-item">
                                             <a class="page-link"
                                                href="?
+
                                                        {% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">
                                                 Назад
                                             </a>
@@ -354,6 +365,7 @@
                                             <li class="page-item">
                                                 <a class="page-link"
                                                    href="?
+
                                                            {% if querystring %}{{ querystring }}&{% endif %}page={{ num }}">
                                                     {{ num }}
                                                 </a>
@@ -365,6 +377,7 @@
                                         <li class="page-item">
                                             <a class="page-link"
                                                href="?
+
                                                        {% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">
                                                 Вперед
                                             </a>
