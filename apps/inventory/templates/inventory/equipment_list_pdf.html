@@ -1,41 +1,101 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <style>
-    @page { size: A4; margin: 12mm; }
-    body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 10pt; }
-    h1 { font-size: 14pt; margin: 0 0 6mm; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #777; padding: 4px; vertical-align: top; }
-    th { background: #eee; }
-    .muted { color: #666; font-size: 9pt; }
-  </style>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 8mm;
+        }
+
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 9px;
+            color: #000;
+        }
+
+        h1 {
+            font-size: 14px;
+            margin: 0 0 8px 0;
+        }
+
+        .meta {
+            font-size: 8px;
+            margin-bottom: 8px;
+            color: #444;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 1px solid #999;
+            padding: 4px;
+            vertical-align: top;
+            word-wrap: break-word;
+        }
+
+        th {
+            background: #f2f2f2;
+            font-size: 8px;
+        }
+
+        td {
+            font-size: 8px;
+        }
+
+        .nowrap {
+            white-space: nowrap;
+        }
+    </style>
 </head>
 <body>
-<h1>Оборудование (PDF)</h1>
-<div class="muted">Фильтр: {{ request.GET.urlencode|default:"(нет)" }}</div>
-<br>
+<h1>Оборудование</h1>
+<div class="meta">Фильтр: {{ filter_summary }}</div>
+
 <table>
-  <thead>
-    <tr>
-      <th>Наименование</th><th>Тип</th><th>Инв. №</th><th>Статус</th><th>Закреплено</th><th>Орг.</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for obj in filter.qs %}
-    <tr>
-      <td>{{ obj.name }}</td>
-      <td>{{ obj.equipment_type }}</td>
-      <td>{{ obj.inventory_number|default:"—" }}</td>
-      <td>{{ obj.get_status_display }}</td>
-      <td>{{ obj.assigned_to|default:"—" }}</td>
-      <td>{{ obj.organization }}</td>
-    </tr>
-  {% empty %}
-    <tr><td colspan="7">Нет данных</td></tr>
-  {% endfor %}
-  </tbody>
+    <thead>
+        <tr>
+            <th style="width: 3%;">#</th>
+            <th style="width: 22%;">Наименование</th>
+            <th style="width: 12%;">Инв./Сер. №</th>
+            <th style="width: 10%;">Статус</th>
+            <th style="width: 14%;">Закреплено</th>
+            <th style="width: 14%;">Организация</th>
+            <th style="width: 12%;">Ввод / Срок</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for obj in filter.qs %}
+            <tr>
+                <td>
+                    {{ obj.pk}}
+                </td>
+                <td>
+                    {{ obj.equipment_type }} {{ obj.name }}
+                </td>
+                <td>
+                    {{ obj.inventory_number|default:"—" }}<br>
+                    {{ obj.serial_number|default:"—" }}
+                </td>
+
+                <td>{{ obj.get_status_display }}</td>
+                <td>{{ obj.assigned_to|default:"—" }}</td>
+                <td>{{ obj.organization }}</td>
+                <td>
+                    {{ obj.commissioning_date|default:"—" }}<br>
+                    {{ obj.usage_duration_display|default:"—" }}
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="7" style="text-align:center;">Нет данных</td>
+            </tr>
+        {% endfor %}
+    </tbody>
 </table>
 </body>
 </html>

@@ -5,7 +5,14 @@ ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y \
     gcc \
-    libpq-dev \
+    libglib2.0-0 \
+    libgirepository-1.0-1 \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libpangoft2-1.0-0 \
+    libffi-dev \
+    shared-mime-info \
     netcat-openbsd \
     postgresql-client \
     fonts-dejavu-core \

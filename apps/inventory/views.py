@@ -42,6 +42,14 @@ class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView)
         ctx["equipmenttype_meta"] = list(EquipmentType.objects.values("id", "category"))
         params = self.request.GET.copy()
         params.pop("page", None)
+
+        for key in list(params.keys()):
+            values = [v for v in params.getlist(key) if str(v).strip()]
+            if values:
+                params.setlist(key, values)
+            else:
+                params.pop(key)
+
         ctx["querystring"] = params.urlencode()
         return ctx
 
@@ -206,11 +214,57 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
 class EquipmentListPdfView(EquipmentListView):
     permission_required = "inventory.view_equipment"
 
+    def _build_filter_summary(self, filt):
+        data = getattr(filt.form, "cleaned_data", {}) or {}
+        parts = []
+
+        if data.get("q"):
+            parts.append(f"Поиск: {data['q']}")
+        if data.get("organization"):
+            parts.append(f"Организация: {data['organization']}")
+        if data.get("equipment_type"):
+            parts.append(f"Тип: {data['equipment_type']}")
+        if data.get("status"):
+            parts.append(f"Статус: {dict(EquipmentStatus.choices).get(data['status'], data['status'])}")
+        if data.get("assigned_to"):
+            parts.append(f"Закреплено: {data['assigned_to']}")
+        if data.get("commissioning_date__gte"):
+            parts.append(f"Дата ввода от: {data['commissioning_date__gte'].strftime('%d.%m.%Y')}")
+        if data.get("commissioning_date__lte"):
+            parts.append(f"Дата ввода до: {data['commissioning_date__lte'].strftime('%d.%m.%Y')}")
+        if data.get("cpu"):
+            parts.append(f"CPU: {data['cpu']}")
+        if data.get("ram_gb__gte"):
+            parts.append(f"RAM от: {data['ram_gb__gte']}")
+        if data.get("ram_gb__lte"):
+            parts.append(f"RAM до: {data['ram_gb__lte']}")
+        if data.get("storageHDD_gb__gte"):
+            parts.append(f"HDD от: {data['storageHDD_gb__gte']}")
+        if data.get("storageHDD_gb__lte"):
+            parts.append(f"HDD до: {data['storageHDD_gb__lte']}")
+        if data.get("storageSDD_gb__gte"):
+            parts.append(f"SSD от: {data['storageSDD_gb__gte']}")
+        if data.get("storageSDD_gb__lte"):
+            parts.append(f"SSD до: {data['storageSDD_gb__lte']}")
+        if data.get("print_format"):
+            parts.append(f"Формат печати: {data['print_format']}")
+        if data.get("print_mode"):
+            parts.append(f"Тип печати: {dict(PrintMode.choices).get(data['print_mode'], data['print_mode'])}")
+
+        return "; ".join(parts) if parts else "нет"
+
     def get(self, request, *args, **kwargs):
         self.object_list = self.get_queryset()
         filt = self.get_filterset(self.filterset_class)
-        context = {"filter": filt, "request": request}
-        return render_pdf_response(request, "inventory/pdf/equipment_list_pdf.html", context, "equipment.pdf")
+
+        filt.form.is_valid()  # <-- добавить
+
+        context = {
+            "filter": filt,
+            "request": request,
+            "filter_summary": self._build_filter_summary(filt),
+        }
+        return render_pdf_response(request, "inventory/equipment_list_pdf.html", context, "equipment.pdf")
 
 
 class EquipmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
