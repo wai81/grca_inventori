@@ -63,9 +63,8 @@
 
                                 <div class="col-md-6 mb-2"><strong>Модель:</strong> {{ object.model|default:"—" }}</div>
                                 <div class="col-md-6 mb-2"><strong>Серийный
-                                    №:</strong> {{ object.serial_number|default:"—" }}</div>
-                                <div class="col-md-6 mb-2"><strong>Дата
-                                    ввода:</strong> {{ object.commissioning_date|date:"Y-m-d"|default:"—" }}</div>
+                                    №:</strong> {{ object.serial_number|default:"—" }}
+                                </div>
                                 <div class="col-md-6 mb-2">
                                     <strong>Закреплено:</strong>
                                     {% if object.assigned_to != Null %}
@@ -77,6 +76,17 @@
                                         {{ object.assigned_to|default:"—" }}
                                     {% endif %}
                                 </div>
+                                <div class="col-sm-6">
+                                    <strong>Дата
+                                        ввода:</strong> {{ object.commissioning_date|date:"d.m.Y"|default:"—" }}
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Срок использования:</strong>
+                                    <span class="{% if object.usage_duration and object.usage_duration.years >= 5 %}text-danger fw-bold{% elif object.usage_duration and object.usage_duration.years >= 3 %}text-warning{% else %}text-success{% endif %}">
+                                        {{ object.usage_duration_display }}
+                                    </span>
+                                </div>
+
                                 {% if object.equipment_type.category == "computer" %}
                                     <div class="mt-3">
                                         <h6 class="mb-2">Параметры компьютера</h6>

@@ -233,11 +233,12 @@
                                     <tr>
                                         <th>#</th>
                                         <th class="ps-4">Тип | Наименование</th>
-{#                                        <th>Тип</th>#}
+                                        {#                                        <th>Тип</th>#}
                                         <th>Инв. №</th>
                                         <th>Статус</th>
                                         <th>Закреплено</th>
                                         <th>Организация</th>
+                                        <th>Срок</th>
                                         <th>Создал</th>
                                         <th class="text-end pe-4">Действия</th>
                                     </tr>
@@ -265,7 +266,7 @@
                                                 </div>
                                             </td>
 
-{#                                            <td>{{ obj.equipment_type }}</td>#}
+                                            {#                                            <td>{{ obj.equipment_type }}</td>#}
                                             <td>{{ obj.inventory_number|default:"—" }}</td>
                                             <td>
                                             <span class="badge bg-light-secondary text-secondary">
@@ -276,6 +277,11 @@
                                             <td>{{ obj.assigned_to|default:"—" }}</td>
                                             <td>{{ obj.organization }}</td>
                                             <td>
+                                            <span class="{% if obj.usage_duration and obj.usage_duration.years >= 5 %}text-danger fw-bold{% elif obj.usage_duration and obj.usage_duration.years >= 3 %}text-warning{% else %}text-success{% endif %}">
+                                                {{ obj.usage_duration_display }}
+                                            </span>
+                                            </td>
+                                            <td>
                                                 {% if eq.created_by %}
                                                     {{ eq.created_by.get_full_name|default:eq.created_by.username }}
                                                 {% else %}
@@ -285,8 +291,14 @@
                                                 <small class="text-muted">{{ eq.created_at|date:"d.m.Y" }}</small>
                                             </td>
 
+
                                             <td class="text-end pe-4">
-                                                <ul class="list-inline mb-0">
+                                                <button type="button" class="btn dropdown-toggle"
+                                                        data-bs-toggle="dropdown" aria-haspopup="true"
+                                                        aria-expanded="false">
+                                                    <i class="feather icon-more-horizontal"></i>
+                                                </button>
+                                                <ul class="list-unstyled card-option dropdown-menu dropdown-menu-end">
                                                     <li class="list-inline-item">
                                                         <a class="btn btn-sm btn-link-hover-primary"
                                                            href="{% url 'inventory:equipment_qr_label' obj.pk %}">
@@ -303,21 +315,21 @@
                                                         <a class="btn btn-sm btn-success"
                                                            href="{% url 'inventory:equipment_detail' obj.pk %}">
                                                             <i class="ti ti-eye"></i>
-                                                            {#                                                            Открыть#}
+                                                            Открыть
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item">
                                                         <a class="btn btn-sm btn-primary"
                                                            href="{% url "inventory:equipment_edit" obj.pk %}">
                                                             <i class="ti ti-edit"></i>
-                                                            {#                                                            Редактировать#}
+                                                            Редактировать
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item">
                                                         <a class="btn btn-sm btn-light"
                                                            href="{% url 'inventory:equipment_move' obj.pk %}">
                                                             <i class="ti ti-corner-down-right"></i>
-                                                            {#                                                            Переместить#}
+                                                            Переместить
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -344,6 +356,8 @@
                                             <a class="page-link"
                                                href="?
 
+
+
                                                        {% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">
                                                 Назад
                                             </a>
@@ -364,6 +378,8 @@
                                                 <a class="page-link"
                                                    href="?
 
+
+
                                                            {% if querystring %}{{ querystring }}&{% endif %}page={{ num }}">
                                                     {{ num }}
                                                 </a>
@@ -375,6 +391,8 @@
                                         <li class="page-item">
                                             <a class="page-link"
                                                href="?
+
+
 
                                                        {% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">
                                                 Вперед

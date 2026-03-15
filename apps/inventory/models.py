@@ -1,3 +1,4 @@
+from dateutil.relativedelta import relativedelta
 from django.db import models
 from django.utils import timezone
 
@@ -117,6 +118,56 @@ class Equipment(models.Model):
             import secrets
             self.qr_token = secrets.token_hex(16)
         super().save(*args, **kwargs)
+
+    @property
+    def usage_duration(self):
+        """Возвращает срок использования как relativedelta или None."""
+        if not self.commissioning_date:
+            return None
+        today = timezone.now().date()
+        if self.commissioning_date > today:
+            return None
+        return relativedelta(today, self.commissioning_date)
+
+    @property
+    def usage_duration_display(self):
+        """Срок использования в формате '2 г. 3 мес.' """
+        rd = self.usage_duration
+        if rd is None:
+            return "—"
+
+        parts = []
+        if rd.years:
+            y = rd.years
+            if y % 10 == 1 and y % 100 != 11:
+                parts.append(f"{y} год")
+            elif 2 <= y % 10 <= 4 and not (12 <= y % 100 <= 14):
+                parts.append(f"{y} года")
+            else:
+                parts.append(f"{y} лет")
+
+        if rd.months:
+            m = rd.months
+            if m % 10 == 1 and m % 100 != 11:
+                parts.append(f"{m} месяц")
+            elif 2 <= m % 10 <= 4 and not (12 <= m % 100 <= 14):
+                parts.append(f"{m} месяца")
+            else:
+                parts.append(f"{m} месяцев")
+
+        if not parts:
+            if rd.days:
+                d = rd.days
+                if d % 10 == 1 and d % 100 != 11:
+                    parts.append(f"{d} день")
+                elif 2 <= d % 10 <= 4 and not (12 <= d % 100 <= 14):
+                    parts.append(f"{d} дня")
+                else:
+                    parts.append(f"{d} дней")
+            else:
+                return "менее дня"
+
+        return " ".join(parts)
 
 
 class EquipmentEventType(models.TextChoices):
