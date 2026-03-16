@@ -35,8 +35,8 @@
                             <tbody>
                             {% for obj in object_list %}
                                 <tr>
-                                    <td>
-                                        <a href="{% url 'inventory:equipmenttype_detail' obj.pk %}">{{ obj.name }}</a>
+                                    <td class="ps-4">
+                                        <a class="text-body fw-semibold" href="{% url 'inventory:equipmenttype_detail' obj.pk %}">{{ obj.name }}</a>
 
                                     </td>
                                     <td class="text-center pe-4">
