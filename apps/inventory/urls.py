@@ -14,6 +14,7 @@ urlpatterns = [
     path("equipment/pdf/", views.EquipmentListPdfView.as_view(), name="equipment_list_pdf"),
     path("equipment/import/csv/template/", views.equipment_csv_template, name="equipment_csv_template"),
     path("equipment/import/csv/", views.EquipmentImportCsvView.as_view(), name="equipment_import_csv"),
+    path("equipment/labels/selected/",views.equipment_qr_labels_selected, name="equipment_qr_labels_selected"),
 
 
     path("equipment/<int:pk>/qr.png", views.equipment_qr_png, name="equipment_qr_png"),

@@ -1018,3 +1018,38 @@ def equipment_csv_template(request):
 
     ])
     return response
+
+@login_required
+@permission_required("inventory.view_equipment", raise_exception=True)
+def equipment_qr_labels_selected(request):
+    raw_ids = request.GET.getlist("ids")
+    ids = []
+
+    for value in raw_ids:
+        try:
+            ids.append(int(value))
+        except (TypeError, ValueError):
+            continue
+
+    if not ids:
+        return HttpResponseBadRequest("Не выбрано ни одного оборудования.")
+
+    qs = filter_queryset_by_user_orgs(
+        Equipment.objects.select_related(
+            "organization", "equipment_type", "assigned_to", "assigned_to__department"
+        ),
+        request.user,
+        "organization",
+    ).filter(pk__in=ids)
+
+    by_id = {obj.pk: obj for obj in qs}
+    objects = [by_id[pk] for pk in ids if pk in by_id]
+
+    if not objects:
+        return HttpResponseBadRequest("Нет доступного оборудования для печати.")
+
+    return render(
+        request,
+        "inventory/equipment_qr_labels_selected_58x40.html",
+        {"objects": objects},
+    )

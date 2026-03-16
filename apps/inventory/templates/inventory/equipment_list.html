@@ -21,8 +21,15 @@
                             </ul>
                         </div>
                         <div class="col-auto">
+                            <button type="button" id="print-selected-labels" class="btn btn-outline-primary btn-sm">
+                                Печать этикеток 58×40
+                            </button>
                             <a class="btn btn-light-primary d-flex align-items-center gap-2"
-                               href="{% url 'inventory:equipment_list_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+                               href="
+
+
+
+                                       {% url 'inventory:equipment_list_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
                                 <i class="ti ti-printer"></i>
                                 PDF по текущему фильтру
                             </a>
@@ -228,6 +235,9 @@
                                 <table class="table table-hover mb-0">
                                     <thead>
                                     <tr>
+                                        <th style="width: 40px;" class="text-center">
+                                            <input type="checkbox" id="select-all-equipment">
+                                        </th>
                                         <th>#</th>
                                         <th class="ps-4">Тип | Наименование</th>
                                         {#                                        <th>Тип</th>#}
@@ -243,6 +253,9 @@
                                     <tbody>
                                     {% for obj in page_obj %}
                                         <tr>
+                                            <td class="text-center">
+                                                <input type="checkbox" class="js-equipment-select" value="{{ obj.pk }}">
+                                            </td>
                                             <td>{{ obj.pk }}</td>
                                             <td class="ps-4">
                                                 <div class="d-flex flex-column">
@@ -364,6 +377,10 @@
                                             <a class="page-link"
                                                href="?
 
+
+
+
+
                                                        {% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">
                                                 Назад
                                             </a>
@@ -384,6 +401,10 @@
                                                 <a class="page-link"
                                                    href="?
 
+
+
+
+
                                                            {% if querystring %}{{ querystring }}&{% endif %}page={{ num }}">
                                                     {{ num }}
                                                 </a>
@@ -395,6 +416,10 @@
                                         <li class="page-item">
                                             <a class="page-link"
                                                href="?
+
+
+
+
 
                                                        {% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">
                                                 Вперед
@@ -495,6 +520,42 @@
 
             typeEl.addEventListener("change", sync);
             sync();
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const selectAll = document.getElementById("select-all-equipment");
+            const printBtn = document.getElementById("print-selected-labels");
+
+            function getItems() {
+                return Array.from(document.querySelectorAll(".js-equipment-select"));
+            }
+
+            if (selectAll) {
+                selectAll.addEventListener("change", function () {
+                    getItems().forEach(cb => {
+                        cb.checked = selectAll.checked;
+                    });
+                });
+            }
+
+            if (printBtn) {
+                printBtn.addEventListener("click", function () {
+                    const checked = getItems()
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.value);
+
+                    if (!checked.length) {
+                        alert("Выберите оборудование для печати этикеток.");
+                        return;
+                    }
+
+                    const url = new URL("{% url 'inventory:equipment_qr_labels_selected' %}", window.location.origin);
+                    checked.forEach(id => url.searchParams.append("ids", id));
+
+                    window.open(url.toString(), "_blank");
+                });
+            }
         });
     </script>
 {% endblock extra_js %}
