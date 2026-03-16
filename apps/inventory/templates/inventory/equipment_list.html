@@ -21,18 +21,38 @@
                             </ul>
                         </div>
                         <div class="col-auto">
-                            <button type="button" id="print-selected-labels" class="btn btn-outline-primary btn-sm">
-                                Печать этикеток 58×40
-                            </button>
-                            <a class="btn btn-light-primary d-flex align-items-center gap-2"
-                               href="
+                            <div class="dropdown">
+                                <button
+                                        class="btn dropdown-toggle"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false"
+                                >
+                                    <i class="ti ti-printer"></i>
+                                    Печать
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="
 
 
 
-                                       {% url 'inventory:equipment_list_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
-                                <i class="ti ti-printer"></i>
-                                PDF по текущему фильтру
-                            </a>
+
+
+
+
+                                                   {% url 'inventory:equipment_list_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+                                            В PDF по текущему фильтру
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a id="print-selected-labels" class="dropdown-item">
+                                            Печать этикеток 58×40
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -381,6 +401,10 @@
 
 
 
+
+
+
+
                                                        {% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">
                                                 Назад
                                             </a>
@@ -405,6 +429,10 @@
 
 
 
+
+
+
+
                                                            {% if querystring %}{{ querystring }}&{% endif %}page={{ num }}">
                                                     {{ num }}
                                                 </a>
@@ -416,6 +444,10 @@
                                         <li class="page-item">
                                             <a class="page-link"
                                                href="?
+
+
+
+
 
 
 
