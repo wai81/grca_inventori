@@ -56,7 +56,6 @@ AUTHENTICATION_BACKENDS = [
 
 # AUTH_USER_MODEL = "auth.User"
 AUTH_USER_MODEL = 'users.User'
-MIDDLEWARE = []
 
 LOGIN_URL = "/users/login/"
 LOGIN_REDIRECT_URL = "/equipment/"
