@@ -144,7 +144,10 @@
                                                for="{{ form.commissioning_date.id_for_label }}">{{ form.commissioning_date.label }}</label>
                                         {{ form.commissioning_date }}
                                         {% if form.commissioning_date.errors %}
-                                            <div class="invalid-feedback d-block">{{ form.commissioning_date.errors|striptags }}</div>{% endif %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.commissioning_date.errors|striptags }}
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 </div>
 
@@ -170,11 +173,21 @@
                                         <label class="form-label"
                                                for="{{ form.storageHDD_gb.id_for_label }}">{{ form.storageHDD_gb.label }}</label>
                                         {{ form.storageHDD_gb }}
+                                        {% if form.storageHDD_gb.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.storageHDD_gb.errors|striptags }}
+                                            </div>
+                                        {% endif %}
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label"
                                                for="{{ form.storageSDD_gb.id_for_label }}">{{ form.storageSDD_gb.label }}</label>
                                         {{ form.storageSDD_gb }}
+                                        {% if form.storageSDD_gb.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.storageSDD_gb.errors|striptags }}
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 </div>
 
@@ -184,14 +197,20 @@
                                                for="{{ form.print_format.id_for_label }}">{{ form.print_format.label }}</label>
                                         {{ form.print_format }}
                                         {% if form.print_format.errors %}
-                                            <div class="text-danger small">{{ form.print_format.errors|striptags }}</div>{% endif %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.print_format.errors|striptags }}
+                                            </div>
+                                        {% endif %}
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label"
                                                for="{{ form.print_mode.id_for_label }}">{{ form.print_mode.label }}</label>
                                         {{ form.print_mode }}
                                         {% if form.print_mode.errors %}
-                                            <div class="text-danger small">{{ form.print_mode.errors|striptags }}</div>{% endif %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.print_mode.errors|striptags }}
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 </div>
 

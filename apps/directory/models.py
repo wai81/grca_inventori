@@ -40,8 +40,8 @@ class UserOrganizationAccess(models.Model):
 
 
 class Department(models.Model):
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="departments")
-    name = models.CharField(max_length=200)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="departments", verbose_name="Организация")
+    name = models.CharField(max_length=200,verbose_name="Наименование")
     active = models.BooleanField(default=True, verbose_name="Активно")
 
     class Meta:
@@ -55,11 +55,11 @@ class Department(models.Model):
 
 
 class Employee(models.Model):
-    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="employees")
-    department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="employees")
-    full_name = models.CharField(max_length=200)
-    email = models.EmailField(blank=True)
-    phone = models.CharField(max_length=50, blank=True)
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="employees", verbose_name="Организация")
+    department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="employees", verbose_name="Подразделение")
+    full_name = models.CharField(max_length=200, verbose_name="Ф.И.О.")
+    email = models.EmailField(blank=True, verbose_name="e-mail")
+    phone = models.CharField(max_length=50, blank=True, verbose_name="Телефон")
     active = models.BooleanField(default=True, verbose_name="Активен")
 
     class Meta:

@@ -70,6 +70,14 @@ class EquipmentForm(forms.ModelForm):
         et = cleaned.get("equipment_type")
         cat = getattr(et, "category", None)
 
+        commissioning_date = cleaned.get("commissioning_date")
+
+        if not commissioning_date:
+            self.add_error(
+                "commissioning_date",
+                "Укажите дату ввода в эксплуатацию."
+            )
+
         if cat == "computer":
             if not cleaned.get("cpu"):
                 self.add_error("cpu", "Укажите процессор.")
@@ -92,6 +100,15 @@ class EquipmentForm(forms.ModelForm):
             cleaned["storageSDD_gb"] = None
 
         return cleaned
+
+    def full_clean(self):
+        super().full_clean()
+
+        for name, field in self.fields.items():
+            css_class = field.widget.attrs.get("class", "")
+
+            if name in self.errors and "is-invalid" not in css_class:
+                field.widget.attrs["class"] = f"{css_class} is-invalid".strip()
 
     class Meta:
         model = Equipment
