@@ -53,7 +53,45 @@ class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView)
                 params.pop(key)
 
         ctx["querystring"] = params.urlencode()
+        ctx["active_filters"] = self._active_filters(ctx["filter"])
+        ctx["advanced_filters_count"] = sum(
+            1 for f in ctx["active_filters"] if f["name"] not in self.MAIN_FILTERS)
         return ctx
+
+    # поля в строке фильтра; остальные — в панели «Ещё фильтры»
+    MAIN_FILTERS = ("q", "organization", "equipment_type", "status")
+
+    def _active_filters(self, filterset):
+        """Плашки применённых фильтров: подпись, значение и ссылка без этого фильтра."""
+        form = filterset.form
+        if not form.is_valid():
+            return []
+        # сначала поля строки фильтра, затем остальные
+        names = sorted(form.fields, key=lambda n: self.MAIN_FILTERS.index(n) if n in self.MAIN_FILTERS
+                       else len(self.MAIN_FILTERS))
+        result = []
+        for name in names:
+            field = form.fields[name]
+            value = form.cleaned_data.get(name)
+            if value in (None, "", [], ()):
+                continue
+            if hasattr(field, "choices") and not hasattr(value, "pk"):
+                display = dict(field.choices).get(value, value)
+            elif hasattr(value, "strftime"):
+                display = value.strftime("%d.%m.%Y")
+            else:
+                display = value
+            params = self.request.GET.copy()
+            for key in list(params):
+                if key in (name, "page") or not any(v.strip() for v in params.getlist(key)):
+                    params.pop(key)
+            result.append({
+                "name": name,
+                "label": field.label,
+                "value": display,
+                "remove_url": "?" + params.urlencode() if params else self.request.path,
+            })
+        return result
 
     def get_queryset(self):
         qs = Equipment.objects.select_related(

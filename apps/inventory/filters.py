@@ -13,10 +13,13 @@ class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
         widget=forms.TextInput(attrs={"placeholder": "Название, инв. №, серийный, модель..."})
     )
 
-    status = django_filters.ChoiceFilter(choices=EquipmentStatus.choices, label="Статус")
-    equipment_type = django_filters.ModelChoiceFilter(queryset=EquipmentType.objects.all(), label="Тип")
-    organization = django_filters.ModelChoiceFilter(queryset=Organization.objects.all(), label="Организация")
-    assigned_to = django_filters.ModelChoiceFilter(queryset=Employee.objects.all(), label="Сотрудник")
+    status = django_filters.ChoiceFilter(choices=EquipmentStatus.choices, label="Статус", empty_label="Все статусы")
+    equipment_type = django_filters.ModelChoiceFilter(queryset=EquipmentType.objects.order_by("name"), label="Тип",
+                                                    empty_label="Все типы")
+    organization = django_filters.ModelChoiceFilter(queryset=Organization.objects.all(), label="Организация",
+                                                  empty_label="Все организации")
+    assigned_to = django_filters.ModelChoiceFilter(queryset=Employee.objects.order_by("full_name"), label="Сотрудник",
+                                                 empty_label="Любой сотрудник")
 
     commissioning_date__gte = django_filters.DateFilter(
         field_name="commissioning_date", lookup_expr="gte", label="Ввод с",
@@ -47,7 +50,7 @@ class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
         widget=forms.TextInput(attrs={"placeholder": "A4, A3..."})
     )
     print_mode = django_filters.ChoiceFilter(
-        field_name="print_mode", choices=PrintMode.choices, label="Печать"
+        field_name="print_mode", choices=PrintMode.choices, label="Печать", empty_label="Любая"
     )
 
     class Meta:
@@ -58,6 +61,15 @@ class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
             "status",
             "assigned_to",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # подсказки для диапазонов «от — до»
+        for name, field in self.form.fields.items():
+            if name.endswith("__gte"):
+                field.widget.attrs.setdefault("placeholder", "от")
+            elif name.endswith("__lte"):
+                field.widget.attrs.setdefault("placeholder", "до")
 
     def search(self, queryset, name, value):
         value = (value or "").strip()

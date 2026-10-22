@@ -58,178 +58,6 @@
                 </div>
             </div>
 
-            <!-- Filter -->
-            <div class="row">
-                <div class="col-12">
-
-                    <div class="card-body">
-                        <form method="get" class="card mb-3">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center gap-2">
-                                    <strong>Фильтр</strong>
-                                    <span id="eq-filter-category-badge"
-                                          class="badge bg-light text-muted border">—</span>
-                                </div>
-
-                                <button
-                                        class="btn btn-sm btn-outline-secondary"
-                                        type="button"
-                                        data-bs-toggle="collapse"
-                                        data-bs-target="#eq-filter-advanced"
-                                        aria-expanded="false"
-                                        aria-controls="eq-filter-advanced"
-                                >
-                                    Расширенный
-                                </button>
-                            </div>
-
-                            <div class="card-body">
-                                {% if filter.form.non_field_errors %}
-                                    <div class="alert alert-danger py-2 mb-3">
-                                        {{ filter.form.non_field_errors }}
-                                    </div>
-                                {% endif %}
-
-                                <div class="row g-3">
-                                    <div class="col-12 filter-field" data-field-name="q">
-                                        <label class="form-label"
-                                               for="{{ filter.form.q.id_for_label }}">{{ filter.form.q.label }}</label>
-                                        {{ filter.form.q }}
-                                        {% if filter.form.q.errors %}
-                                            <div class="text-danger small">{{ filter.form.q.errors|striptags }}</div>{% endif %}
-                                    </div>
-
-                                    <div class="col-md-6 filter-field" data-field-name="organization">
-                                        <label class="form-label"
-                                               for="{{ filter.form.organization.id_for_label }}">{{ filter.form.organization.label }}</label>
-                                        {{ filter.form.organization }}
-                                        {% if filter.form.organization.errors %}
-                                            <div class="text-danger small">{{ filter.form.organization.errors|striptags }}</div>{% endif %}
-                                    </div>
-
-                                    <div class="col-md-6 filter-field" data-field-name="equipment_type">
-                                        <label class="form-label"
-                                               for="{{ filter.form.equipment_type.id_for_label }}">{{ filter.form.equipment_type.label }}</label>
-                                        {{ filter.form.equipment_type }}
-                                        {% if filter.form.equipment_type.errors %}
-                                            <div class="text-danger small">{{ filter.form.equipment_type.errors|striptags }}</div>{% endif %}
-                                    </div>
-
-                                    <div class="col-md-6 filter-field" data-field-name="status">
-                                        <label class="form-label"
-                                               for="{{ filter.form.status.id_for_label }}">{{ filter.form.status.label }}</label>
-                                        {{ filter.form.status }}
-                                        {% if filter.form.status.errors %}
-                                            <div class="text-danger small">{{ filter.form.status.errors|striptags }}</div>{% endif %}
-                                    </div>
-
-                                    <div class="col-md-6 filter-field" data-field-name="assigned_to">
-                                        <label class="form-label"
-                                               for="{{ filter.form.assigned_to.id_for_label }}">{{ filter.form.assigned_to.label }}</label>
-                                        {{ filter.form.assigned_to }}
-                                        {% if filter.form.assigned_to.errors %}
-                                            <div class="text-danger small">{{ filter.form.assigned_to.errors|striptags }}</div>{% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="collapse mt-3" id="eq-filter-advanced">
-                                    <hr class="my-3">
-
-                                    <div class="row g-3">
-                                        <div class="col-12">
-                                            <div class="text-muted small mb-2">Дата ввода</div>
-                                        </div>
-
-                                        <div class="col-md-6 filter-field"
-                                             data-field-name="commissioning_date__gte">
-                                            <label class="form-label"
-                                                   for="{{ filter.form.commissioning_date__gte.id_for_label }}">{{ filter.form.commissioning_date__gte.label }}</label>
-                                            {{ filter.form.commissioning_date__gte }}
-                                        </div>
-
-                                        <div class="col-md-6 filter-field"
-                                             data-field-name="commissioning_date__lte">
-                                            <label class="form-label"
-                                                   for="{{ filter.form.commissioning_date__lte.id_for_label }}">{{ filter.form.commissioning_date__lte.label }}</label>
-                                            {{ filter.form.commissioning_date__lte }}
-                                        </div>
-
-                                        <div class="col-12 mt-2">
-                                            <div class="text-muted small mb-2">Компьютер</div>
-                                        </div>
-
-                                        <div class="col-12 filter-field" data-field-name="cpu">
-                                            <label class="form-label"
-                                                   for="{{ filter.form.cpu.id_for_label }}">{{ filter.form.cpu.label }}</label>
-                                            {{ filter.form.cpu }}
-                                        </div>
-
-                                        <div class="col-md-6 filter-field" data-field-name="ram_gb__gte">
-                                            <label class="form-label"
-                                                   for="{{ filter.form.ram_gb__gte.id_for_label }}">{{ filter.form.ram_gb__gte.label }}</label>
-                                            {{ filter.form.ram_gb__gte }}
-                                        </div>
-
-                                        <div class="col-md-6 filter-field" data-field-name="ram_gb__lte">
-                                            <label class="form-label"
-                                                   for="{{ filter.form.ram_gb__lte.id_for_label }}">{{ filter.form.ram_gb__lte.label }}</label>
-                                            {{ filter.form.ram_gb__lte }}
-                                        </div>
-
-                                        <div class="col-md-6 filter-field" data-field-name="storageHDD_gb__gte">
-                                            <label class="form-label"
-                                                   for="{{ filter.form.storageHDD_gb__gte.id_for_label }}">{{ filter.form.storageHDD_gb__gte.label }}</label>
-                                            {{ filter.form.storageHDD_gb__gte }}
-                                        </div>
-
-                                        <div class="col-md-6 filter-field" data-field-name="storageHDD_gb__lte">
-                                            <label class="form-label"
-                                                   for="{{ filter.form.storageHDD_gb__lte.id_for_label }}">{{ filter.form.storageHDD_gb__lte.label }}</label>
-                                            {{ filter.form.storageHDD_gb__lte }}
-                                        </div>
-
-                                        <div class="col-md-6 filter-field" data-field-name="storageSDD_gb__gte">
-                                            <label class="form-label"
-                                                   for="{{ filter.form.storageSDD_gb__gte.id_for_label }}">{{ filter.form.storageSDD_gb__gte.label }}</label>
-                                            {{ filter.form.storageSDD_gb__gte }}
-                                        </div>
-
-                                        <div class="col-md-6 filter-field" data-field-name="storageSDD_gb__lte">
-                                            <label class="form-label"
-                                                   for="{{ filter.form.storageSDD_gb__lte.id_for_label }}">{{ filter.form.storageSDD_gb__lte.label }}</label>
-                                            {{ filter.form.storageSDD_gb__lte }}
-                                        </div>
-
-                                        <div class="col-12 mt-2">
-                                            <div class="text-muted small mb-2">Печать</div>
-                                        </div>
-
-                                        <div class="col-md-6 filter-field" data-field-name="print_format">
-                                            <label class="form-label"
-                                                   for="{{ filter.form.print_format.id_for_label }}">{{ filter.form.print_format.label }}</label>
-                                            {{ filter.form.print_format }}
-                                        </div>
-
-                                        <div class="col-md-6 filter-field" data-field-name="print_mode">
-                                            <label class="form-label"
-                                                   for="{{ filter.form.print_mode.id_for_label }}">{{ filter.form.print_mode.label }}</label>
-                                            {{ filter.form.print_mode }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card-footer d-flex gap-2">
-                                <button class="btn btn-primary" type="submit">Фильтровать</button>
-                                <a class="btn btn-outline-secondary"
-                                   href="{% url 'inventory:equipment_list' %}">Сброс</a>
-                            </div>
-                        </form>
-                    </div>
-
-                </div>
-            </div>
-
             <!-- Table -->
             <div class="row">
                 <div class="col-12">
@@ -256,6 +84,116 @@
                                 {% endif %}
                             </div>
                         </div>
+
+                        <!-- Фильтр: компактная строка + панель «Ещё фильтры» -->
+                        <form method="get" id="eq-filter" class="eq-filter">
+                            {% if filter.form.non_field_errors %}
+                                <div class="alert alert-danger py-2 mb-2">{{ filter.form.non_field_errors }}</div>
+                            {% endif %}
+
+                            <div class="eq-filter__bar">
+                                <div class="eq-filter__search">
+                                    <i class="ti ti-search"></i>
+                                    {{ filter.form.q }}
+                                </div>
+                                <div class="eq-filter__select" title="{{ filter.form.organization.label }}">
+                                    {{ filter.form.organization }}
+                                </div>
+                                <div class="eq-filter__select" title="{{ filter.form.equipment_type.label }}">
+                                    {{ filter.form.equipment_type }}
+                                </div>
+                                <div class="eq-filter__select" title="{{ filter.form.status.label }}">
+                                    {{ filter.form.status }}
+                                </div>
+                                <button class="btn btn-outline-secondary d-inline-flex align-items-center gap-1"
+                                        type="button" data-bs-toggle="offcanvas" data-bs-target="#eq-filter-more"
+                                        aria-controls="eq-filter-more">
+                                    <i class="ti ti-adjustments-horizontal"></i> Ещё фильтры
+                                    {% if advanced_filters_count %}
+                                        <span class="badge bg-primary text-white">{{ advanced_filters_count }}</span>
+                                    {% endif %}
+                                </button>
+                            </div>
+
+                            {% if active_filters %}
+                                <div class="eq-filter__chips">
+                                    {% for f in active_filters %}
+                                        <a class="filter-chip" href="{{ f.remove_url }}" title="Убрать фильтр">
+                                            <span class="filter-chip__label">{{ f.label }}:</span> {{ f.value }}
+                                            <i class="ti ti-x"></i>
+                                        </a>
+                                    {% endfor %}
+                                    <a class="filter-chip filter-chip--reset" href="{% url 'inventory:equipment_list' %}">
+                                        Сбросить всё
+                                    </a>
+                                </div>
+                            {% endif %}
+
+                            <!-- Панель «Ещё фильтры» -->
+                            <div class="offcanvas offcanvas-end" tabindex="-1" id="eq-filter-more"
+                                 aria-labelledby="eq-filter-more-title">
+                                <div class="offcanvas-header">
+                                    <h5 class="offcanvas-title" id="eq-filter-more-title">Ещё фильтры</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+                                            aria-label="Закрыть"></button>
+                                </div>
+                                <div class="offcanvas-body">
+                                    <div class="filter-section">
+                                        <label class="form-label" for="{{ filter.form.assigned_to.id_for_label }}">
+                                            {{ filter.form.assigned_to.label }}
+                                        </label>
+                                        {{ filter.form.assigned_to }}
+                                    </div>
+
+                                    <div class="filter-section">
+                                        <div class="filter-section__title">Дата ввода</div>
+                                        <div class="filter-range">
+                                            {{ filter.form.commissioning_date__gte }}
+                                            <span>—</span>
+                                            {{ filter.form.commissioning_date__lte }}
+                                        </div>
+                                    </div>
+
+                                    <div class="filter-section" data-category="computer">
+                                        <div class="filter-section__title">Компьютер</div>
+                                        <div class="mb-2">
+                                            <label class="form-label" for="{{ filter.form.cpu.id_for_label }}">Процессор</label>
+                                            {{ filter.form.cpu }}
+                                        </div>
+                                        <label class="form-label">ОЗУ, ГБ</label>
+                                        <div class="filter-range mb-2">
+                                            {{ filter.form.ram_gb__gte }}<span>—</span>{{ filter.form.ram_gb__lte }}
+                                        </div>
+                                        <label class="form-label">HDD, ГБ</label>
+                                        <div class="filter-range mb-2">
+                                            {{ filter.form.storageHDD_gb__gte }}<span>—</span>{{ filter.form.storageHDD_gb__lte }}
+                                        </div>
+                                        <label class="form-label">SSD, ГБ</label>
+                                        <div class="filter-range">
+                                            {{ filter.form.storageSDD_gb__gte }}<span>—</span>{{ filter.form.storageSDD_gb__lte }}
+                                        </div>
+                                    </div>
+
+                                    <div class="filter-section" data-category="print">
+                                        <div class="filter-section__title">Печать</div>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <label class="form-label" for="{{ filter.form.print_format.id_for_label }}">Формат</label>
+                                                {{ filter.form.print_format }}
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label" for="{{ filter.form.print_mode.id_for_label }}">Цветность</label>
+                                                {{ filter.form.print_mode }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="offcanvas-footer">
+                                    <a class="btn btn-outline-secondary" href="{% url 'inventory:equipment_list' %}">Сбросить</a>
+                                    <button class="btn btn-primary flex-grow-1" type="submit">Применить</button>
+                                </div>
+                            </div>
+                        </form>
 
                         <div class="card-body p-0">
                             <div class="table-responsive">
@@ -465,73 +403,33 @@
     {{ block.super }}
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            const form = document.getElementById("eq-filter");
             const metaEl = document.getElementById("equipmenttype-meta");
             const typeEl = document.getElementById("id_equipment_type");
+            if (!form || !typeEl) return;
 
-            if (!metaEl || !typeEl) return;
+            // Списки в строке фильтра применяются сразу
+            ["id_organization", "id_equipment_type", "id_status"].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener("change", () => form.requestSubmit());
+            });
 
-            const byId = new Map(JSON.parse(metaEl.textContent || "[]").map(x => [String(x.id), x.category]));
+            // Разделы «Компьютер» / «Печать» — по категории выбранного типа
+            const byId = new Map(JSON.parse(metaEl ? metaEl.textContent : "[]").map(x => [String(x.id), x.category]));
+            const cat = typeEl.value ? (byId.get(String(typeEl.value)) || "other") : "";
+            form.querySelectorAll(".filter-section[data-category]").forEach(section => {
+                const visible = !cat || section.dataset.category === cat;
+                section.classList.toggle("d-none", !visible);
+                // скрытые поля не отправляем, чтобы не мешали
+                section.querySelectorAll("input, select").forEach(el => el.disabled = !visible);
+            });
 
-            const computerFields = [
-                "cpu",
-                "ram_gb__gte", "ram_gb__lte",
-                "storageHDD_gb__gte", "storageHDD_gb__lte",
-                "storageSDD_gb__gte", "storageSDD_gb__lte",
-            ];
-            const printFields = ["print_format", "print_mode"];
-
-            function wrapper(name) {
-                return document.querySelector(`.filter-field[data-field-name="${name}"]`);
-            }
-
-            function inputEl(name) {
-                return document.getElementById(`id_${name}`);
-            }
-
-            function clearField(name) {
-                const el = inputEl(name);
-                if (!el) return;
-                if (el.tagName === "SELECT") el.value = "";
-                else el.value = "";
-            }
-
-            function setVisible(name, visible, clearWhenHidden = true) {
-                const w = wrapper(name);
-                if (w) w.classList.toggle("d-none", !visible);
-                if (!visible && clearWhenHidden) clearField(name);
-            }
-
-            function sync() {
-                const cat = byId.get(String(typeEl.value || "")) || "";
-
-                if (!typeEl.value) {
-                    // тип не выбран — показываем всё и ничего не чистим
-                    computerFields.forEach(f => setVisible(f, true, false));
-                    printFields.forEach(f => setVisible(f, true, false));
-                    return;
-                }
-
-                if (cat === "computer") {
-                    computerFields.forEach(f => setVisible(f, true, false));
-                    printFields.forEach(f => setVisible(f, false, true));
-                } else if (cat === "print") {
-                    computerFields.forEach(f => setVisible(f, false, true));
-                    printFields.forEach(f => setVisible(f, true, false));
-                } else {
-                    // other
-                    computerFields.forEach(f => setVisible(f, false, true));
-                    printFields.forEach(f => setVisible(f, false, true));
-                }
-                const badge = document.getElementById("eq-filter-category-badge");
-                if (badge) {
-                    const txt = !typeEl.value ? "Все" : (cat === "computer" ? "Компьютер" : (cat === "print" ? "Печать" : "Другое"));
-                    badge.textContent = txt;
-                    badge.className = "badge border " + (cat === "computer" ? "bg-light text-primary" : (cat === "print" ? "bg-light text-success" : "bg-light text-muted"));
-                }
-            }
-
-            typeEl.addEventListener("change", sync);
-            sync();
+            // Пустые поля не попадают в адрес
+            form.addEventListener("submit", () => {
+                form.querySelectorAll("input, select").forEach(el => {
+                    if (!el.disabled && el.name && el.value === "") el.disabled = true;
+                });
+            });
         });
     </script>
     <script>

@@ -795,6 +795,160 @@ a:hover {
     }
 }
 
+/* ---------- Компактный фильтр списка ---------- */
+.eq-filter {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--app-border);
+    background: #fafbfd;
+}
+
+.eq-filter__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.eq-filter__search {
+    position: relative;
+    flex: 1 1 200px;
+    min-width: 180px;
+}
+
+.eq-filter__search > i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 17px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.eq-filter__search .form-control {
+    padding-left: 38px;
+}
+
+.eq-filter__select {
+    flex: 0 1 150px;
+    min-width: 140px;
+}
+
+@media (max-width: 575.98px) {
+    .eq-filter {
+        padding: 12px;
+    }
+
+    .eq-filter__search {
+        flex-basis: 100%;
+    }
+
+    .eq-filter__select,
+    .eq-filter__bar > .btn {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 0;
+        justify-content: center;
+    }
+}
+
+.eq-filter__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 4px 12px;
+    border-radius: 999px;
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+    font-size: 13px;
+    line-height: 1.3;
+    text-decoration: none;
+    transition: background-color .15s;
+}
+
+.filter-chip:hover {
+    background: #dde8ff;
+    color: var(--app-primary-hover);
+}
+
+.filter-chip__label {
+    color: #4b6bb5;
+}
+
+.filter-chip .ti-x {
+    font-size: 14px;
+    opacity: .7;
+}
+
+.filter-chip--reset {
+    background: transparent;
+    color: var(--app-muted);
+    padding-left: 8px;
+}
+
+.filter-chip--reset:hover {
+    background: #f1f3f7;
+    color: var(--app-text);
+}
+
+/* боковая панель «Ещё фильтры» */
+.offcanvas {
+    --bs-offcanvas-width: 380px;
+    border-left: 1px solid var(--app-border);
+}
+
+.offcanvas-header {
+    border-bottom: 1px solid var(--app-border);
+}
+
+.offcanvas-title {
+    font-weight: 700;
+}
+
+.offcanvas-footer {
+    display: flex;
+    gap: 8px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--app-border);
+    background: #fafbfd;
+}
+
+.filter-section + .filter-section {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--app-border);
+}
+
+.filter-section__title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--app-muted);
+    margin-bottom: 10px;
+}
+
+.filter-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-range > span {
+    color: var(--app-muted);
+}
+
+.filter-range .form-control {
+    min-width: 0;
+}
+
 /* ---------- Кто создал / изменил ---------- */
 .author-info {
     display: flex;
