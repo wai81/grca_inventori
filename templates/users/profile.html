@@ -36,15 +36,15 @@
                         <div class="card-header"><h5 class="mb-0">Учётная запись</h5></div>
                         <div class="card-body">
                             <dl class="profile-list">
-                                <dt>ФИО</dt>
+                                <dt><i class="ti ti-user"></i>ФИО</dt>
                                 <dd>{{ user.get_full_name|default:"—" }}</dd>
-                                <dt>Логин</dt>
+                                <dt><i class="ti ti-at"></i>Логин</dt>
                                 <dd>{{ user.username }}</dd>
-                                <dt>E-mail</dt>
+                                <dt><i class="ti ti-mail"></i>E-mail</dt>
                                 <dd>{{ user.email|default:"—" }}</dd>
-                                <dt>Зарегистрирован</dt>
+                                <dt><i class="ti ti-calendar-plus"></i>Зарегистрирован</dt>
                                 <dd>{{ user.date_joined|date:"d.m.Y H:i" }}</dd>
-                                <dt>Последний вход</dt>
+                                <dt><i class="ti ti-login"></i>Последний вход</dt>
                                 <dd>{{ user.last_login|date:"d.m.Y H:i"|default:"—" }}</dd>
                             </dl>
                         </div>
