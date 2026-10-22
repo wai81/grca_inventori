@@ -949,6 +949,252 @@ a:hover {
     min-width: 0;
 }
 
+/* ---------- Профиль пользователя ---------- */
+.user-avatar {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: #fff;
+    background: linear-gradient(135deg, #2563eb, #22d3ee);
+    box-shadow: 0 0 0 2px #fff, 0 2px 8px rgba(var(--app-primary-rgb), .35);
+}
+
+.user-avatar--lg {
+    width: 52px;
+    height: 52px;
+    font-size: 18px;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .15);
+}
+
+.user-avatar--xl {
+    width: 64px;
+    height: 64px;
+    font-size: 22px;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, .12);
+}
+
+/* кнопка профиля в шапке */
+.pc-header .header-user-profile .user-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+    padding: 4px 10px 4px 4px;
+    border-radius: 999px;
+    transition: background-color .15s;
+}
+
+.pc-header .header-user-profile .user-chip:hover,
+.pc-header .header-user-profile .user-chip[aria-expanded="true"] {
+    background: rgba(17, 24, 39, .05);
+}
+
+/* у темы на .pc-head-link есть непрозрачный ::before поверх содержимого */
+.pc-header .header-user-profile .user-chip::before {
+    display: none;
+}
+
+.user-chip__text {
+    flex-direction: column;
+    line-height: 1.15;
+    text-align: left;
+}
+
+.user-chip__name {
+    color: var(--app-heading);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.user-chip__role {
+    color: var(--app-muted);
+    font-size: 12px;
+}
+
+.user-chip .ti-chevron-down {
+    color: var(--app-muted);
+    font-size: 14px;
+}
+
+/* выпадающее меню профиля */
+.profile-menu {
+    width: 320px;
+    border: 1px solid var(--app-border);
+    border-radius: 16px;
+    box-shadow: 0 20px 48px rgba(16, 24, 40, .18);
+}
+
+.profile-menu__head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px;
+    background: var(--app-hero-bg);
+    color: #cbd5e1;
+}
+
+.profile-menu__name {
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.2;
+}
+
+.profile-menu__login {
+    color: #94a3b8;
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+.profile-menu__roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.profile-menu__info {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--app-border);
+    display: grid;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--app-text);
+}
+
+.profile-menu__row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.profile-menu__row > i {
+    color: var(--app-muted);
+    font-size: 17px;
+    margin-top: 1px;
+}
+
+.profile-menu__label {
+    color: var(--app-muted);
+    font-size: 12px;
+}
+
+.profile-menu__links {
+    padding: 6px;
+}
+
+.profile-menu__links .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--app-radius-sm);
+    color: var(--app-text);
+}
+
+.profile-menu__links .dropdown-item i {
+    font-size: 18px;
+    color: var(--app-muted);
+}
+
+.profile-menu__links .dropdown-item:hover {
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+}
+
+.profile-menu__links .dropdown-item:hover i {
+    color: var(--app-primary);
+}
+
+.profile-menu__foot {
+    padding: 10px 12px 12px;
+    border-top: 1px solid var(--app-border);
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(96, 165, 250, .18);
+    color: #bfdbfe;
+}
+
+/* страница профиля */
+.profile-list {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 10px 20px;
+    margin: 0;
+}
+
+.profile-list dt {
+    color: var(--app-muted);
+    font-weight: 400;
+}
+
+.profile-list dd {
+    margin: 0;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.profile-icon {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: #f1f3f7;
+    color: var(--app-muted);
+}
+
+.profile-icon--ok {
+    background: #e8f7ef;
+    color: #15803d;
+}
+
+.org-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px 4px 4px;
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.org-pill .org-group__code {
+    min-width: 38px;
+    height: 28px;
+}
+
+.perm-table .perm-yes {
+    color: #16a34a;
+    font-size: 18px;
+}
+
+.perm-table .perm-no {
+    color: #d1d5db;
+    font-size: 18px;
+}
+
+.password-help ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+}
+
 /* ---------- Кто создал / изменил ---------- */
 .author-info {
     display: flex;

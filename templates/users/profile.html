@@ -1,0 +1,138 @@
+{% extends "layouts/base.html" %}
+{% block title %}Мой профиль{% endblock %}
+
+{% block content %}
+    <div class="pc-container">
+        <div class="pc-content">
+
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="row align-items-center g-3">
+                        <div class="col-auto">
+                            <span class="user-avatar user-avatar--xl">{{ profile.initials }}</span>
+                        </div>
+                        <div class="col">
+                            <div class="page-header-title">
+                                <h5 class="m-b-10">{{ profile.display_name }}</h5>
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="text-muted">@{{ user.username }}</span>
+                                {% for role in profile.roles %}<span class="role-badge">{{ role }}</span>{% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-auto">
+                            <a class="btn btn-light d-inline-flex align-items-center gap-2" href="{% url 'password_change' %}">
+                                <i class="ti ti-lock"></i> Сменить пароль
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Личные данные -->
+                <div class="col-lg-5">
+                    <div class="card">
+                        <div class="card-header"><h5 class="mb-0">Учётная запись</h5></div>
+                        <div class="card-body">
+                            <dl class="profile-list">
+                                <dt>ФИО</dt>
+                                <dd>{{ user.get_full_name|default:"—" }}</dd>
+                                <dt>Логин</dt>
+                                <dd>{{ user.username }}</dd>
+                                <dt>E-mail</dt>
+                                <dd>{{ user.email|default:"—" }}</dd>
+                                <dt>Зарегистрирован</dt>
+                                <dd>{{ user.date_joined|date:"d.m.Y H:i" }}</dd>
+                                <dt>Последний вход</dt>
+                                <dd>{{ user.last_login|date:"d.m.Y H:i"|default:"—" }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><h5 class="mb-0">Telegram-бот</h5></div>
+                        <div class="card-body">
+                            {% if profile.telegram_linked %}
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="profile-icon profile-icon--ok"><i class="ti ti-brand-telegram"></i></span>
+                                    <div>
+                                        <div class="fw-semibold">Аккаунт привязан</div>
+                                        <div class="text-muted small">Telegram ID: {{ user.telegram_id }}</div>
+                                    </div>
+                                </div>
+                                <p class="text-muted small mb-0 mt-3">
+                                    Через бота можно сканировать QR-этикетки{% if perms.inventory.change_equipment %} и перемещать оборудование{% endif %}.
+                                </p>
+                            {% else %}
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="profile-icon"><i class="ti ti-brand-telegram"></i></span>
+                                    <div>
+                                        <div class="fw-semibold">Не привязан</div>
+                                        <div class="text-muted small">Для привязки обратитесь к администратору.</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <!-- Организации -->
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h5 class="mb-0">Доступные организации</h5>
+                            {% if not profile.all_organizations %}<span class="text-muted">{{ profile.organizations|length }}</span>{% endif %}
+                        </div>
+                        <div class="card-body">
+                            {% if profile.all_organizations %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="ti ti-shield-check text-success fs-5"></i> Доступ ко всем организациям
+                                </div>
+                            {% else %}
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for org in profile.organizations %}
+                                        <span class="org-pill"><span class="org-group__code">{{ org.code }}</span>{{ org.name }}</span>
+                                    {% empty %}
+                                        <span class="text-danger">Нет доступа ни к одной организации — обратитесь к администратору.</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Права -->
+                    <div class="card table-card">
+                        <div class="card-header"><h5 class="mb-0">Права доступа</h5></div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table mb-0 perm-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Раздел</th>
+                                        {% for a in permission_actions %}<th class="text-center">{{ a }}</th>{% endfor %}
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for row in permission_rows %}
+                                        <tr>
+                                            <td class="fw-medium">{{ row.title }}</td>
+                                            {% for allowed in row.actions %}
+                                                <td class="text-center">
+                                                    {% if allowed %}<i class="ti ti-check perm-yes" title="Разрешено"></i>
+                                                    {% else %}<i class="ti ti-minus perm-no" title="Нет"></i>{% endif %}
+                                                </td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+{% endblock content %}

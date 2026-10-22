@@ -20,7 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView, TemplateView
 
-from apps.users.views import UserLoginView
+from apps.users.views import ProfileView, UserLoginView
 from config import views
 
 urlpatterns = [
@@ -30,6 +30,7 @@ urlpatterns = [
     path('feather-icon/', views.icon_feather, name='icon_feather'),
     path('sample-page/', views.sample_page, name='sample_page'),
     path('users/login/', UserLoginView.as_view(), name='login'),
+    path('users/profile/', ProfileView.as_view(), name='profile'),
     path('users/', include("django.contrib.auth.urls")),
     # path('', views.home, name='home'),
     path('', RedirectView.as_view(pattern_name="inventory:equipment_list", permanent=False), name="index"),
