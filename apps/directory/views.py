@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, UpdateView, DetailView
 from django_filters.views import FilterView
@@ -15,7 +15,7 @@ from apps.directory.forms import OrganizationForm, DepartmentForm, EmployeeForm,
 from apps.directory.models import Employee, Organization, Department
 from apps.inventory.models import Equipment, EquipmentEvent, EquipmentEventType, EquipmentStatus
 from apps.inventory.views import _append_query
-from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access
+from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access, safe_next_url
 
 # Create your views here.
 class EmployeeListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
@@ -38,6 +38,10 @@ class EmployeeDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
     permission_required = "directory.view_employee"
     model = Employee
     template_name = "directory/employee_detail.html"
+
+    def get_queryset(self):
+        qs = Employee.objects.select_related("organization", "department")
+        return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -63,7 +67,8 @@ class EmployeeUnassignAllView(LoginRequiredMixin, PermissionRequiredMixin, View)
     permission_required = ("directory.view_employee", "inventory.change_equipment")
 
     def post(self, request, pk):
-        employee = get_object_or_404(Employee, pk=pk)
+        employee = get_object_or_404(
+            filter_queryset_by_user_orgs(Employee.objects.all(), request.user, "organization"), pk=pk)
 
         form = EmployeeUnassignAllForm(request.POST)
         if not form.is_valid():
@@ -120,7 +125,8 @@ class EmployeeUnassignAllView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
         return redirect("directory:employee_detail", pk=employee.pk)
 
-class EmployeeCreateView(LoginRequiredMixin, CreateView):
+class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "directory.add_employee"
     model = Employee
     form_class = EmployeeForm
     template_name = "directory/employee_form.html"
@@ -150,7 +156,7 @@ class EmployeeCreateView(LoginRequiredMixin, CreateView):
         return ctx
 
     def get_success_url(self):
-        nxt = self.request.POST.get("next") or self.request.GET.get("next") or ""
+        nxt = safe_next_url(self.request, self.request.POST.get("next") or self.request.GET.get("next"))
         org_id = self.request.POST.get("org_id") or self.request.GET.get("org_id") or ""
         if nxt:
             url = _append_query(nxt, assigned_to=self.object.pk)
@@ -162,7 +168,8 @@ class EmployeeCreateView(LoginRequiredMixin, CreateView):
 
 
 
-class EmployeeUpdateView(LoginRequiredMixin, UpdateView):
+class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "directory.change_employee"
     model = Employee
     form_class = EmployeeForm
     template_name = "directory/employee_form.html"
@@ -178,7 +185,9 @@ class EmployeeUpdateView(LoginRequiredMixin, UpdateView):
         return kw
 
 
-class EmployeeToggleActiveView(LoginRequiredMixin, View):
+class EmployeeToggleActiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = "directory.change_employee"
+
     # Используем как “Удалить” (active=False) и “Восстановить” (active=True)
     def post(self, request, pk):
         qs = Employee.objects.select_related("organization")
@@ -186,7 +195,8 @@ class EmployeeToggleActiveView(LoginRequiredMixin, View):
         obj = get_object_or_404(qs, pk=pk)
         obj.active = not obj.active
         obj.save(update_fields=["active"])
-        return redirect(request.POST.get("next") or request.META.get("HTTP_REFERER") or "/employees/")
+        return redirect(safe_next_url(request, request.POST.get("next") or request.META.get("HTTP_REFERER"),
+                                      reverse("directory:employee_list")))
 
 class EmployeeListPdfView(EmployeeListView):
     permission_required = "directory.view_employee"
@@ -198,7 +208,8 @@ class EmployeeListPdfView(EmployeeListView):
         return render_pdf_response(request, "directory/pdf/employee_list_pdf.html", context, "employees.pdf")
 
 
-class OrganizationListView(FilterView):
+class OrganizationListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
+    permission_required = "directory.view_organization"
     template_name = "directory/organization_list.html"
     filterset_class = OrganizationFilter
     paginate_by = 20
@@ -216,24 +227,29 @@ class OrganizationListView(FilterView):
         return filter_queryset_by_user_orgs(qs, self.request.user, "id")
 
 
-class OrganizationToggleActiveView(LoginRequiredMixin, View):
+class OrganizationToggleActiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = "directory.change_organization"
+
     def post(self, request, pk):
-        obj = get_object_or_404(Organization, pk=pk)
+        qs = filter_queryset_by_user_orgs(Organization.objects.all(), request.user, "id")
+        obj = get_object_or_404(qs, pk=pk)
         obj.active = not obj.active
         obj.save(update_fields=["active"])
 
-        next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or "/organizations/"
-        return redirect(next_url)
+        return redirect(safe_next_url(request, request.POST.get("next") or request.META.get("HTTP_REFERER"),
+                                      reverse("directory:organization_list")))
 
 
-class OrganizationCreateView(LoginRequiredMixin, CreateView):
+class OrganizationCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "directory.add_organization"
     model = Organization
     form_class = OrganizationForm
     template_name = "directory/organization_form.html"
     success_url = reverse_lazy("directory:organization_list")
 
 
-class OrganizationUpdateView(LoginRequiredMixin, UpdateView):
+class OrganizationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "directory.change_organization"
     model = Organization
     form_class = OrganizationForm
     template_name = "directory/organization_form.html"
@@ -243,7 +259,8 @@ class OrganizationUpdateView(LoginRequiredMixin, UpdateView):
         return filter_queryset_by_user_orgs(Organization.objects.all(), self.request.user, "id")
 
 
-class DepartmentListView(LoginRequiredMixin, FilterView):
+class DepartmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
+    permission_required = "directory.view_department"
     template_name = "directory/department_list.html"
     filterset_class = DepartmentFilter
     paginate_by = 20
@@ -257,7 +274,7 @@ class DepartmentListView(LoginRequiredMixin, FilterView):
         )
         return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
 
-class DepartmentsByOrganizationView(LoginRequiredMixin, View):
+class DepartmentsByOrganizationView(LoginRequiredMixin, PermissionRequiredMixin, View):
     permission_required = "directory.view_department"
 
     def get(self, request):
@@ -280,7 +297,8 @@ class DepartmentsByOrganizationView(LoginRequiredMixin, View):
         data = [{"id": d.id, "name": d.name} for d in qs]  # <-- без повторного order_by
         return JsonResponse({"results": data})
 
-class DepartmentCreateView(LoginRequiredMixin, CreateView):
+class DepartmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "directory.add_department"
     model = Department
     form_class = DepartmentForm
     template_name = "directory/department_form.html"
@@ -305,7 +323,7 @@ class DepartmentCreateView(LoginRequiredMixin, CreateView):
         return ctx
 
     def get_success_url(self):
-        nxt = self.request.POST.get("next") or self.request.GET.get("next") or ""
+        nxt = safe_next_url(self.request, self.request.POST.get("next") or self.request.GET.get("next"))
         if nxt:
             return _append_query(
                 nxt,
@@ -315,7 +333,8 @@ class DepartmentCreateView(LoginRequiredMixin, CreateView):
         return super().get_success_url()
 
 
-class DepartmentUpdateView(LoginRequiredMixin, UpdateView):
+class DepartmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "directory.change_department"
     model = Department
     form_class = DepartmentForm
     template_name = "directory/department_form.html"
@@ -331,11 +350,14 @@ class DepartmentUpdateView(LoginRequiredMixin, UpdateView):
         return kw
 
 
-class DepartmentToggleActiveView(LoginRequiredMixin, View):
+class DepartmentToggleActiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = "directory.change_department"
+
     def post(self, request, pk):
         qs = Department.objects.select_related("organization")
         qs = filter_queryset_by_user_orgs(qs, request.user, "organization")
         obj = get_object_or_404(qs, pk=pk)
         obj.active = not obj.active
         obj.save(update_fields=["active"])
-        return redirect(request.POST.get("next") or request.META.get("HTTP_REFERER") or "/departments/")
+        return redirect(safe_next_url(request, request.POST.get("next") or request.META.get("HTTP_REFERER"),
+                                      reverse("directory:department_list")))

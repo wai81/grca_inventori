@@ -12,7 +12,7 @@ router = Router()
 @router.message(F.text)
 async def handle_qr_code(message: Message, state: FSMContext):
     code = message.text.strip()
-    device = await get_device_by_code_or_id(code)
+    device = await get_device_by_code_or_id(code, message.from_user.id)
 
     if device:
         # employee = await get_user_by_telegram(message.from_user.id)

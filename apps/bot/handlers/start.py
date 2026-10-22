@@ -28,7 +28,7 @@ async def cmd_start(message: Message, command: CommandObject, state: FSMContext)
     args = command.args
     if args:
         # Если пришли с параметром (из QR-кода)
-        device = await get_device_by_code_or_id(args)
+        device = await get_device_by_code_or_id(args, message.from_user.id)
         if device:
             # user = await get_user_by_telegram(message.from_user.id)
             # is_owner = user and device.responsible and device.responsible.id == user.id

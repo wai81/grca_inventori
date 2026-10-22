@@ -29,7 +29,7 @@ from django.conf import settings
 from config.pdf import render_pdf_response
 from apps.inventory.services import apply_document
 
-from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access
+from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access, safe_next_url
 
 
 class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
@@ -323,8 +323,8 @@ class DocumentPdfView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
         return render_pdf_response(request, tpl, {"doc": doc}, fname)
 
 
-class EmployeesByOrganizationView(LoginRequiredMixin, View):
-    permission_required = "directory.view_department"
+class EmployeesByOrganizationView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = "directory.view_employee"
 
     def get(self, request):
         org_id = request.GET.get("organization_id")
@@ -466,7 +466,7 @@ class EquipmentTypeCreateView(LoginRequiredMixin, PermissionRequiredMixin, Creat
         return ctx
 
     def get_success_url(self):
-        nxt = self.request.POST.get("next") or self.request.GET.get("next") or ""
+        nxt = safe_next_url(self.request, self.request.POST.get("next") or self.request.GET.get("next"))
         if nxt:
             # вернемся назад и подставим созданный тип в equipment_form
             return _append_query(nxt, equipment_type=self.object.pk)

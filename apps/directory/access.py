@@ -29,3 +29,17 @@ def user_has_org_access(user, organization_id):
         return False
 
     return access.organizations.filter(pk=organization_id).exists()
+
+
+def safe_next_url(request, url, fallback=""):
+    """Возвращает url, если он ведёт на этот же сайт, иначе fallback (защита от open redirect)."""
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    url = (url or "").strip()
+    if url and url_has_allowed_host_and_scheme(
+            url=url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+    ):
+        return url
+    return fallback

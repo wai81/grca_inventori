@@ -7,9 +7,13 @@ from apps.users.models import User
 
 # -----Список доступных организаций для User
 def access_orgs_for_user(telegram_id):
+    """
+    Список id доступных организаций.
+    None — без ограничений (суперпользователь), [] — нет доступа (в т.ч. незарегистрированный пользователь).
+    """
     user = User.objects.filter(telegram_id=telegram_id, is_active=True).first()
     if not user:
-        return None
+        return []
 
     orgs = get_allowed_organizations(user)
 
@@ -32,6 +36,14 @@ def access_orgs_for_user(telegram_id):
     #     return None
     #
     # return list(scope.allowed_regions.values_list('id', flat=True))
+
+
+def _filter_by_user_orgs(qs, telegram_id, field="organization_id"):
+    """Ограничивает queryset организациями пользователя бота."""
+    org_ids = access_orgs_for_user(telegram_id)
+    if org_ids is None:
+        return qs
+    return qs.filter(**{f"{field}__in": org_ids})
 
 # ---------- Базовые функции (используются в start.py и др.) ----------
 # получить по id телеграмма пользователя
@@ -65,7 +77,12 @@ def get_device_by_qr_code(code):
 
 # получить по qr или id оборудование
 @sync_to_async
-def get_device_by_code_or_id(identifier):
+def get_device_by_code_or_id(identifier, telegram_id=None):
+    """
+    По qr_token (случайный токен с наклейки) оборудование доступно всем.
+    По числовому id — только зарегистрированным пользователям и только в их организациях,
+    иначе устройства можно перебрать по номерам.
+    """
     qs = Equipment.objects.select_related(
         "organization",
         "equipment_type",
@@ -74,11 +91,13 @@ def get_device_by_code_or_id(identifier):
 
     try:
         equipment_id = int(identifier)
-        equipment = qs.filter(id=equipment_id).first()
+    except (ValueError, TypeError):
+        equipment_id = None
+
+    if equipment_id is not None and telegram_id is not None:
+        equipment = _filter_by_user_orgs(qs, telegram_id).filter(id=equipment_id).first()
         if equipment:
             return equipment
-    except (ValueError, TypeError):
-        pass
     return qs.filter(qr_token=identifier).first()
     # try:
     #     qr_id = int(identifier)
@@ -169,15 +188,18 @@ def get_device_types():
 # проверка администратор ли пользователь
 @sync_to_async
 def is_admin(telegram_id):
-    # return User.objects.filter(telegram_id=telegram_id, is_admin=True, is_approved=True).exists()
-    return User.objects.filter(telegram_id=telegram_id, is_active=True).exists()
+    # администрирование в боте — только для пользователей с правом изменять оборудование
+    user = User.objects.filter(telegram_id=telegram_id, is_active=True).first()
+    return bool(user) and user.has_perm("inventory.change_equipment")
 
 
 # ---------- Функции для сотрудников ----------
 # Создание сотрудника
 @sync_to_async
-def create_employee(full_name, department_id=None, **kwargs):
-    department = Department.objects.get(id=department_id)
+def create_employee(full_name, department_id=None, admin_telegram_id=None, **kwargs):
+    department = _filter_by_user_orgs(Department.objects.all(), admin_telegram_id).filter(id=department_id).first()
+    if not department:
+        return None
     organization_id = department.organization_id
     employee = Employee.objects.create(
         full_name=full_name,
@@ -255,12 +277,10 @@ def get_all_employees_with_dept(admin_telegram_id=None, department_id=None):
 # получение списка доступных организаций
 @sync_to_async
 def get_all_organization(admin_telegram_id=None):
-    qs = Organization.objects.filter(is_active=True)
+    qs = Organization.objects.filter(active=True)
     if admin_telegram_id is not None:
-        org_ids = access_orgs_for_user(admin_telegram_id)
-        if org_ids is not None:
-            qs = qs.filter(organization_id__in=org_ids)
-    return list(qs.order_by("organization__name"))
+        qs = _filter_by_user_orgs(qs, admin_telegram_id, "id")
+    return list(qs.order_by("name"))
 
 # получение списка доступных подразделений
 @sync_to_async
@@ -307,9 +327,10 @@ def get_employees_by_department(department_id, admin_telegram_id=None):
 
 # получаем сотрудника по employee_id
 @sync_to_async
-def get_employee_data_safe(employee_id):
+def get_employee_data_safe(employee_id, admin_telegram_id=None):
     try:
-        emp = Employee.objects.select_related('department','organization').get(id=employee_id)
+        qs = _filter_by_user_orgs(Employee.objects.select_related('department', 'organization'), admin_telegram_id)
+        emp = qs.get(id=employee_id)
         return {
             'id': emp.id,
             'full_name': emp.full_name,
@@ -328,17 +349,16 @@ def get_employee_data_safe(employee_id):
 
 # редактируем сотрудника по employee_id
 @sync_to_async
-def update_employee(employee_id, full_name=None, department_id=None, organization_id=None, active=None, email=None, phone=None):
+def update_employee(employee_id, full_name=None, department_id=None, organization_id=None, active=None, email=None,
+                    phone=None, admin_telegram_id=None):
     try:
-        emp = Employee.objects.get(id=employee_id)
-        dept = Department.objects.get(id=department_id)
-        org = Organization.objects.get(id=dept.organization_id)
+        emp = _filter_by_user_orgs(Employee.objects.all(), admin_telegram_id).get(id=employee_id)
         if full_name is not None:
             emp.full_name = full_name
         if department_id is not None:
+            dept = _filter_by_user_orgs(Department.objects.all(), admin_telegram_id).get(id=department_id)
             emp.department = dept
-        if org is not None:
-            emp.organization = org
+            emp.organization_id = dept.organization_id
         if active is not None:
             emp.active = active
         if email is not None:
@@ -348,7 +368,7 @@ def update_employee(employee_id, full_name=None, department_id=None, organizatio
 
         emp.save()
         return emp
-    except Employee.DoesNotExist:
+    except (Employee.DoesNotExist, Department.DoesNotExist):
         return None
 
 # @sync_to_async
@@ -371,9 +391,9 @@ def update_employee(employee_id, full_name=None, department_id=None, organizatio
 
 # делаем не активным сотрудника по employee_id
 @sync_to_async
-def delete_employee(employee_id):
+def delete_employee(employee_id, admin_telegram_id=None):
     try:
-        emp = Employee.objects.get(id=employee_id)
+        emp = _filter_by_user_orgs(Employee.objects.all(), admin_telegram_id).get(id=employee_id)
         emp.active = False
         emp.save(update_fields=["active"])
         return True
@@ -382,9 +402,12 @@ def delete_employee(employee_id):
 
 # получаем список оборудования за сотрудником по employee_id
 @sync_to_async
-def get_employee_devices(employee_id):
+def get_employee_devices(employee_id, admin_telegram_id=None):
     try:
-        device_epm = Equipment.objects.filter(assigned_to=employee_id).select_related('equipment_type', 'organization').all()
+        qs = Equipment.objects.filter(assigned_to=employee_id).select_related('equipment_type', 'organization')
+        if admin_telegram_id is not None:
+            qs = _filter_by_user_orgs(qs, admin_telegram_id)
+        device_epm = qs.all()
         return list(device_epm)
     except Employee.DoesNotExist:
         return []

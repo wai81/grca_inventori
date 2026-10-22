@@ -1,7 +1,6 @@
 import random
 from datetime import date, timedelta
 
-from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
@@ -10,6 +9,7 @@ from apps.directory.models import Department, Employee, Organization, UserOrgani
 from apps.inventory.models import (
     DocumentType, Equipment, EquipmentEvent, EquipmentEventType, EquipmentStatus,
     EquipmentType, InventoryDocument, InventoryDocumentLine, PrintMode)
+from apps.inventory.roles import bootstrap_roles
 from apps.users.models import User
 
 # Пароль тестовых пользователей (только для локальной разработки)
@@ -64,13 +64,6 @@ MODELS = {
 CPUS = ["Intel Core i3-10100", "Intel Core i5-10400", "Intel Core i5-1135G7", "Intel Core i7-10700",
         "AMD Ryzen 5 5600G"]
 
-ROLES = {
-    # роль: (действия по моделям inventory/directory)
-    "inventory_viewer": {"view"},
-    "inventory_storekeeper": {"view", "add", "change"},
-    "inventory_admin": {"view", "add", "change", "delete"},
-}
-
 DEMO_USERS = [
     # username, имя, фамилия, роль, коды организаций
     ("viewer", "Ольга", "Смотрова", "inventory_viewer", ["400"]),
@@ -94,7 +87,7 @@ class Command(BaseCommand):
         departments = self._departments(orgs)
         employees = self._employees(rnd, departments)
         types = self._equipment_types()
-        groups = self._roles()
+        groups = bootstrap_roles()
         users = self._users(groups, orgs)
         equipment = self._equipment(rnd, options["equipment"], orgs, types, employees, users)
         events = self._events(rnd, equipment, employees, users)
@@ -148,15 +141,6 @@ class Command(BaseCommand):
             et, _ = EquipmentType.objects.get_or_create(name=name, defaults={"category": category})
             types[name] = et
         return types
-
-    def _roles(self):
-        groups = {}
-        for role, actions in ROLES.items():
-            group, _ = Group.objects.get_or_create(name=role)
-            perms = Permission.objects.filter(content_type__app_label__in=["inventory", "directory"])
-            group.permissions.set([p for p in perms if p.codename.split("_", 1)[0] in actions])
-            groups[role] = group
-        return groups
 
     def _users(self, groups, orgs):
         users = []

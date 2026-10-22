@@ -36,7 +36,7 @@ async def employee_edit_card(callback: CallbackQuery):
         await callback.answer("⛔ Нет прав", show_alert=True)
         return
     emp_id = int(callback.data.split("_")[-1])
-    emp_data = await get_employee_data_safe(emp_id)
+    emp_data = await get_employee_data_safe(emp_id, callback.from_user.id)
     if not emp_data:
         await callback.message.edit_text("Сотрудник не найден.")
         await callback.answer()
@@ -77,7 +77,7 @@ async def process_new_employee_name(message: Message, state: FSMContext):
         return
     data = await state.get_data()
     emp_id = data['emp_id']
-    emp = await update_employee(emp_id, full_name=new_name)
+    emp = await update_employee(emp_id, full_name=new_name, admin_telegram_id=message.from_user.id)
     if emp:
         await message.answer(f"✅ ФИО сотрудника изменено на: {new_name}")
     else:
@@ -107,7 +107,7 @@ async def process_new_employee_dept(callback: CallbackQuery, state: FSMContext):
     dept_id = int(callback.data.split("_")[-1])
     data = await state.get_data()
     emp_id = data['emp_id']
-    emp = await update_employee(emp_id, department_id=dept_id)
+    emp = await update_employee(emp_id, department_id=dept_id, admin_telegram_id=callback.from_user.id)
     if emp:
         await callback.message.edit_text("✅ Отдел сотрудника обновлён.")
     else:
@@ -122,7 +122,7 @@ async def approve_employee(callback: CallbackQuery):
         await callback.answer("⛔ Нет прав", show_alert=True)
         return
     emp_id = int(callback.data.split("_")[-1])
-    emp = await update_employee(emp_id, active=True)
+    emp = await update_employee(emp_id, active=True, admin_telegram_id=callback.from_user.id)
     if emp:
         await callback.message.edit_text(f"✅ Сотрудник {emp.full_name} подтверждён.")
     else:
@@ -136,7 +136,7 @@ async def delete_employee_confirm(callback: CallbackQuery):
         await callback.answer("⛔ Нет прав", show_alert=True)
         return
     emp_id = int(callback.data.split("_")[-1])
-    emp_data = await get_employee_data_safe(emp_id)
+    emp_data = await get_employee_data_safe(emp_id, callback.from_user.id)
     if not emp_data:
         await callback.message.edit_text("Сотрудник не найден.")
         return
@@ -153,8 +153,11 @@ async def delete_employee_confirm(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("emp_delete_yes_"))
 async def delete_employee_execute(callback: CallbackQuery):
+    if not await is_admin(callback.from_user.id):
+        await callback.answer("⛔ Нет прав", show_alert=True)
+        return
     emp_id = int(callback.data.split("_")[-1])
-    success = await delete_employee(emp_id)
+    success = await delete_employee(emp_id, callback.from_user.id)
     if success:
         await callback.message.edit_text("✅ Сотрудник удалён.")
     else:
@@ -173,7 +176,7 @@ async def show_employee_devices(callback: CallbackQuery):
         await callback.answer("⛔ Нет прав", show_alert=True)
         return
     emp_id = int(callback.data.split("_")[-1])
-    devices = await get_employee_devices(emp_id)
+    devices = await get_employee_devices(emp_id, callback.from_user.id)
     if not devices:
         await callback.message.edit_text("У сотрудника нет закреплённой техники.")
         await callback.answer()
@@ -192,16 +195,19 @@ async def show_employee_devices(callback: CallbackQuery):
 # ---------- Возврат к списку сотрудников отдела ----------
 @router.callback_query(F.data.startswith("back_to_dept_emps_"))
 async def back_to_dept_employees(callback: CallbackQuery):
+    if not await is_admin(callback.from_user.id):
+        await callback.answer("⛔ Нет прав", show_alert=True)
+        return
     emp_id = int(callback.data.split("_")[-1])
-    emp_data = await get_employee_data_safe(emp_id)
-    if not emp_data or not emp_data['department_name']:
+    emp_data = await get_employee_data_safe(emp_id, callback.from_user.id)
+    if not emp_data or not emp_data['department_id']:
         await callback.message.edit_text("Сотрудник не найден или не имеет отдела.")
         await callback.answer()
         return
 
-    dept = await sync_to_async(Department.objects.get)(name=emp_data['department_name'])
-    employees = await get_employees_by_department(dept.id, callback.from_user.id)
-    kb = employees_by_department_keyboard(employees, dept.id, page=1)
+    dept_id = emp_data['department_id']
+    employees = await get_employees_by_department(dept_id, callback.from_user.id)
+    kb = employees_by_department_keyboard(employees, dept_id, page=1)
     try:
         await callback.message.edit_text(
             f"Сотрудники отдела:\n(нажмите на имя для редактирования)",
@@ -267,8 +273,12 @@ async def confirm_create_employee(callback: CallbackQuery, state: FSMContext):
     full_name = data['full_name']
     dept_id = data['department_id']
     # Создаём сотрудника сразу подтверждённым
-    emp = await create_employee(full_name=full_name, department_id=dept_id, active=True)
-    await callback.message.edit_text(f"✅ Сотрудник {full_name} создан и подтверждён.")
+    emp = await create_employee(full_name=full_name, department_id=dept_id, active=True,
+                                admin_telegram_id=callback.from_user.id)
+    if emp:
+        await callback.message.edit_text(f"✅ Сотрудник {full_name} создан и подтверждён.")
+    else:
+        await callback.message.edit_text("❌ Отдел не найден или нет доступа.")
     await state.clear()
     await back_to_main_menu(callback, callback.from_user.id)
 
