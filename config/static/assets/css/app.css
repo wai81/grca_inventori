@@ -1279,9 +1279,14 @@ a:hover {
 }
 
 .req__sub {
-    color: var(--app-muted);
+    color: var(--app-text);
     font-size: 12px;
     font-weight: 400;
+    margin-top: 2px;
+}
+
+.req__sub > span {
+    color: var(--app-muted);
 }
 
 .req-section {

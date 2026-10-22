@@ -58,6 +58,13 @@
 
                             <div class="req-grid">
                                 <div class="req">
+                                    <span class="req__icon"><i class="ti ti-building"></i></span>
+                                    <div>
+                                        <div class="req__label">Организация</div>
+                                        <div class="req__value">{{ object.organization.code }} {{ object.organization.name }}</div>
+                                    </div>
+                                </div>
+                                <div class="req">
                                     <span class="req__icon"><i class="ti ti-barcode"></i></span>
                                     <div><div class="req__label">Инв. №</div><div class="req__value">{{ object.inventory_number|default:"—" }}</div></div>
                                 </div>
@@ -76,7 +83,8 @@
                                         <div class="req__value">
                                             {% if object.assigned_to %}
                                                 <a href="{% url 'directory:employee_detail' object.assigned_to.pk %}">{{ object.assigned_to }}</a>
-                                                {% if object.assigned_to.department %}<div class="req__sub">{{ object.assigned_to.department.name }}</div>{% endif %}
+                                                <div class="req__sub"><span>Подразделение:</span> {{ object.assigned_to.department.name|default:"—" }}</div>
+                                                <div class="req__sub"><span>Организация:</span> {{ object.assigned_to.organization.code }} {{ object.assigned_to.organization.name }}</div>
                                             {% else %}—{% endif %}
                                         </div>
                                     </div>

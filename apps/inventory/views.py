@@ -314,7 +314,7 @@ class EquipmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVie
     def get_queryset(self):
         qs = Equipment.objects.select_related(
             "organization", "equipment_type",
-            "assigned_to", "assigned_to__department",
+            "assigned_to", "assigned_to__department", "assigned_to__organization",
             "created_by", "updated_by",
         ).prefetch_related(
             "events",
