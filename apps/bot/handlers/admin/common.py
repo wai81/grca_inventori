@@ -10,6 +10,7 @@ router = Router()
 # ---------- Состояния ----------
 class AddEmployeeStates(StatesGroup):
     waiting_for_fullname = State()
+    waiting_for_organization = State()
     waiting_for_department = State()
     confirmation = State()
 
@@ -31,6 +32,11 @@ class QrAssignStates(StatesGroup):
 class MoveDeviceStates(StatesGroup):
     waiting_for_device = State()
     waiting_for_employee = State()
+
+class NewEmployeeMoveStates(StatesGroup):
+    waiting_for_fullname = State()
+    waiting_for_department = State()
+    confirmation = State()
 
 # ---------- Функция возврата в главное меню ----------
 async def back_to_main_menu(callback_or_message, user_id):

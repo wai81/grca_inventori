@@ -2,9 +2,8 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from .start import get_status_text
-from ..utils.db import get_device_by_code_or_id, get_user_by_telegram, is_admin
-from ..keyboards.inline import device_detail_keyboard, confirm_keyboard
+from .start import send_device_card
+from ..utils.db import get_device_by_code_or_id
 # from .admin_create import CreateDeviceStates
 
 router = Router()
@@ -13,34 +12,7 @@ router = Router()
 async def handle_qr_code(message: Message, state: FSMContext):
     code = message.text.strip()
     device = await get_device_by_code_or_id(code, message.from_user.id)
-
-    if device:
-        # employee = await get_user_by_telegram(message.from_user.id)
-        # is_owner = employee and device.responsible and device.responsible.id == employee.id
-
-        # if is_owner:
-        text = (
-            f"✅ <b>Ваше устройство</b>\n"
-            f"🔹 <b>{device.name}</b>\n"
-            f"📌 Инв. номер: {device.inventory_number}\n"
-            f"🏷 Тип: {device.equipment_type.name}\n"
-            f"🏢 Организация: {device.organization.name if device.organization else '—'}\n"
-            f"👤 Ответственный: {device.assigned_to.full_name if device.assigned_to else '—'}\n"
-            f"⚙️ Статус: {get_status_text(device.status)}\n"
-            f"🔢 Серийный №: {device.serial_number or '—'}"
-        )
-        # else:
-        #     text = (
-        #         f"ℹ️ <b>{device.name}</b>\n"
-        #         f"Инв. номер: {device.inventory_number}\n"
-        #         f"Отдел: {device.department.name if device.department else '—'}\n"
-        #         f"Ответственный: {device.responsible.full_name if device.responsible else '—'}\n"
-        #         f"Статус: {get_status_text(device.status)}"
-        #     )
-        kb = device_detail_keyboard(device.id, is_owner=True) #if is_owner else None
-        await message.answer(text, reply_markup=kb)
-    else:
-        await message.answer("❌ Неверный QR-код или он деактивирован.")
+    await send_device_card(message, device)
     # else:
     #     admin = await is_admin(message.from_user.id)
     #     if admin:

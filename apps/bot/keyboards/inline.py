@@ -18,6 +18,24 @@ def main_menu_keyboard(is_admin: bool) -> InlineKeyboardMarkup:
         builder.row(InlineKeyboardButton(text="ℹ️ Как сканировать QR", callback_data="qr_info"))
     return builder.as_markup()
 
+def organizations_keyboard(organizations, action_prefix="org") -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for org in organizations:
+        builder.button(text=f"🏢 {org.code} {org.name}", callback_data=f"{action_prefix}_{org.id}")
+    builder.adjust(1)
+    builder.row(InlineKeyboardButton(text="🔙 Назад в главное меню", callback_data="back_to_main"))
+    return builder.as_markup()
+
+def device_actions_keyboard(device_id: int, can_manage: bool) -> InlineKeyboardMarkup:
+    """Меню действий после сканирования QR-кода."""
+    builder = InlineKeyboardBuilder()
+    if can_manage:
+        builder.row(InlineKeyboardButton(text="🔄 Переместить", callback_data=f"move_dev_{device_id}"))
+        builder.row(InlineKeyboardButton(text="👤➕ Создать сотрудника и переместить",
+                                         callback_data=f"qr_newemp_{device_id}"))
+    builder.row(InlineKeyboardButton(text="🏠 Главное меню", callback_data="back_to_main"))
+    return builder.as_markup()
+
 def departments_keyboard(departments, action_prefix="dept") -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for dept in departments:

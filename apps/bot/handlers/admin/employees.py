@@ -11,10 +11,10 @@ from ...utils.db import (
     is_admin, create_employee, get_all_departments,
     get_employees_by_department, get_employee_data_safe,
     update_employee, delete_employee, get_all_employees_data,
-    get_employee_devices
+    get_employee_devices, get_all_organization
 )
 from ...keyboards.inline import (
-    departments_keyboard, employees_by_department_keyboard,
+    departments_keyboard, employees_by_department_keyboard, organizations_keyboard,
     employee_edit_keyboard, confirm_keyboard, cancel_keyboard,
     devices_list_keyboard
 )
@@ -25,7 +25,7 @@ router = Router()
 @sync_to_async
 def get_department_by_id(dept_id):
     try:
-        return Department.objects.get(id=dept_id)
+        return Department.objects.select_related("organization").get(id=dept_id)
     except Department.DoesNotExist:
         return None
 
@@ -92,13 +92,19 @@ async def edit_employee_dept_start(callback: CallbackQuery, state: FSMContext):
         await callback.answer("⛔ Нет прав", show_alert=True)
         return
     emp_id = int(callback.data.split("_")[-1])
+    emp_data = await get_employee_data_safe(emp_id, callback.from_user.id)
+    if not emp_data:
+        await callback.answer("Сотрудник не найден", show_alert=True)
+        return
     await state.update_data(emp_id=emp_id)
-    depts = await get_all_departments(callback.from_user.id)
+    # подразделения только организации сотрудника
+    depts = await get_all_departments(callback.from_user.id, organization_id=emp_data["organization_id"])
     if not depts:
         await callback.message.edit_text("Нет доступных отделов.", reply_markup=cancel_keyboard())
         return
     kb = departments_keyboard(depts, action_prefix="emp_newdept")
-    await callback.message.edit_text("Выберите новый отдел:", reply_markup=kb)
+    await callback.message.edit_text(
+        f"Организация: {emp_data['organization_name']}\nВыберите новое подразделение:", reply_markup=kb)
     await state.set_state(EditEmployeeStates.waiting_for_new_department)
     await callback.answer()
 
@@ -237,15 +243,43 @@ async def process_employee_fullname(message: Message, state: FSMContext):
         await message.answer("Слишком короткое имя. Введите ФИО полностью.")
         return
     await state.update_data(full_name=full_name)
-    depts = await get_all_departments(message.from_user.id)
-    if not depts:
-        await message.answer("В системе нет отделов. Сначала создайте отдел через /add_department или в админке.")
+    orgs = await get_all_organization(message.from_user.id)
+    if not orgs:
+        await message.answer("Нет доступных организаций.")
         await state.clear()
         await back_to_main_menu(message, message.from_user.id)
         return
+    if len(orgs) == 1:
+        await ask_employee_department(message, state, orgs[0])
+        return
+    kb = organizations_keyboard(orgs, action_prefix="addemp_org")
+    await message.answer(f"Сотрудник: {full_name}\nВыберите организацию:", reply_markup=kb)
+    await state.set_state(AddEmployeeStates.waiting_for_organization)
+
+async def ask_employee_department(message: Message, state: FSMContext, org, edit=False):
+    depts = await get_all_departments(state.key.user_id, organization_id=org.id)
+    if not depts:
+        await message.answer(f"В организации {org.code} {org.name} нет подразделений. Создайте его в приложении.")
+        await state.clear()
+        return
+    data = await state.get_data()
+    text = f"Сотрудник: {data['full_name']}\nОрганизация: {org.code} {org.name}\nВыберите подразделение:"
     kb = departments_keyboard(depts, action_prefix="addemp_dept")
-    await message.answer("Выберите отдел для сотрудника:", reply_markup=kb)
+    if edit:
+        await message.edit_text(text, reply_markup=kb)
+    else:
+        await message.answer(text, reply_markup=kb)
     await state.set_state(AddEmployeeStates.waiting_for_department)
+
+@router.callback_query(AddEmployeeStates.waiting_for_organization, F.data.startswith("addemp_org_"))
+async def process_employee_organization(callback: CallbackQuery, state: FSMContext):
+    org_id = int(callback.data.split("_")[-1])
+    org = next((o for o in await get_all_organization(callback.from_user.id) if o.id == org_id), None)
+    if not org:
+        await callback.answer("Организация не найдена", show_alert=True)
+        return
+    await ask_employee_department(callback.message, state, org, edit=True)
+    await callback.answer()
 
 @router.callback_query(AddEmployeeStates.waiting_for_department, F.data.startswith("addemp_dept_"))
 async def process_employee_department(callback: CallbackQuery, state: FSMContext):
@@ -256,7 +290,9 @@ async def process_employee_department(callback: CallbackQuery, state: FSMContext
     dept = await get_department_by_id(dept_id)
     try:
         await callback.message.edit_text(
-            f"Подтвердите создание сотрудника:\nФИО: {full_name}\nОтдел: {dept.name}\n\nВсё верно?",
+            f"Подтвердите создание сотрудника:\nФИО: {full_name}\n"
+            f"Организация: {dept.organization.code} {dept.organization.name}\n"
+            f"Подразделение: {dept.name}\n\nВсё верно?",
             reply_markup=confirm_keyboard("addemp_confirm_yes", "addemp_confirm_no")
         )
     except TelegramBadRequest as e:

@@ -5,8 +5,10 @@ from asgiref.sync import sync_to_async
 from aiogram.exceptions import TelegramBadRequest
 
 from apps.directory.models import Department
-from ...utils.db import is_admin, get_all_departments, get_employees_by_department
-from ...keyboards.inline import departments_keyboard, employees_by_department_keyboard, confirm_keyboard, cancel_keyboard
+from ...utils.db import is_admin, get_all_departments, get_employees_by_department, get_all_organization
+from ...keyboards.inline import (
+    departments_keyboard, employees_by_department_keyboard, confirm_keyboard, cancel_keyboard,
+    organizations_keyboard)
 from .common import back_to_main_menu, AddDepartmentStates, send_long_message
 
 router = Router()
@@ -32,10 +34,31 @@ async def departments_menu(callback: CallbackQuery):
     if not await is_admin(callback.from_user.id):
         await callback.answer("⛔ Нет прав", show_alert=True)
         return
-    depts = await get_all_departments(callback.from_user.id)
-    kb = departments_keyboard(depts, action_prefix="dept")
-    await callback.message.edit_text("🏢 Выберите отдел:", reply_markup=kb)
+    orgs = await get_all_organization(callback.from_user.id)
+    if len(orgs) == 1:
+        await show_org_departments(callback, orgs[0])
+        return
+    kb = organizations_keyboard(orgs, action_prefix="deptorg")
+    await callback.message.edit_text("🏢 Выберите организацию:", reply_markup=kb)
     await callback.answer()
+
+async def show_org_departments(callback: CallbackQuery, org):
+    depts = await get_all_departments(callback.from_user.id, organization_id=org.id)
+    kb = departments_keyboard(depts, action_prefix="dept")
+    await callback.message.edit_text(f"🏢 {org.code} {org.name}\nВыберите подразделение:", reply_markup=kb)
+    await callback.answer()
+
+@router.callback_query(F.data.regexp(r"^deptorg_\d+$"))
+async def departments_of_organization(callback: CallbackQuery):
+    if not await is_admin(callback.from_user.id):
+        await callback.answer("⛔ Нет прав", show_alert=True)
+        return
+    org_id = int(callback.data.split("_")[-1])
+    org = next((o for o in await get_all_organization(callback.from_user.id) if o.id == org_id), None)
+    if not org:
+        await callback.answer("Организация не найдена", show_alert=True)
+        return
+    await show_org_departments(callback, org)
 
 @router.callback_query(F.data.regexp(r"^dept_\d+$"))
 async def show_department_employees(callback: CallbackQuery):

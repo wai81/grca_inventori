@@ -6,9 +6,10 @@ from aiogram.fsm.context import FSMContext
 from ..utils.db import (
     get_user_by_telegram,
     get_device_by_code_or_id,
+    can_manage_device,
     is_admin
 )
-from ..keyboards.inline import main_menu_keyboard
+from ..keyboards.inline import main_menu_keyboard, device_actions_keyboard
 
 router = Router()
 
@@ -23,62 +24,38 @@ def get_status_text(status_code):
     }
     return status_map.get(status_code, '❓ Неизвестно')
 
+def device_card_text(device):
+    return (
+        f"🔹 <b>{device.name}</b>\n"
+        f"📌 Инв. номер: {device.inventory_number or '—'}\n"
+        f"🏷 Тип: {device.equipment_type.name}\n"
+        f"🏢 Организация: {device.organization.code} {device.organization.name}\n"
+        f"👤 Ответственный: {device.assigned_to.full_name if device.assigned_to else '—'}\n"
+        f"⚙️ Статус: {get_status_text(device.status)}\n"
+        f"🔢 Серийный №: {device.serial_number or '—'}"
+    )
+
+
+async def send_device_card(message: Message, device):
+    """Карточка оборудования после сканирования QR + меню действий."""
+    if not device:
+        await message.answer("❌ Устройство с таким кодом не найдено.",
+                             reply_markup=device_actions_keyboard(0, can_manage=False))
+        return
+    can_manage = await can_manage_device(message.from_user.id, device.id)
+    await message.answer(
+        device_card_text(device) + ("\n\nЧто сделать с оборудованием?" if can_manage else ""),
+        reply_markup=device_actions_keyboard(device.id, can_manage),
+    )
+
+
 @router.message(Command("start"))
 async def cmd_start(message: Message, command: CommandObject, state: FSMContext):
     args = command.args
     if args:
         # Если пришли с параметром (из QR-кода)
         device = await get_device_by_code_or_id(args, message.from_user.id)
-        if device:
-            # user = await get_user_by_telegram(message.from_user.id)
-            # is_owner = user and device.responsible and device.responsible.id == user.id
-            # if is_owner:
-            #     text = (
-            #         f"✅ <b>Ваше устройство</b>\n"
-            #         f"🔹 <b>{device.name} {device.pc_number or ''}</b>\n"
-            #         f"📌 Инв. номер: {device.inventory_number}\n"
-            #         f"🏷 Тип: {device.device_type.name}\n"
-            #         f"🏢 Организация: {device.organization.name if device.organization else '—'}\n"
-            #         f"👤 Ответственный: {device.assigned_to.full_name if device.assigned_to else '—'}\n"
-            #         f"⚙️ Статус: {get_status_text(device.status)}\n"
-            #         f"🔢 Серийный №: {device.serial_number or '—'}"
-            #     )
-            #     await message.answer(text)
-            # else:
-            #     text = (
-            #         f"ℹ️ <b>{device.name}</b>\n"
-            #         f"Инв. номер: {device.inventory_number}\n"
-            #         f"Организация: {device.organization.name if device.organization else '—'}\n"
-            #         f"Ответственный: {device.assigned_to.full_name if device.assigned_to else '—'}\n"
-            #         f"Статус: {get_status_text(device.status)}"
-            #     )
-            #     await message.answer(text)
-            text = (
-                f"✅ <b>Ваше устройство</b>\n"
-                f"🔹 <b>{device.name}</b>\n"
-                f"📌 Инв. номер: {device.inventory_number}\n"
-                f"🏷 Тип: {device.equipment_type.name}\n"
-                f"🏢 Организация: {device.organization.name if device.organization else '—'}\n"
-                f"👤 Ответственный: {device.assigned_to.full_name if device.assigned_to else '—'}\n"
-                f"⚙️ Статус: {get_status_text(device.status)}\n"
-                f"🔢 Серийный №: {device.serial_number or '—'}"
-            )
-            await message.answer(text)
-        else:
-            await message.answer(f"❌ Устройство с таким кодом не найдено.")
-
-        # После ответа показываем соответствующее меню
-        user = await get_user_by_telegram(message.from_user.id)
-        if user and user.is_active:
-            await message.answer(
-                f"Выберите действие:",
-                reply_markup=main_menu_keyboard(True)
-            )
-        else:
-            await message.answer(
-                f"Вы можете сканировать QR-коды и получать информацию об устройствах.",
-                reply_markup=main_menu_keyboard(False)
-            )
+        await send_device_card(message, device)
         return
 
     # Обычный /start без параметра

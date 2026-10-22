@@ -185,6 +185,14 @@ def get_device_types():
     return list(qs)
     # return list(DeviceType.objects.all())
 
+# может ли пользователь управлять оборудованием (админ + доступ к организации оборудования)
+@sync_to_async
+def can_manage_device(telegram_id, device_id):
+    user = User.objects.filter(telegram_id=telegram_id, is_active=True).first()
+    if not user or not user.has_perm("inventory.change_equipment"):
+        return False
+    return _filter_by_user_orgs(Equipment.objects.all(), telegram_id).filter(id=device_id).exists()
+
 # проверка администратор ли пользователь
 @sync_to_async
 def is_admin(telegram_id):
@@ -280,17 +288,19 @@ def get_all_organization(admin_telegram_id=None):
     qs = Organization.objects.filter(active=True)
     if admin_telegram_id is not None:
         qs = _filter_by_user_orgs(qs, admin_telegram_id, "id")
-    return list(qs.order_by("name"))
+    return list(qs.order_by("code", "name"))
 
 # получение списка доступных подразделений
 @sync_to_async
-def get_all_departments(admin_telegram_id=None):
-    qs = Department.objects.filter(active=True)
+def get_all_departments(admin_telegram_id=None, organization_id=None):
+    qs = Department.objects.filter(active=True).select_related("organization")
+    if organization_id is not None:
+        qs = qs.filter(organization_id=organization_id)
     if admin_telegram_id is not None:
         org_ids = access_orgs_for_user(admin_telegram_id)
         if org_ids is not None:
             qs = qs.filter(organization_id__in=org_ids)
-    return list(qs.order_by("name"))
+    return list(qs.order_by("organization__code", "name"))
 
     # qs = Department.objects.all()
     # if admin_telegram_id is not None:
