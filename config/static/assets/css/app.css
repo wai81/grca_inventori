@@ -1214,6 +1214,85 @@ a:hover {
     padding-left: 18px;
 }
 
+/* ---------- Реквизиты в карточке оборудования ---------- */
+.req-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 10px;
+}
+
+.req {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+    background: #fff;
+    min-width: 0;
+}
+
+.req--wide {
+    margin-top: 10px;
+}
+
+.req__icon {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+}
+
+.req__icon .feather {
+    font-size: 17px;
+}
+
+.req__icon--success { background: #e8f7ef; color: #15803d; }
+.req__icon--warning { background: #fff5e6; color: #b45309; }
+.req__icon--danger { background: #fdecec; color: #b91c1c; }
+
+.req__label {
+    color: var(--app-muted);
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.req__value {
+    color: var(--app-heading);
+    font-weight: 600;
+    margin-top: 2px;
+    word-break: break-word;
+}
+
+.req__value a {
+    color: var(--app-heading);
+}
+
+.req__value a:hover {
+    color: var(--app-primary);
+}
+
+.req__sub {
+    color: var(--app-muted);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.req-section {
+    margin: 18px 0 10px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--app-muted);
+}
+
 /* ---------- Кто создал / изменил ---------- */
 .author-info {
     display: flex;
