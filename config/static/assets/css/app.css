@@ -1214,6 +1214,86 @@ a:hover {
     padding-left: 18px;
 }
 
+/* ---------- Примечание в списке оборудования ---------- */
+.note-cell {
+    min-width: 160px;
+    max-width: 260px;
+}
+
+.note-cell__wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.note-cell__text {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--app-text);
+    white-space: pre-line;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.note-cell__text:empty {
+    display: none;
+}
+
+.note-cell__edit {
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    border: 1px dashed var(--app-border-strong);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--app-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    transition: all .15s;
+}
+
+.note-cell__text:not(:empty) + .note-cell__edit {
+    border-style: solid;
+    border-color: transparent;
+    background: transparent;
+    opacity: .55;
+}
+
+tr:hover .note-cell__edit,
+.note-cell__edit:focus-visible {
+    opacity: 1;
+}
+
+.note-cell__edit:hover {
+    border-color: var(--app-primary) !important;
+    background: var(--app-primary-soft) !important;
+    color: var(--app-primary);
+}
+
+@keyframes note-saved {
+    from { background-color: #e8f7ef; }
+    to { background-color: transparent; }
+}
+
+.note-cell--saved {
+    animation: note-saved 1.5s ease-out;
+}
+
+.req--note {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+.req--note .req__icon {
+    background: #fef3c7;
+    color: #b45309;
+}
+
 /* ---------- Реквизиты в карточке оборудования ---------- */
 .req-grid {
     display: grid;

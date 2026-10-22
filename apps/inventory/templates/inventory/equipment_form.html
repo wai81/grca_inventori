@@ -219,6 +219,12 @@
                                 {{ form.specs }}
                                 {% if form.specs.errors %}
                                     <div class="invalid-feedback d-block">{{ form.specs.errors|striptags }}</div>{% endif %}
+
+                                <label class="form-label mt-3"
+                                       for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+                                {{ form.note }}
+                                {% if form.note.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.note.errors|striptags }}</div>{% endif %}
                             </div>
 
                         </div>

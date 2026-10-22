@@ -143,6 +143,13 @@
                                     <div class="req__value fw-normal">{{ object.specs|default:"—"|linebreaksbr }}</div>
                                 </div>
                             </div>
+                            <div class="req req--wide{% if object.note %} req--note{% endif %}">
+                                <span class="req__icon"><i class="ti ti-message-2"></i></span>
+                                <div class="min-w-0">
+                                    <div class="req__label">Примечание</div>
+                                    <div class="req__value fw-normal">{{ object.note|default:"—"|linebreaksbr }}</div>
+                                </div>
+                            </div>
                             <div class="mt-4 pt-3 border-top">
                                 <h6 class="text-muted mb-3">
                                     <i class="ti ti-history me-1"></i> Служебная информация

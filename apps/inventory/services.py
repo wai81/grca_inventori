@@ -64,6 +64,31 @@ def log_equipment_edit(eq, user, *, old_assigned_id, old_status, comment=""):
     )
 
 
+def log_note_change(eq, user, old_note):
+    """Если примечание изменилось — событие «примечание» в истории с автором."""
+    if (old_note or "") == (eq.note or ""):
+        return None
+    return EquipmentEvent.objects.create(
+        equipment=eq,
+        event_type=EquipmentEventType.NOTE,
+        created_by=user,
+        comment=eq.note or "Примечание удалено",
+    )
+
+
+def change_equipment_note(eq, user, note):
+    """Изменить только примечание (быстрое редактирование из списка)."""
+    note = (note or "").strip()
+    old_note = eq.note
+    if note == (old_note or ""):
+        return None
+    with transaction.atomic():
+        eq.note = note
+        eq.updated_by = user
+        eq.save(update_fields=["note", "updated_by", "updated_at"])
+        return log_note_change(eq, user, old_note)
+
+
 def apply_document(doc: InventoryDocument, user=None):
     """
     Применяет документ к оборудованию:

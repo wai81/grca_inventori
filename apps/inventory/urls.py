@@ -7,6 +7,7 @@ urlpatterns = [
     path("equipment/create/", views.EquipmentCreateView.as_view(), name="equipment_create"),
     path("equipment/<int:pk>/edit/", views.EquipmentUpdateView.as_view(), name="equipment_edit"),
     path("equipment/<int:pk>/move/", views.EquipmentMoveView.as_view(), name="equipment_move"),
+    path("equipment/<int:pk>/note/", views.EquipmentNoteView.as_view(), name="equipment_note"),
 
     path("equipment/", views.EquipmentListView.as_view(), name="equipment_list"),
     path("equipment/<int:pk>/", views.EquipmentDetailView.as_view(), name="equipment_detail"),

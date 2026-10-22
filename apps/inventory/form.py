@@ -117,7 +117,7 @@ class EquipmentForm(forms.ModelForm):
             "organization", "equipment_type", "name", "model",
             "inventory_number", "serial_number",
             "cpu", "ram_gb", "storageSDD_gb", "storageHDD_gb", "print_format", "print_mode",
-            "specs", "commissioning_date", "status", "assigned_to",
+            "specs", "note", "commissioning_date", "status", "assigned_to",
         ]
         widgets = {
             "commissioning_date": forms.DateInput(
@@ -125,6 +125,7 @@ class EquipmentForm(forms.ModelForm):
                 attrs={"type": "date"}
             ),
             "specs": forms.Textarea(attrs={"rows": 4}),
+            "note": forms.Textarea(attrs={"rows": 2, "placeholder": "Например: требуется замена картриджа"}),
         }
 
 

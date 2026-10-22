@@ -208,6 +208,7 @@
                                         <th>Инв. №</th>
                                         <th>Статус</th>
                                         <th>Закреплено</th>
+                                        <th>Примечание</th>
                                         <th class="d-none d-md-table-cell">Организация</th>
                                         <th class="d-none d-xl-table-cell">Срок использования</th>
                                         <th class="d-none d-xxl-table-cell">Создал</th>
@@ -240,6 +241,21 @@
                                                 {% else %}
                                                     <span class="text-muted">—</span>
                                                 {% endif %}
+                                            </td>
+                                            <td class="note-cell">
+                                                <div class="note-cell__wrap">
+                                                    <span class="note-cell__text js-note-text">{{ obj.note }}</span>
+                                                    {% if perms.inventory.change_equipment %}
+                                                        <button type="button" class="note-cell__edit js-note-edit"
+                                                                data-url="{% url 'inventory:equipment_note' obj.pk %}"
+                                                                data-name="{{ obj.name }}"
+                                                                title="{% if obj.note %}Изменить примечание{% else %}Добавить примечание{% endif %}">
+                                                            <i class="ti {% if obj.note %}ti-pencil{% else %}ti-plus{% endif %}"></i>
+                                                        </button>
+                                                    {% elif not obj.note %}
+                                                        <span class="text-muted">—</span>
+                                                    {% endif %}
+                                                </div>
                                             </td>
                                             <td class="d-none d-md-table-cell text-nowrap">{{ obj.organization }}</td>
                                             <td class="d-none d-xl-table-cell text-nowrap">
@@ -314,7 +330,7 @@
                                         </tr>
                                     {% empty %}
                                         <tr>
-                                            <td colspan="10" class="text-center py-5 text-muted">
+                                            <td colspan="11" class="text-center py-5 text-muted">
                                                 Нет данных
                                             </td>
                                         </tr>
@@ -396,6 +412,35 @@
         {{ equipmenttype_meta|json_script:"equipmenttype-meta" }}
     </div>
 
+
+    {% if perms.inventory.change_equipment %}
+        <!-- Быстрое редактирование примечания -->
+        <div class="modal fade" id="note-modal" tabindex="-1" aria-labelledby="note-modal-title" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form class="modal-content" id="note-form">
+                    <div class="modal-header">
+                        <div class="min-w-0">
+                            <h5 class="modal-title" id="note-modal-title">Примечание</h5>
+                            <div class="text-muted small text-truncate" id="note-modal-name"></div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                    </div>
+                    <div class="modal-body">
+                        <textarea class="form-control" id="note-input" rows="4" maxlength="2000"
+                                  placeholder="Например: требуется замена картриджа"></textarea>
+                        <div class="d-flex justify-content-between mt-1 small">
+                            <span class="text-danger" id="note-error"></span>
+                            <span class="text-muted">Ctrl+Enter — сохранить</span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary" id="note-save">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
 {% endblock content %}
 
 
@@ -466,6 +511,71 @@
                     window.open(url.toString(), "_blank");
                 });
             }
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const modalEl = document.getElementById("note-modal");
+            if (!modalEl) return;
+            const modal = new bootstrap.Modal(modalEl);
+            const form = document.getElementById("note-form");
+            const input = document.getElementById("note-input");
+            const nameEl = document.getElementById("note-modal-name");
+            const errorEl = document.getElementById("note-error");
+            const saveBtn = document.getElementById("note-save");
+            const csrf = "{{ csrf_token }}";
+            let current = null;  // кнопка редактируемой строки
+
+            document.querySelectorAll(".js-note-edit").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    current = btn;
+                    const text = btn.closest(".note-cell").querySelector(".js-note-text").textContent;
+                    input.value = text.trim();
+                    nameEl.textContent = btn.dataset.name;
+                    errorEl.textContent = "";
+                    modal.show();
+                });
+            });
+
+            modalEl.addEventListener("shown.bs.modal", () => {
+                input.focus();
+                input.setSelectionRange(input.value.length, input.value.length);
+            });
+
+            input.addEventListener("keydown", e => {
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) form.requestSubmit();
+            });
+
+            form.addEventListener("submit", async e => {
+                e.preventDefault();
+                if (!current) return;
+                saveBtn.disabled = true;
+                errorEl.textContent = "";
+                try {
+                    const body = new FormData();
+                    body.append("note", input.value);
+                    const resp = await fetch(current.dataset.url, {
+                        method: "POST",
+                        headers: {"X-CSRFToken": csrf},
+                        body,
+                    });
+                    const data = await resp.json().catch(() => ({}));
+                    if (!resp.ok || !data.ok) throw new Error(data.error || "Не удалось сохранить.");
+
+                    const cell = current.closest(".note-cell");
+                    cell.querySelector(".js-note-text").textContent = data.note;
+                    current.title = data.note ? "Изменить примечание" : "Добавить примечание";
+                    current.querySelector("i").className = "ti " + (data.note ? "ti-pencil" : "ti-plus");
+                    cell.classList.remove("note-cell--saved");
+                    void cell.offsetWidth;  // перезапуск анимации подсветки
+                    cell.classList.add("note-cell--saved");
+                    modal.hide();
+                } catch (err) {
+                    errorEl.textContent = err.message;
+                } finally {
+                    saveBtn.disabled = false;
+                }
+            });
         });
     </script>
 {% endblock extra_js %}

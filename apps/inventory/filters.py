@@ -10,7 +10,7 @@ class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
     q = django_filters.CharFilter(
         method="search",
         label="Поиск",
-        widget=forms.TextInput(attrs={"placeholder": "Название, инв. №, серийный, модель..."})
+        widget=forms.TextInput(attrs={"placeholder": "Название, инв. №, серийный, модель, примечание..."})
     )
 
     status = django_filters.ChoiceFilter(choices=EquipmentStatus.choices, label="Статус", empty_label="Все статусы")
@@ -81,6 +81,7 @@ class EquipmentFilter(BootstrapFilterFormMixin, django_filters.FilterSet):
             | models.Q(serial_number__icontains=value)
             | models.Q(model__icontains=value)
             | models.Q(specs__icontains=value)
+            | models.Q(note__icontains=value)
             | models.Q(cpu__icontains=value)
             | models.Q(print_format__icontains=value)
         )

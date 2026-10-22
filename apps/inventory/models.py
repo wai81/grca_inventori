@@ -54,6 +54,7 @@ class Equipment(models.Model):
 
     specs = models.TextField(blank=True,
                              verbose_name="Характеристики")  # характеристики в свободном виде (или позже вынести в JSON)
+    note = models.TextField(blank=True, verbose_name="Примечание")
     commissioning_date = models.DateField(null=True, blank=True, verbose_name="Дата поступления")
     status = models.CharField(max_length=20, choices=EquipmentStatus.choices, default=EquipmentStatus.IN_USE,
                               verbose_name="Статус")

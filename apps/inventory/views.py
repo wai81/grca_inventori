@@ -27,7 +27,8 @@ from apps.inventory.models import (
     EquipmentEvent, EquipmentType, EquipmentStatus, PrintMode)
 from django.conf import settings
 from config.pdf import render_pdf_response
-from apps.inventory.services import apply_document, change_equipment, log_equipment_edit
+from apps.inventory.services import (
+    apply_document, change_equipment, change_equipment_note, log_equipment_edit, log_note_change)
 
 from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access, safe_next_url
 
@@ -136,7 +137,7 @@ class EquipmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
 
     def form_valid(self, form):
         # значения до правки (form.instance уже содержит новые)
-        old = Equipment.objects.values("assigned_to_id", "status").get(pk=form.instance.pk)
+        old = Equipment.objects.values("assigned_to_id", "status", "note").get(pk=form.instance.pk)
         form.instance.updated_by = self.request.user
         with transaction.atomic():
             response = super().form_valid(form)
@@ -145,6 +146,7 @@ class EquipmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
                 old_assigned_id=old["assigned_to_id"], old_status=old["status"],
                 comment="Изменено в карточке оборудования",
             )
+            log_note_change(self.object, self.request.user, old["note"])
         return response
 
 
@@ -186,6 +188,27 @@ class EquipmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVie
         form.instance.created_by = self.request.user
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
+
+
+class EquipmentNoteView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Быстрое изменение примечания из списка оборудования (AJAX)."""
+    permission_required = "inventory.change_equipment"
+    max_length = 2000
+
+    def post(self, request, pk):
+        qs = filter_queryset_by_user_orgs(Equipment.objects.all(), request.user, "organization")
+        eq = get_object_or_404(qs, pk=pk)
+        note = (request.POST.get("note") or "").strip()
+        if len(note) > self.max_length:
+            return JsonResponse({"ok": False, "error": f"Не длиннее {self.max_length} символов."}, status=400)
+        change_equipment_note(eq, request.user, note)
+        eq.refresh_from_db(fields=["note", "updated_at"])
+        return JsonResponse({
+            "ok": True,
+            "note": eq.note,
+            "updated_by": request.user.get_full_name() or request.user.get_username(),
+            "updated_at": eq.updated_at.strftime("%d.%m.%Y %H:%M") if eq.updated_at else "",
+        })
 
 
 class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
@@ -599,6 +622,11 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
             "характеристики",
             "описание",
         },
+        "note": {
+            "note",
+            "примечание",
+            "комментарий",
+        },
         "cpu": {
             "cpu",
             "процессор",
@@ -855,6 +883,7 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
                     if equipment:
                         action = "update"
                         old_assigned_id, old_status = equipment.assigned_to_id, equipment.status
+                        old_note = equipment.note
                     else:
                         equipment = Equipment(organization=organization)
 
@@ -881,6 +910,9 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
                     equipment.serial_number = row.get("serial_number", "")
                     equipment.model = row.get("model", "")
                     equipment.specs = row.get("specs", "")
+                    if "note" in row:
+                        # без колонки «Примечание» существующее примечание не трогаем
+                        equipment.note = row["note"]
                     equipment.commissioning_date = self._parse_date(row.get("commissioning_date", ""))
                     equipment.status = status_value
                     equipment.assigned_to = assigned_to
@@ -905,6 +937,7 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
                             old_assigned_id=old_assigned_id, old_status=old_status,
                             comment="Импорт CSV",
                         )
+                        log_note_change(equipment, self.request.user, old_note)
                         updated_count += 1
 
             except Exception as e:
@@ -1048,6 +1081,7 @@ def equipment_csv_template(request):
         "Серийный номер",
         "Модель",
         "Характеристики",
+        "Примечание",
         "Процессор",
         "ОЗУ",
         "HDD",
@@ -1067,6 +1101,7 @@ def equipment_csv_template(request):
         "SN123",
         "T14",
         "Core i5, 16GB RAM",
+        "Новый ноутбук бухгалтерии",
         "Intel Core i5",
         "16",
         "512",
