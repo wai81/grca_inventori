@@ -53,7 +53,7 @@
                             <h5 class="card-title mb-2">{{ object.name }}</h5>
                             <div class="text-muted mb-3">
                                 {{ object.equipment_type }} · {{ object.organization }} · Статус:
-                                <strong>{{ object.get_status_display }}</strong>
+                                <span class="status-badge status-{{ object.status }}">{{ object.get_status_display }}</span>
                             </div>
 
                             <div class="row">

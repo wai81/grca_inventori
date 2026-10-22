@@ -4,13 +4,9 @@
 <nav class="pc-sidebar">
     <div class="navbar-wrapper">
         <div class="m-header">
-            <a href="{% url "index" %}" class="b-brand d-flex align-items-center text-decoration-none group">
-                <div class="position-relative">
-                    <span class="fw-bold fs-4 text-primary">Gr@pp</span>
-                    <div class="position-absolute start-0 bottom-0 w-100"
-                         style="height: 3px; background: linear-gradient(90deg, #0d6efd, #0dcaf0); border-radius: 2px;"></div>
-                </div>
-                <span class="ms-2 text-white" style="font-size: 0.85rem;">инвентаризация</span>
+            <a href="{% url "index" %}" class="b-brand app-logo">
+                <span class="app-logo__mark">Gr@pp</span>
+                <span class="app-logo__app">инвентаризация</span>
             </a>
         </div>
 
@@ -102,12 +98,6 @@
                 {#                        <span class="pc-mtext">Typography</span>#}
                 {#                    </a>#}
                 {#                </li>#}
-                <li class="pc-item">
-                    <a href="{% url "icon_feather" %}" class="pc-link">
-                        <span class="pc-micon"><i data-feather="feather"></i></span>
-                        <span class="pc-mtext">Icons</span>
-                    </a>
-                </li>
                 {#                <li class="pc-item pc-caption">#}
                 {#                    <label>Pages</label>#}
                 {#                    <i data-feather="monitor"></i>#}

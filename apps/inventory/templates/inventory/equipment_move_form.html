@@ -30,7 +30,7 @@
                             <div class="mb-3">
                                 <div><strong>Организация:</strong> {{ object.organization }}</div>
                                 <div><strong>Сейчас закреплено:</strong> {{ object.assigned_to|default:"—" }}</div>
-                                <div><strong>Статус:</strong> {{ object.get_status_display }}</div>
+                                <div><strong>Статус:</strong> <span class="status-badge status-{{ object.status }}">{{ object.get_status_display }}</span></div>
                             </div>
                             <form method="post" novalidate>
                                 {% csrf_token %}

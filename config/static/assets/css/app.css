@@ -1,0 +1,801 @@
+/* ==========================================================================
+   Оформление приложения поверх темы Datta Able.
+   Палитра: спокойный синий + нейтральные серые, шрифт Inter.
+   ========================================================================== */
+
+:root {
+    --app-primary: #2563eb;
+    --app-primary-hover: #1d4ed8;
+    --app-primary-soft: #eff4ff;
+    --app-primary-rgb: 37, 99, 235;
+    --app-bg: #f5f7fb;
+    --app-surface: #ffffff;
+    --app-border: #e4e8f0;
+    --app-border-strong: #cfd6e2;
+    --app-text: #1f2937;
+    --app-muted: #6b7280;
+    --app-heading: #111827;
+    --app-radius: 12px;
+    --app-radius-sm: 8px;
+    --app-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .06);
+
+    --bs-primary: var(--app-primary);
+    --bs-primary-rgb: var(--app-primary-rgb);
+    --bs-body-bg: var(--app-bg);
+    --bs-body-color: var(--app-text);
+    --bs-body-font-family: "Inter var", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --bs-link-color: var(--app-primary);
+    --bs-link-color-rgb: var(--app-primary-rgb);
+    --bs-link-hover-color: var(--app-primary-hover);
+    --bs-border-color: var(--app-border);
+
+    --pc-heading-color: var(--app-heading);
+    --pc-sidebar-background: #111827;
+    --pc-sidebar-color: #aab4c5;
+    --pc-sidebar-color-rgb: 170, 180, 197;
+    --pc-sidebar-active-color: #ffffff;
+    --pc-sidebar-active-background: rgba(255, 255, 255, .08);
+    --pc-sidebar-main-active-color: #ffffff;
+    --pc-sidebar-caption-color: #6b7a90;
+    --pc-sidebar-shadow: none;
+    /* тёмный фон с синим свечением — как на странице входа */
+    --app-dark: #111827;
+    --app-hero-bg:
+        radial-gradient(600px 400px at 0% 100%, rgba(var(--app-primary-rgb), .35), transparent 70%),
+        radial-gradient(500px 300px at 100% 0%, rgba(99, 102, 241, .25), transparent 70%),
+        var(--app-dark);
+
+    --pc-header-background: rgba(245, 247, 251, .85);
+    --pc-header-color: var(--app-muted);
+    --pc-card-box-shadow: var(--app-shadow);
+}
+
+body {
+    font-family: var(--bs-body-font-family);
+    font-size: 14px;
+    color: var(--app-text);
+    background: var(--app-bg);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .h5 {
+    color: var(--app-heading);
+    font-weight: 600;
+    letter-spacing: -.01em;
+}
+
+a {
+    color: var(--app-primary);
+}
+
+a:hover {
+    color: var(--app-primary-hover);
+}
+
+.text-primary {
+    color: var(--app-primary) !important;
+}
+
+.bg-primary {
+    background-color: var(--app-primary) !important;
+}
+
+/* ---------- Сайдбар ---------- */
+.pc-sidebar {
+    background:
+        radial-gradient(420px 360px at 0% 100%, rgba(var(--app-primary-rgb), .30), transparent 70%),
+        radial-gradient(320px 240px at 100% 0%, rgba(99, 102, 241, .18), transparent 70%),
+        var(--app-dark);
+    border-right: 0;
+}
+
+.pc-sidebar .navbar-wrapper,
+.pc-sidebar .navbar-content,
+.pc-sidebar .m-header {
+    background: transparent;
+}
+
+.pc-sidebar .m-header {
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+
+/* логотип (общий для сайдбара и страницы входа) */
+.app-logo {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.app-logo__mark {
+    font-size: 22px;
+    font-weight: 800;
+    color: #60a5fa;
+    border-bottom: 3px solid;
+    border-image: linear-gradient(90deg, #2563eb, #22d3ee) 1;
+    line-height: 1.2;
+}
+
+.app-logo__app {
+    color: #fff;
+    font-size: 13px;
+}
+
+.pc-sidebar .pc-caption label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--pc-sidebar-caption-color);
+}
+
+.pc-sidebar .pc-navbar > .pc-item > .pc-link {
+    margin: 2px 12px;
+    padding: 9px 12px;
+    border-radius: var(--app-radius-sm);
+    color: var(--pc-sidebar-color);
+    transition: background-color .15s, color .15s;
+}
+
+.pc-sidebar .pc-navbar > .pc-item > .pc-link:hover {
+    background: rgba(255, 255, 255, .05);
+    color: #fff;
+}
+
+.pc-sidebar .pc-navbar > .pc-item.active > .pc-link,
+.pc-sidebar .pc-navbar > .pc-item > .pc-link.active {
+    background: var(--app-primary);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(var(--app-primary-rgb), .35);
+}
+
+.pc-sidebar .pc-navbar > .pc-item.active > .pc-link .pc-micon i,
+.pc-sidebar .pc-navbar > .pc-item.active > .pc-link .pc-micon svg {
+    color: #fff;
+    stroke: #fff;
+}
+
+/* ---------- Шапка и заголовок страницы ---------- */
+.pc-header {
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--app-border);
+}
+
+.breadcrumb {
+    font-size: 13px;
+}
+
+.breadcrumb .breadcrumb-item,
+.breadcrumb .breadcrumb-item a {
+    color: var(--app-muted);
+}
+
+/* Шапка страницы — тёмный баннер как на странице входа */
+.pc-container .page-header {
+    position: relative;
+    top: 0;
+    left: 0;
+    right: auto;
+    margin: 0 0 20px;
+    padding: 22px 24px;
+    min-height: 0;
+    border-radius: 16px;
+    background: var(--app-hero-bg);
+    color: #cbd5e1;
+    box-shadow: 0 12px 32px rgba(17, 24, 39, .18);
+    overflow: visible;
+}
+
+.pc-container .page-header .page-header-title h5 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.pc-container .page-header .breadcrumb {
+    margin-bottom: 0;
+}
+
+.pc-container .page-header .breadcrumb .breadcrumb-item,
+.pc-container .page-header .breadcrumb .breadcrumb-item a,
+.pc-container .page-header .breadcrumb .breadcrumb-item::before {
+    color: #94a3b8;
+}
+
+.pc-container .page-header .breadcrumb .breadcrumb-item a:hover {
+    color: #fff;
+}
+
+.pc-container .page-header .breadcrumb .breadcrumb-item:last-child {
+    color: #e2e8f0;
+}
+
+.pc-container .page-header .text-muted {
+    color: #94a3b8 !important;
+}
+
+/* кнопки на тёмной шапке */
+.pc-container .page-header .btn:not(.btn-primary),
+.pc-container .page-header .btn-light,
+.pc-container .page-header .btn-outline-secondary {
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .16);
+    color: #fff;
+}
+
+.pc-container .page-header .btn:not(.btn-primary):hover,
+.pc-container .page-header .btn-light:hover,
+.pc-container .page-header .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, .16);
+    color: #fff;
+}
+
+.pc-container .page-header .btn-outline-primary {
+    border-color: #60a5fa;
+    color: #bfdbfe;
+}
+
+.pc-container .page-header .btn-primary {
+    box-shadow: 0 6px 16px rgba(var(--app-primary-rgb), .45);
+}
+
+.pc-container .page-header .dropdown-menu {
+    z-index: 1030;
+}
+
+.pc-container .page-header + .row {
+    padding-top: 0;
+}
+
+@media (max-width: 575.98px) {
+    .pc-container .page-header {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .pc-container .page-header .page-header-title h5 {
+        font-size: 18px;
+    }
+}
+
+/* ---------- Карточки ---------- */
+.card {
+    border: 1px solid var(--app-border);
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(16, 24, 40, .06);
+    margin-bottom: 20px;
+}
+
+.card .card-footer {
+    border-radius: 0 0 16px 16px;
+}
+
+.card .card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--app-border);
+    padding: 14px 20px;
+}
+
+.card .card-header h5 {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.card .card-header h5::after {
+    display: none;
+}
+
+.card .card-body {
+    padding: 20px;
+}
+
+.card .card-footer {
+    background: #fafbfd;
+    border-top: 1px solid var(--app-border);
+    border-radius: 0 0 var(--app-radius) var(--app-radius);
+}
+
+/* ---------- Таблицы ---------- */
+.table {
+    --bs-table-hover-bg: #f7f9fc;
+    color: var(--app-text);
+    margin-bottom: 0;
+}
+
+.table > thead th {
+    background: #f8fafc;
+    color: var(--app-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    border-bottom: 1px solid var(--app-border);
+    padding-top: 10px;
+    padding-bottom: 10px;
+    white-space: nowrap;
+}
+
+.table > tbody td {
+    padding-top: 11px;
+    padding-bottom: 11px;
+    border-color: #eef1f6;
+    vertical-align: middle;
+}
+
+.table-card .card-body .table tr td:first-child,
+.table-card .card-body .table tr th:first-child {
+    padding-left: 20px;
+}
+
+/* ---------- Кнопки ---------- */
+.btn {
+    border-radius: var(--app-radius-sm);
+    font-weight: 500;
+    padding: 7px 14px;
+    transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s;
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 13px;
+}
+
+.btn-primary {
+    background: var(--app-primary);
+    border-color: var(--app-primary);
+    color: #fff;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background: var(--app-primary-hover) !important;
+    border-color: var(--app-primary-hover) !important;
+    color: #fff;
+}
+
+.btn-light-primary {
+    background: var(--app-primary-soft);
+    border-color: transparent;
+    color: var(--app-primary);
+}
+
+.btn-light-primary:hover,
+.btn-light-primary:focus {
+    background: var(--app-primary);
+    color: #fff;
+}
+
+.btn-outline-primary {
+    color: var(--app-primary);
+    border-color: var(--app-primary);
+}
+
+.btn-outline-primary:hover {
+    background: var(--app-primary);
+    border-color: var(--app-primary);
+    color: #fff;
+}
+
+.btn-outline-secondary {
+    color: #374151;
+    border-color: var(--app-border-strong);
+    background: #fff;
+}
+
+.btn-outline-secondary:hover {
+    background: #f3f5f9;
+    color: #111827;
+    border-color: var(--app-border-strong);
+}
+
+.btn:focus-visible {
+    box-shadow: 0 0 0 3px rgba(var(--app-primary-rgb), .25);
+}
+
+/* иконки-действия в таблицах */
+.avatar.btn-pc-default {
+    border-radius: var(--app-radius-sm);
+}
+
+/* ---------- Формы ---------- */
+.form-label {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.form-control,
+.form-select {
+    border-radius: var(--app-radius-sm);
+    border-color: var(--app-border-strong);
+    padding: 8px 12px;
+    font-size: 14px;
+    color: var(--app-text);
+    background-color: #fff;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--app-primary);
+    box-shadow: 0 0 0 3px rgba(var(--app-primary-rgb), .15);
+}
+
+.form-check-input:checked {
+    background-color: var(--app-primary);
+    border-color: var(--app-primary);
+}
+
+.form-text,
+.text-muted {
+    color: var(--app-muted) !important;
+}
+
+/* ---------- Бейджи ---------- */
+.badge {
+    font-weight: 500;
+    border-radius: 999px;
+    padding: 4px 10px;
+}
+
+/* ---------- Статусы оборудования ---------- */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    background: #f1f3f7;
+    color: #4b5563;
+}
+
+.status-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.status-in_use { background: #e8f7ef; color: #15803d; }
+.status-reserve { background: #eaf2ff; color: #1d4ed8; }
+.status-repair { background: #fff5e6; color: #b45309; }
+.status-to_transfer { background: #f1ecff; color: #6d28d9; }
+.status-to_write_off { background: #fdecec; color: #b91c1c; }
+.status-written_off { background: #f1f3f7; color: #6b7280; }
+
+/* название оборудования в таблицах */
+.eq-name {
+    color: var(--app-heading);
+    font-weight: 600;
+}
+
+.eq-name:hover {
+    color: var(--app-primary);
+}
+
+.eq-sub {
+    color: var(--app-muted);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+/* ---------- Пагинация ---------- */
+.pagination .page-link {
+    border-radius: var(--app-radius-sm);
+    margin: 0 2px;
+    border-color: var(--app-border);
+    color: var(--app-text);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--app-primary);
+    border-color: var(--app-primary);
+}
+
+/* ---------- Списки с поиском (Tom Select) ---------- */
+.ts-wrapper.form-select,
+.ts-wrapper.form-control {
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    min-height: 0;
+}
+
+.ts-wrapper .ts-control {
+    border: 1px solid var(--app-border-strong);
+    border-radius: var(--app-radius-sm);
+    padding: 7px 34px 7px 12px;
+    min-height: 38px;
+    font-size: 14px;
+    box-shadow: none;
+    background-color: #fff;
+}
+
+.ts-wrapper.single .ts-control {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 10px;
+}
+
+.ts-wrapper.focus .ts-control {
+    border-color: var(--app-primary);
+    box-shadow: 0 0 0 3px rgba(var(--app-primary-rgb), .15);
+}
+
+.ts-dropdown {
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-sm);
+    box-shadow: 0 10px 30px rgba(16, 24, 40, .12);
+    margin-top: 4px;
+    font-size: 14px;
+    z-index: 1060;
+}
+
+.ts-dropdown .option,
+.ts-dropdown .optgroup-header,
+.ts-dropdown .no-results {
+    padding: 7px 12px;
+}
+
+.ts-dropdown .optgroup-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--app-muted);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    background: #f8fafc;
+}
+
+.ts-dropdown .active {
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+}
+
+.ts-dropdown .dropdown-input-wrap {
+    padding: 6px;
+    border-bottom: 1px solid var(--app-border);
+}
+
+.ts-dropdown .dropdown-input {
+    border: 1px solid var(--app-border-strong);
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+/* ---------- Подразделения, сгруппированные по организациям ---------- */
+.org-group + .org-group {
+    border-top: 1px solid var(--app-border);
+}
+
+.org-group__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: #fafbfd;
+}
+
+.org-group__code {
+    flex: 0 0 auto;
+    min-width: 44px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: var(--app-radius-sm);
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.org-group__title {
+    font-weight: 600;
+    color: var(--app-heading);
+}
+
+.org-group__meta {
+    color: var(--app-muted);
+    font-size: 13px;
+}
+
+.dept-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px 10px 76px;
+    border-top: 1px solid #eef1f6;
+}
+
+.dept-row:hover {
+    background: #f7f9fc;
+}
+
+.dept-row__name {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-weight: 500;
+}
+
+.dept-row--inactive .dept-row__name {
+    color: var(--app-muted);
+    text-decoration: line-through;
+}
+
+.dept-row__count {
+    color: var(--app-muted);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+    .dept-row {
+        padding-left: 20px;
+        flex-wrap: wrap;
+    }
+}
+
+/* ---------- Страница входа ---------- */
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    background: var(--app-bg);
+}
+
+.login-brand {
+    flex: 0 0 42%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px 48px;
+    color: #cbd5e1;
+    background: var(--app-hero-bg);
+}
+
+.login-brand__title {
+    color: #fff;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -.02em;
+    margin-bottom: 24px;
+}
+
+.login-brand__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 14px;
+    font-size: 15px;
+}
+
+.login-brand__list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.login-brand__list i {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #fff;
+    background: rgba(255, 255, 255, .08);
+}
+
+.login-brand__foot {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.login-main {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(16, 24, 40, .08);
+    padding: 36px 32px;
+}
+
+.login-card__logo {
+    margin-bottom: 24px;
+}
+
+.login-card .app-logo__mark {
+    color: var(--app-primary);
+}
+
+.login-card .app-logo__app {
+    color: var(--app-muted);
+}
+
+.login-card__title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.login-card__subtitle {
+    color: var(--app-muted);
+    margin-bottom: 24px;
+}
+
+.login-input {
+    position: relative;
+}
+
+.login-input > i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 18px;
+    pointer-events: none;
+}
+
+.login-input .form-control {
+    padding: 10px 40px 10px 40px;
+}
+
+.login-input__toggle {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 0;
+    background: none;
+    color: #9ca3af;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.login-input__toggle:hover {
+    color: var(--app-text);
+    background: #f3f5f9;
+}
+
+@media (max-width: 991.98px) {
+    .login-brand {
+        display: none;
+    }
+}
+
+@media (max-width: 420px) {
+    .login-card {
+        padding: 28px 20px;
+        border-radius: 12px;
+    }
+}
+
+/* ---------- Футер ---------- */
+.pc-footer {
+    color: var(--app-muted);
+}

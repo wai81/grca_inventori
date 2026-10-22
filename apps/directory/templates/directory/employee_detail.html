@@ -69,7 +69,7 @@
                                         <td>{{ eq.equipment_type }}</td>
                                         <td>{{ eq.serial_number|default:"—" }}</td>
                                         <td>{{ eq.inventory_number|default:"—" }}</td>
-                                        <td>{{ eq.get_status_display }}</td>
+                                        <td><span class="status-badge status-{{ eq.status }}">{{ eq.get_status_display }}</span></td>
                                         <td class="text-end">
                                             <a class="btn btn-sm btn-outline-secondary"
                                                href="{% url 'inventory:equipment_detail' eq.pk %}">
