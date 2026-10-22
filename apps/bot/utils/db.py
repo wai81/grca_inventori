@@ -3,6 +3,7 @@ from django.db import transaction
 from apps.directory.access import get_allowed_organizations
 from apps.directory.models import Department, Employee, Organization
 from apps.inventory.models import Equipment, EquipmentEvent, EquipmentEventType, EquipmentType
+from apps.inventory.services import change_equipment
 from apps.users.models import User
 
 # -----Список доступных организаций для User
@@ -36,6 +37,13 @@ def access_orgs_for_user(telegram_id):
     #     return None
     #
     # return list(scope.allowed_regions.values_list('id', flat=True))
+
+
+def _user_by_telegram(telegram_id):
+    """Пользователь приложения по Telegram ID (для фиксации автора изменений)."""
+    if telegram_id is None:
+        return None
+    return User.objects.filter(telegram_id=telegram_id, is_active=True).first()
 
 
 def _filter_by_user_orgs(qs, telegram_id, field="organization_id"):
@@ -517,47 +525,28 @@ def change_device_responsible(device_id, new_responsible_id, admin_telegram_id=N
             return False, "Сотрудник и оборудование должны быть из одной организации", None
 
         old_responsible = equipment.assigned_to
-        # old_department = equipment.department
-        old_status = getattr(equipment, "status", "") or ""
-        event_type = EquipmentEventType.MOVE
 
-        if equipment.assigned_to == employee.id:
+        if equipment.assigned_to_id == employee.id:
             return True, "Ответственный уже назначен", {
                 "device": equipment,
-                # "from_department": old_department.name if old_department else "—",
-                # "to_department": equipment.department.name if equipment.department else "—",
                 "from_responsible": old_responsible.full_name if old_responsible else "—",
                 "to_responsible": employee.full_name,
                 "event_id": None,
             }
 
-        update_fields = ["assigned_to"]
-        equipment.assigned_to = employee
-
-        if hasattr(equipment, "organization_id") and equipment.organization_id != employee.organization_id:
-            equipment.organization_id = employee.organization_id
-            update_fields.append("organization")
-
-        equipment.save(update_fields=update_fields)
-
-        event = EquipmentEvent.objects.create(
-            equipment=equipment,
-            event_type=event_type,
-            from_employee=old_responsible,
+        # автор перемещения — пользователь бота
+        event = change_equipment(
+            equipment, _user_by_telegram(admin_telegram_id),
             to_employee=employee,
-            old_status=old_status,
-            new_status=getattr(equipment, "status", "") or "",
             document_number=document_number,
-            comment=comment,
+            comment=comment or "Перемещение через Telegram-бот",
         )
 
         movement_info = {
             "device": equipment,
-            # "from_department": old_department.name if old_department else "—",
-            # "to_department": equipment.department.name if equipment.department else "—",
             "from_responsible": old_responsible.full_name if old_responsible else "—",
             "to_responsible": employee.full_name,
-            "event_id": event.id,
+            "event_id": event.id if event else None,
         }
 
         return True, "Ответственный успешно изменён", movement_info
@@ -633,6 +622,10 @@ def update_device_status(device_id, status, admin_telegram_id=None):
     if not device:
         return False, 'Техника не найдена или нет доступа'
 
-    device.status = status
-    device.save(update_fields=['status'])
+    change_equipment(
+        device, _user_by_telegram(admin_telegram_id),
+        new_status=status,
+        event_type=EquipmentEventType.STATUS,
+        comment="Смена статуса через Telegram-бот",
+    )
     return True, f'Статус обновлён: {device.inventory_number} — {device.get_status_display()}'

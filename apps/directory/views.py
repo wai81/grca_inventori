@@ -13,7 +13,8 @@ from config.pdf import render_pdf_response
 from apps.directory.filters import EmployeeFilter, OrganizationFilter, DepartmentFilter
 from apps.directory.forms import OrganizationForm, DepartmentForm, EmployeeForm, EmployeeUnassignAllForm
 from apps.directory.models import Employee, Organization, Department
-from apps.inventory.models import Equipment, EquipmentEvent, EquipmentEventType, EquipmentStatus
+from apps.inventory.models import Equipment, EquipmentStatus
+from apps.inventory.services import change_equipment
 from apps.inventory.views import _append_query
 from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access, safe_next_url
 
@@ -96,27 +97,14 @@ class EmployeeUnassignAllView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
         with transaction.atomic():
             items = list(qs)
-
-            events = []
             for eq in items:
-                old_status = eq.status
-                eq.assigned_to = None
-                eq.status = reserve_value
-                eq.save(update_fields=["assigned_to", "status"])
-
-                events.append(EquipmentEvent(
-                    equipment=eq,
-                    event_type=EquipmentEventType.MOVE,
-                    from_employee=employee,
+                change_equipment(
+                    eq, request.user,
                     to_employee=None,
-                    old_status=old_status if old_status != reserve_value else "",
-                    new_status=reserve_value if old_status != reserve_value else "",
+                    new_status=reserve_value,
                     document_number=doc_no,
                     comment=comment,
-                ))
-
-            if events:
-                EquipmentEvent.objects.bulk_create(events)
+                )
 
         if items:
             messages.success(request, f"Снято в резерв: {len(items)}")

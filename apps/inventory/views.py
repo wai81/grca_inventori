@@ -27,7 +27,7 @@ from apps.inventory.models import (
     EquipmentEvent, EquipmentType, EquipmentStatus, PrintMode)
 from django.conf import settings
 from config.pdf import render_pdf_response
-from apps.inventory.services import apply_document
+from apps.inventory.services import apply_document, change_equipment, log_equipment_edit
 
 from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access, safe_next_url
 
@@ -97,8 +97,17 @@ class EquipmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
         return ctx
 
     def form_valid(self, form):
+        # значения до правки (form.instance уже содержит новые)
+        old = Equipment.objects.values("assigned_to_id", "status").get(pk=form.instance.pk)
         form.instance.updated_by = self.request.user
-        return super().form_valid(form)
+        with transaction.atomic():
+            response = super().form_valid(form)
+            log_equipment_edit(
+                self.object, self.request.user,
+                old_assigned_id=old["assigned_to_id"], old_status=old["status"],
+                comment="Изменено в карточке оборудования",
+            )
+        return response
 
 
 class EquipmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
@@ -175,32 +184,22 @@ class EquipmentMoveView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
 
     def form_valid(self, form):
         eq = self.equipment
-        from_emp = eq.assigned_to
         to_emp = form.cleaned_data["to_employee"]
         new_status = form.cleaned_data["new_status"]
         doc_no = (form.cleaned_data.get("document_number") or "").strip()
         comment = (form.cleaned_data.get("comment") or "").strip()
 
-        old_status = eq.status
-
-        with transaction.atomic():
-            eq.assigned_to = to_emp
-            eq.status = new_status
-            eq.save()
-
-            EquipmentEvent.objects.create(
-                equipment=eq,
-                event_type=EquipmentEventType.MOVE,
-                created_by=self.request.user,
-                from_employee=from_emp,
-                to_employee=to_emp,
-                old_status=old_status if old_status != new_status else "",
-                new_status=new_status if old_status != new_status else "",
-                document_number=doc_no,
-                comment=comment,
-            )
-
-        messages.success(self.request, "Перемещение сохранено.")
+        event = change_equipment(
+            eq, self.request.user,
+            to_employee=to_emp,
+            new_status=new_status,
+            document_number=doc_no,
+            comment=comment,
+        )
+        if event:
+            messages.success(self.request, "Перемещение сохранено.")
+        else:
+            messages.info(self.request, "Изменений нет: сотрудник и статус остались прежними.")
 
         next_url = (self.request.POST.get("next") or "").strip()
         if next_url and url_has_allowed_host_and_scheme(
@@ -421,7 +420,7 @@ def apply_document_view(request, pk: int):
     if doc.applied_at:
         messages.info(request, "Документ уже применён.")
     else:
-        apply_document(doc)
+        apply_document(doc, request.user)
         messages.success(request, "Документ применён.")
     return redirect("inventory:document_detail", pk=pk)
 
@@ -811,6 +810,7 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
 
                     if equipment:
                         action = "update"
+                        old_assigned_id, old_status = equipment.assigned_to_id, equipment.status
                     else:
                         equipment = Equipment(organization=organization)
 
@@ -856,6 +856,11 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
                     if action == "create":
                         created_count += 1
                     else:
+                        log_equipment_edit(
+                            equipment, self.request.user,
+                            old_assigned_id=old_assigned_id, old_status=old_status,
+                            comment="Импорт CSV",
+                        )
                         updated_count += 1
 
             except Exception as e:
