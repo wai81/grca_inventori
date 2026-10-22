@@ -5,7 +5,6 @@
 
 {% block extrastyle %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'css/tom-select.css' %}">
     <style>
         /* убираем “вторую рамку” — прячем оригинальный select после инициализации TomSelect */
         select.ts-hidden-accessible {
@@ -249,7 +248,6 @@
 
 {% block extra_js %}
     {{ block.super }}
-    <script src="{% static 'plugins/tom-select.complete.min.js' %}"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const orgEl = document.getElementById("id_organization");
