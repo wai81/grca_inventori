@@ -1,4 +1,3 @@
-
 from django import forms
 from django.db.models import Q
 from apps.directory.models import Employee, Organization
@@ -10,6 +9,8 @@ class EquipmentForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["commissioning_date"].input_formats = ["%Y-%m-%d"]
 
         allowed_orgs = Organization.objects.none()
         if user:
@@ -119,7 +120,10 @@ class EquipmentForm(forms.ModelForm):
             "specs", "commissioning_date", "status", "assigned_to",
         ]
         widgets = {
-            "commissioning_date": forms.DateInput(attrs={"type": "date"}),
+            "commissioning_date": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={"type": "date"}
+            ),
             "specs": forms.Textarea(attrs={"rows": 4}),
         }
 

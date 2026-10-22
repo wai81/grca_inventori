@@ -312,13 +312,13 @@
                                                 {{ obj.usage_duration_display }}
                                             </td>
                                             <td>
-                                                {% if eq.created_by %}
-                                                    {{ eq.created_by.get_full_name|default:eq.created_by.username }}
+                                                {% if obj.created_by %}
+                                                    {{ obj.created_by.get_full_name|default:obj.created_by.username }}
                                                 {% else %}
                                                     —
                                                 {% endif %}
                                                 <br>
-                                                <small class="text-muted">{{ eq.created_at|date:"d.m.Y" }}</small>
+                                                <small class="text-muted">{{ obj.created_at|date:"d.m.Y" }}</small>
                                             </td>
 
 
