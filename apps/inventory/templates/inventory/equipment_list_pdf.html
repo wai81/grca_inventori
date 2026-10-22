@@ -32,6 +32,8 @@
         }
 
         th, td {
+            /* отступы и рамки входят в ширину колонки, иначе таблица шире страницы */
+            box-sizing: border-box;
             border: 1px solid #999;
             padding: 4px;
             vertical-align: top;
@@ -47,6 +49,15 @@
             font-size: 8px;
         }
 
+        .name {
+            font-weight: bold;
+        }
+
+        .sub {
+            color: #555;
+            margin-top: 1px;
+        }
+
         .nowrap {
             white-space: nowrap;
         }
@@ -60,12 +71,13 @@
     <thead>
         <tr>
             <th style="width: 3%;">#</th>
-            <th style="width: 22%;">Наименование</th>
-            <th style="width: 12%;">Инв./Сер. №</th>
-            <th style="width: 10%;">Статус</th>
+            <th style="width: 19%;">Наименование</th>
+            <th style="width: 11%;">Инв./Сер. №</th>
+            <th style="width: 8%;">Статус</th>
             <th style="width: 14%;">Закреплено</th>
-            <th style="width: 14%;">Организация</th>
-            <th style="width: 12%;">Ввод / Срок</th>
+            <th style="width: 11%;">Организация</th>
+            <th style="width: 10%;">Ввод / Срок</th>
+            <th style="width: 24%;">Примечание</th>
         </tr>
     </thead>
     <tbody>
@@ -75,7 +87,8 @@
                     {{ obj.pk}}
                 </td>
                 <td>
-                    {{ obj.equipment_type }} {{ obj.name }}
+                    <div class="name">{{ obj.name }}</div>
+                    <div class="sub">{{ obj.equipment_type }}{% if obj.model and obj.model not in obj.name %} · {{ obj.model }}{% endif %}</div>
                 </td>
                 <td>
                     {{ obj.inventory_number|default:"—" }}<br>
@@ -86,13 +99,14 @@
                 <td>{{ obj.assigned_to|default:"—" }}</td>
                 <td>{{ obj.organization }}</td>
                 <td>
-                    {{ obj.commissioning_date|default:"—" }}<br>
+                    {{ obj.commissioning_date|date:"d.m.Y"|default:"—" }}<br>
                     {{ obj.usage_duration_display|default:"—" }}
                 </td>
+                <td>{{ obj.note|default:""|linebreaksbr }}</td>
             </tr>
         {% empty %}
             <tr>
-                <td colspan="7" style="text-align:center;">Нет данных</td>
+                <td colspan="8" style="text-align:center;">Нет данных</td>
             </tr>
         {% endfor %}
     </tbody>
