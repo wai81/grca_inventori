@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -263,14 +263,18 @@ class DepartmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView
     permission_required = "directory.view_department"
     template_name = "directory/department_list.html"
     filterset_class = DepartmentFilter
-    paginate_by = 20
+    # подразделения выводятся группами по организациям, поэтому страница большая
+    paginate_by = 300
 
     def get_queryset(self):
         qs = (
             Department.objects
             .select_related("organization")
-            .annotate(employees_count=Count("employees", distinct=True))
-            .order_by("-active","organization__code", "name")
+            .annotate(
+                employees_count=Count("employees", filter=Q(employees__active=True), distinct=True),
+                equipment_count=Count("employees__assigned_equipment", distinct=True),
+            )
+            .order_by("organization__code", "-active", "name")
         )
         return filter_queryset_by_user_orgs(qs, self.request.user, "organization")
 
