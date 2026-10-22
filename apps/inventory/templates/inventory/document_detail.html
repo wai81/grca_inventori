@@ -6,8 +6,12 @@
 
 <div class="no-print">
   <a href="{% url 'inventory:document_pdf' object.pk %}">Скачать/открыть PDF</a>
-  {% if perms.inventory.change_inventorydocument %}
-    | <a href="{% url 'inventory:document_apply' object.pk %}">Применить документ</a>
+  {% if perms.inventory.change_inventorydocument and not object.applied_at %}
+    <form method="post" action="{% url 'inventory:document_apply' object.pk %}" style="display:inline">
+      {% csrf_token %}
+      | <button type="submit" class="btn btn-link p-0 align-baseline"
+                onclick="return confirm('Применить документ? Статусы и закрепления оборудования будут изменены.')">Применить документ</button>
+    </form>
   {% endif %}
 </div>
 

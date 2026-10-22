@@ -9,11 +9,12 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import transaction
 from django.db.models import ProtectedError, Count, Q
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
+from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, UpdateView, FormView, CreateView, DeleteView, ListView
 from django_filters.views import FilterView
 
@@ -26,6 +27,7 @@ from apps.inventory.models import (
     EquipmentEvent, EquipmentType, EquipmentStatus, PrintMode)
 from django.conf import settings
 from config.pdf import render_pdf_response
+from apps.inventory.services import apply_document
 
 from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access
 
@@ -402,6 +404,7 @@ def equipment_qr_label(request, pk: int):
 
 @login_required
 @permission_required("inventory.change_inventorydocument", raise_exception=True)
+@require_POST
 def apply_document_view(request, pk: int):
     doc = get_object_or_404(
         filter_queryset_by_user_orgs(
@@ -411,7 +414,11 @@ def apply_document_view(request, pk: int):
         ),
         pk=pk,
     )
-    apply_document(doc)
+    if doc.applied_at:
+        messages.info(request, "Документ уже применён.")
+    else:
+        apply_document(doc)
+        messages.success(request, "Документ применён.")
     return redirect("inventory:document_detail", pk=pk)
 
 
