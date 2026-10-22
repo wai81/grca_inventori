@@ -381,7 +381,11 @@ def equipment_qr_png(request, pk: int):
     # url = request.build_absolute_uri(reverse("inventory:equipment_detail", args=[equipment.pk]))
     url = f"https://t.me/{settings.TELEGRAM_BOT_USERNAME}?start={equipment.qr_token}"
     import qrcode
-    img = qrcode.make(url)
+    # небольшое поле (2 модуля) — чтобы QR занимал максимум места на этикетке
+    qr = qrcode.QRCode(border=2, box_size=10, error_correction=qrcode.constants.ERROR_CORRECT_M)
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image()
 
     buf = BytesIO()
     img.save(buf, format="PNG")

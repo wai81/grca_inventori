@@ -1,0 +1,15 @@
+<div class="label">
+    <img class="label__qr" src="{% url 'inventory:equipment_qr_png' object.pk %}" alt="QR">
+    <div class="label__text">
+        <div>
+            <div class="label__org">{{ object.organization.code }} {{ object.organization.name }}</div>
+            <div class="label__type">{{ object.equipment_type }}</div>
+            <div class="label__name">{{ object.name }}</div>
+        </div>
+        <div>
+            <div class="label__id">Инв. №</div>
+            <div class="label__inv">{{ object.inventory_number|default:"—" }}</div>
+            <div class="label__id">ID {{ object.pk }}</div>
+        </div>
+    </div>
+</div>

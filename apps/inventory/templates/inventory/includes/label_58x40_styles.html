@@ -1,0 +1,144 @@
+<style>
+    /* Одна этикетка = одна страница 58x40 мм (принтер этикеток) */
+    @page {
+        size: 58mm 40mm;
+        margin: 0;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, "DejaVu Sans", sans-serif;
+        color: #000;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .label {
+        box-sizing: border-box;
+        width: 58mm;
+        height: 40mm;
+        padding: 1.5mm 1.5mm 1.5mm 1mm;
+        display: flex;
+        align-items: center;
+        gap: 1.5mm;
+        overflow: hidden;
+        background: #fff;
+        page-break-after: always;
+        break-after: page;
+    }
+
+    .label:last-child {
+        page-break-after: auto;
+        break-after: auto;
+    }
+
+    .label__qr {
+        flex: 0 0 33mm;
+        width: 33mm;
+        height: 33mm;
+        display: block;
+    }
+
+    .label__text {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 37mm;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        word-break: break-word;
+    }
+
+    .label__org {
+        font-size: 6.5pt;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    .label__type {
+        font-size: 6.5pt;
+        line-height: 1.1;
+        margin-top: .8mm;
+    }
+
+    .label__name {
+        font-size: 6.5pt;
+        line-height: 1.1;
+        margin-top: .5mm;
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .label__inv {
+        font-size: 8pt;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    .label__id {
+        font-size: 6pt;
+        line-height: 1;
+        margin-top: .5mm;
+    }
+
+    /* Предпросмотр на экране */
+    @media screen {
+        body {
+            background: #eef1f5;
+        }
+
+        .toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            background: #fff;
+            border-bottom: 1px solid #dde2ea;
+            font-size: 14px;
+        }
+
+        .toolbar .btn {
+            padding: 8px 14px;
+            border: 1px solid #cfd6e0;
+            border-radius: 6px;
+            background: #fff;
+            color: #1f2937;
+            text-decoration: none;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        .toolbar .btn-primary {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+
+        .sheet {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .label {
+            box-shadow: 0 4px 16px rgba(15, 23, 42, .15);
+            border-radius: 2mm;
+        }
+    }
+
+    @media print {
+        .toolbar {
+            display: none;
+        }
+    }
+</style>
