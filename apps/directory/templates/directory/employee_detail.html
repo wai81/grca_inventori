@@ -19,6 +19,7 @@
                         <i class="feather feather-mail"></i>Email: {{ object.email|default:"—" }}
                         <i class="feather feather-phone"></i>Телефон: {{ object.phone|default:"—" }}
                     </div>
+                    {% include "includes/author_info.html" with obj=object %}
                 </div>
             </div>
 

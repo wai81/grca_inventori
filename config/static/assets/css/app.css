@@ -795,6 +795,33 @@ a:hover {
     }
 }
 
+/* ---------- Кто создал / изменил ---------- */
+.author-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 28px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--app-border);
+    font-size: 13px;
+}
+
+.card-footer .author-info {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.author-info__label {
+    color: var(--app-muted);
+    margin-right: 4px;
+}
+
+.author-info__date {
+    color: var(--app-muted);
+    margin-left: 4px;
+}
+
 /* ---------- Футер ---------- */
 .pc-footer {
     color: var(--app-muted);

@@ -39,6 +39,7 @@
           <a class="btn btn-outline-secondary" href="{% url 'directory:department_list' %}">Отмена</a>
         </div>
       </form>
+      {% if object %}{% include "includes/author_info.html" with obj=object %}{% endif %}
     </div>
   </div>
 

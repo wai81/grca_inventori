@@ -217,10 +217,13 @@ def create_employee(full_name, department_id=None, admin_telegram_id=None, **kwa
     if not department:
         return None
     organization_id = department.organization_id
+    author = _user_by_telegram(admin_telegram_id)
     employee = Employee.objects.create(
         full_name=full_name,
         department_id=department_id,
         organization_id=organization_id,
+        created_by=author,
+        updated_by=author,
         # active=True,
         # is_approved=is_approved,
         # telegram_id=telegram_id,
@@ -384,6 +387,7 @@ def update_employee(employee_id, full_name=None, department_id=None, organizatio
         if phone is not None:
             emp.phone = phone
 
+        emp.set_author(_user_by_telegram(admin_telegram_id))
         emp.save()
         return emp
     except (Employee.DoesNotExist, Department.DoesNotExist):
@@ -413,7 +417,8 @@ def delete_employee(employee_id, admin_telegram_id=None):
     try:
         emp = _filter_by_user_orgs(Employee.objects.all(), admin_telegram_id).get(id=employee_id)
         emp.active = False
-        emp.save(update_fields=["active"])
+        emp.set_author(_user_by_telegram(admin_telegram_id))
+        emp.save(update_fields=["active", "updated_by"])
         return True
     except Employee.DoesNotExist:
         return False

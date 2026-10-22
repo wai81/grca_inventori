@@ -100,6 +100,9 @@
                                href="{% url 'directory:employee_list' %}">Отмена</a>
                         </div>
                     </div>
+                    {% if object %}
+                        <div class="card-footer">{% include "includes/author_info.html" with obj=object %}</div>
+                    {% endif %}
                 </div>
             </form>
         </div>

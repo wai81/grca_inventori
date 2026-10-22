@@ -1,0 +1,13 @@
+{# Кто создал / изменил запись. Ожидает переменную obj с полями created_by/created_at/updated_by/updated_at #}
+<div class="author-info">
+    <div>
+        <span class="author-info__label"><i class="ti ti-user-plus"></i> Создал</span>
+        {% if obj.created_by %}{{ obj.created_by.get_full_name|default:obj.created_by.username }}{% else %}—{% endif %}
+        {% if obj.created_at %}<span class="author-info__date">{{ obj.created_at|date:"d.m.Y H:i" }}</span>{% endif %}
+    </div>
+    <div>
+        <span class="author-info__label"><i class="ti ti-edit"></i> Изменил</span>
+        {% if obj.updated_by %}{{ obj.updated_by.get_full_name|default:obj.updated_by.username }}{% else %}—{% endif %}
+        {% if obj.updated_at %}<span class="author-info__date">{{ obj.updated_at|date:"d.m.Y H:i" }}</span>{% endif %}
+    </div>
+</div>

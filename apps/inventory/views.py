@@ -679,13 +679,16 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
         if department:
             if not department.active:
                 department.active = True
-                department.save(update_fields=["active"])
+                department.set_author(self.request.user)
+                department.save(update_fields=["active", "updated_by"])
             return department
 
         return Department.objects.create(
             organization=organization,
             name=department_name,
             active=True,
+            created_by=self.request.user,
+            updated_by=self.request.user,
         )
 
     def _get_or_create_employee(self, organization, employee_name, department=None):
@@ -709,7 +712,8 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
                 update_fields.append("department")
 
             if update_fields:
-                employee.save(update_fields=update_fields)
+                employee.set_author(self.request.user)
+                employee.save(update_fields=update_fields + ["updated_by"])
 
             return employee
 
@@ -718,6 +722,8 @@ class EquipmentImportCsvView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
             full_name=employee_name,
             department=department,
             active=True,
+            created_by=self.request.user,
+            updated_by=self.request.user,
         )
 
     def form_valid(self, form):

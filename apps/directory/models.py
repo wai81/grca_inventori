@@ -1,6 +1,42 @@
 from django.db import models
+from django.utils import timezone
 
 from config import settings
+
+
+class AuthorFieldsMixin(models.Model):
+    """Кто и когда создал / последним изменил запись."""
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="%(class)s_created", verbose_name="Создал",
+    )
+    # null — для записей, созданных до появления поля (дата неизвестна)
+    created_at = models.DateTimeField("Создан", null=True, blank=True, editable=False)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="%(class)s_updated", verbose_name="Изменил",
+    )
+    updated_at = models.DateTimeField("Изменён", auto_now=True, null=True)
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if self._state.adding and self.created_at is None:
+            self.created_at = timezone.now()
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and "updated_at" not in update_fields:
+            # auto_now срабатывает только для полей из update_fields
+            kwargs["update_fields"] = list(update_fields) + ["updated_at"]
+        super().save(*args, **kwargs)
+
+    def set_author(self, user):
+        """Отметить автора изменения (и создания — для новой записи)."""
+        if user is not None and not getattr(user, "is_authenticated", True):
+            user = None
+        if self._state.adding and self.created_by_id is None:
+            self.created_by = user
+        self.updated_by = user
 
 
 class Organization(models.Model):
@@ -39,7 +75,7 @@ class UserOrganizationAccess(models.Model):
         return self.user.get_username()
 
 
-class Department(models.Model):
+class Department(AuthorFieldsMixin):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="departments", verbose_name="Организация")
     name = models.CharField(max_length=200,verbose_name="Наименование")
     active = models.BooleanField(default=True, verbose_name="Активно")
@@ -54,7 +90,7 @@ class Department(models.Model):
         return f"{self.organization} / {self.name}"
 
 
-class Employee(models.Model):
+class Employee(AuthorFieldsMixin):
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="employees", verbose_name="Организация")
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="employees", verbose_name="Подразделение")
     full_name = models.CharField(max_length=200, verbose_name="Ф.И.О.")

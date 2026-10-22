@@ -18,7 +18,14 @@ from apps.inventory.services import change_equipment
 from apps.inventory.views import _append_query
 from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access, safe_next_url
 
-# Create your views here.
+class SetAuthorMixin:
+    """Отмечает текущего пользователя автором создания/изменения записи."""
+
+    def form_valid(self, form):
+        form.instance.set_author(self.request.user)
+        return super().form_valid(form)
+
+
 class EmployeeListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
     permission_required = "directory.view_employee"
     template_name = "directory/employee_list.html"
@@ -113,7 +120,7 @@ class EmployeeUnassignAllView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
         return redirect("directory:employee_detail", pk=employee.pk)
 
-class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, SetAuthorMixin, CreateView):
     permission_required = "directory.add_employee"
     model = Employee
     form_class = EmployeeForm
@@ -156,7 +163,7 @@ class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
 
 
 
-class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SetAuthorMixin, UpdateView):
     permission_required = "directory.change_employee"
     model = Employee
     form_class = EmployeeForm
@@ -182,7 +189,8 @@ class EmployeeToggleActiveView(LoginRequiredMixin, PermissionRequiredMixin, View
         qs = filter_queryset_by_user_orgs(qs, request.user, "organization")
         obj = get_object_or_404(qs, pk=pk)
         obj.active = not obj.active
-        obj.save(update_fields=["active"])
+        obj.set_author(request.user)
+        obj.save(update_fields=["active", "updated_by"])
         return redirect(safe_next_url(request, request.POST.get("next") or request.META.get("HTTP_REFERER"),
                                       reverse("directory:employee_list")))
 
@@ -289,7 +297,7 @@ class DepartmentsByOrganizationView(LoginRequiredMixin, PermissionRequiredMixin,
         data = [{"id": d.id, "name": d.name} for d in qs]  # <-- без повторного order_by
         return JsonResponse({"results": data})
 
-class DepartmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class DepartmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, SetAuthorMixin, CreateView):
     permission_required = "directory.add_department"
     model = Department
     form_class = DepartmentForm
@@ -325,7 +333,7 @@ class DepartmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVi
         return super().get_success_url()
 
 
-class DepartmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class DepartmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SetAuthorMixin, UpdateView):
     permission_required = "directory.change_department"
     model = Department
     form_class = DepartmentForm
@@ -350,6 +358,7 @@ class DepartmentToggleActiveView(LoginRequiredMixin, PermissionRequiredMixin, Vi
         qs = filter_queryset_by_user_orgs(qs, request.user, "organization")
         obj = get_object_or_404(qs, pk=pk)
         obj.active = not obj.active
-        obj.save(update_fields=["active"])
+        obj.set_author(request.user)
+        obj.save(update_fields=["active", "updated_by"])
         return redirect(safe_next_url(request, request.POST.get("next") or request.META.get("HTTP_REFERER"),
                                       reverse("directory:department_list")))
