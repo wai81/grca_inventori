@@ -7,5 +7,6 @@ from .forms import LoginForm
 # Create your views here.
 
 class UserLoginView(LoginView):
-    template_name = "login.html"
+    template_name = "registration/login.html"
     authentication_form = LoginForm
+    redirect_authenticated_user = True

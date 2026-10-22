@@ -6,6 +6,7 @@ class LoginForm(AuthenticationForm):
     username = forms.CharField(label="Логин")
     password = forms.CharField(
         label="Пароль",
+        strip=False,
         widget=forms.PasswordInput(),
     )
 
@@ -15,9 +16,12 @@ class LoginForm(AuthenticationForm):
         self.fields["username"].widget.attrs.update({
             "class": "form-control",
             "placeholder": "Введите логин",
+            "autocomplete": "username",
+            "autofocus": True,
         })
 
         self.fields["password"].widget.attrs.update({
             "class": "form-control",
             "placeholder": "Введите пароль",
+            "autocomplete": "current-password",
         })

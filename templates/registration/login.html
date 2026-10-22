@@ -1,85 +1,99 @@
 {% extends "layouts/base-auth.html" %}
-{% load static %}
 
 {% block title %}Вход{% endblock title %}
 
+{% block loader %}{% endblock loader %}
+
 {% block content %}
+    <div class="login-page">
 
-    <div class="auth-main">
-        <div class="auth-wrapper v1">
-            <div class="auth-form">
-                <div class="position-relative my-5">
-                    <div class="auth-bg">
-                        <span class="r"></span>
-                        <span class="r s"></span>
-                        <span class="r s"></span>
-                        <span class="r"></span>
-                    </div>
-                    <div class="card mb-0">
-                        <form method="post" class="card-body">
-                            {% csrf_token %}
-
-                            <div class="text-center">
-                                <a href="{% url "index" %}"
-                                   class="b-brand d-flex align-items-center text-decoration-none group">
-                                    <div class="position-relative">
-                                        <span class="fw-bold fs-4 text-primary">Gr@pp</span>
-                                        <div class="position-absolute start-0 bottom-0 w-100"
-                                             style="height: 3px; background: linear-gradient(90deg, #0d6efd, #0dcaf0); border-radius: 2px;"></div>
-                                    </div>
-                                    <span class="ms-2 text-gray-800" style="font-size: 0.85rem;">инвентаризация</span>
-                                </a>
-                            </div>
-                            <h4 class="text-center f-w-500 mt-4 mb-3">Вход</h4>
-
-                            {% if form.non_field_errors %}
-                                {% for error in form.non_field_errors %}
-                                    <span class="d-block text-danger mb-3">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-
-                            <div class="form-group mb-3">
-                                {#                                    <label class="form-label"#}
-                                {#                                           for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>#}
-                                {{ form.username }}
-                                {% if form.username.errors %}
-                                    <div class="text-danger small">{{ form.username.errors|striptags }}</div>{% endif %}
-                            </div>
-
-                            <div class="form-group mb-3">
-                                {#                                    <label class="form-label"#}
-                                {#                                           for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>#}
-                                {{ form.password }}
-                                {% if form.password.errors %}
-                                    <div class="text-danger small">{{ form.password.errors|striptags }}</div>{% endif %}
-                            </div>
-
-
-                            {#              <div class="d-flex mt-1 justify-content-between align-items-center">#}
-                            {#                <div class="form-check">#}
-                            {#                  <input class="form-check-input input-primary" type="checkbox" id="customCheckc1" checked="">#}
-                            {#                  <label class="form-check-label text-muted" for="customCheckc1">Remember me?</label>#}
-                            {#                </div>#}
-                            {#                <a href="{% url "password_reset" %}" class="text-secondary f-w-400 mb-0">Forgot Password?</a>#}
-                            {#              </div>#}
-                            <div class="text-center mt-4">
-                                <button type="submit" class="btn btn-primary shadow px-sm-4">Войти</button>
-                            </div>
-                            {#              <div class="d-flex justify-content-between align-items-end mt-4">#}
-                            {#                <h6 class="f-w-500 mb-0">Don't have an Account?</h6>#}
-                            {#                <a href="{% url "register" %}" class="link-primary">Create Account</a>#}
-                            {#              </div>#}
-                        </form>
-                    </div>
-                </div>
+        <!-- Брендовая панель (как сайдбар приложения) -->
+        <aside class="login-brand">
+            <div class="app-logo">
+                <span class="app-logo__mark">Gr@pp</span>
+                <span class="app-logo__app">инвентаризация</span>
             </div>
-        </div>
+
+            <div class="login-brand__body">
+                <h1 class="login-brand__title">Учёт оборудования в одном месте</h1>
+                <ul class="login-brand__list">
+                    <li><i class="ti ti-device-desktop"></i> Оборудование, сотрудники и подразделения</li>
+                    <li><i class="ti ti-qrcode"></i> QR-этикетки и Telegram-бот для сканирования</li>
+                    <li><i class="ti ti-arrows-right-left"></i> История перемещений и акты</li>
+                </ul>
+            </div>
+
+            <div class="login-brand__foot">© {% now "Y" %} Gr@pp</div>
+        </aside>
+
+        <!-- Форма -->
+        <main class="login-main">
+            <form method="post" class="login-card" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+
+                <div class="app-logo login-card__logo d-lg-none">
+                    <span class="app-logo__mark">Gr@pp</span>
+                    <span class="app-logo__app">инвентаризация</span>
+                </div>
+
+                <h2 class="login-card__title">Вход в систему</h2>
+                <p class="login-card__subtitle">Введите логин и пароль своей учётной записи</p>
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger d-flex align-items-start gap-2 py-2" role="alert">
+                        <i class="ti ti-alert-circle mt-1"></i>
+                        <div>
+                            {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                    <div class="login-input">
+                        <i class="ti ti-user"></i>
+                        {{ form.username }}
+                    </div>
+                    {% if form.username.errors %}
+                        <div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                    <div class="login-input">
+                        <i class="ti ti-lock"></i>
+                        {{ form.password }}
+                        <button type="button" class="login-input__toggle" id="toggle-password"
+                                aria-label="Показать пароль" title="Показать пароль">
+                            <i class="ti ti-eye"></i>
+                        </button>
+                    </div>
+                    {% if form.password.errors %}
+                        <div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2">Войти</button>
+            </form>
+        </main>
     </div>
-    {#              <form method="post" class="card-body">#}
-    {#    {% csrf_token %}#}
-    {#    {{ form.as_p }}#}
-    {#    <button type="submit">Войти</button>#}
-    {#  </form>#}
-
-
 {% endblock content %}
+
+{% block extra_js %}
+    <script>
+        (function () {
+            const btn = document.getElementById("toggle-password");
+            const input = document.getElementById("{{ form.password.id_for_label }}");
+            if (!btn || !input) return;
+            btn.addEventListener("click", function () {
+                const show = input.type === "password";
+                input.type = show ? "text" : "password";
+                btn.querySelector("i").className = show ? "ti ti-eye-off" : "ti ti-eye";
+                btn.setAttribute("aria-label", show ? "Скрыть пароль" : "Показать пароль");
+                btn.title = btn.getAttribute("aria-label");
+            });
+        })();
+    </script>
+{% endblock extra_js %}
