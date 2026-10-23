@@ -8,7 +8,7 @@
 </head>
 <body>
 <div class="toolbar">
-    <a class="btn" href="{% url 'inventory:equipment_list' %}">Назад</a>
+    <a class="btn" href="{{ equipment_list_url }}">Назад</a>
     <span>Этикеток: {{ objects|length }} · 58×40 мм</span>
     <button class="btn btn-primary" onclick="window.print()">Печать</button>
 </div>

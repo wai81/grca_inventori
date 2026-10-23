@@ -31,6 +31,7 @@ from apps.inventory.services import (
     apply_document, change_equipment, change_equipment_note, log_equipment_edit, log_note_change)
 
 from apps.directory.access import filter_queryset_by_user_orgs, user_has_org_access, safe_next_url
+from apps.inventory.list_state import remember_equipment_list_query, equipment_list_url
 
 
 class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView):
@@ -39,6 +40,10 @@ class EquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, FilterView)
     model = Equipment
     filterset_class = EquipmentFilter
     paginate_by = 10
+
+    def get(self, request, *args, **kwargs):
+        remember_equipment_list_query(request)
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -106,7 +111,9 @@ class EquipmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
     model = Equipment
     form_class = EquipmentForm
     template_name = "inventory/equipment_form.html"
-    success_url = reverse_lazy("inventory:equipment_list")
+
+    def get_success_url(self):
+        return equipment_list_url(self.request)
 
     def get_queryset(self):
         qs = Equipment.objects.select_related(
@@ -155,7 +162,9 @@ class EquipmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVie
     model = Equipment
     form_class = EquipmentForm
     template_name = "inventory/equipment_form.html"
-    success_url = reverse_lazy("inventory:equipment_list")
+
+    def get_success_url(self):
+        return equipment_list_url(self.request)
 
     def get_form_kwargs(self):
         kw = super().get_form_kwargs()

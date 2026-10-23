@@ -17,14 +17,14 @@
                             <ul class="breadcrumb">
                                 <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
                                 <li class="breadcrumb-item"><a
-                                        href="{% url 'inventory:equipment_list' %}">Оборудование</a></li>
+                                        href="{{ equipment_list_url }}">Оборудование</a></li>
                                 <li class="breadcrumb-item" aria-current="page">
                                         Импорт оборудования из CSV
                                 </li>
                             </ul>
                         </div>
                         <div class="col-md-4 text-md-end">
-                            <a class="btn btn-light" href="{% url 'inventory:equipment_list' %}">Отмена</a>
+                            <a class="btn btn-light" href="{{ equipment_list_url }}">Отмена</a>
                         </div>
                     </div>
                 </div>
@@ -41,7 +41,7 @@
                             <a href="{% url 'inventory:equipment_csv_template' %}" class="btn btn-outline-secondary">
                                 Скачать шаблон CSV
                             </a>
-                            <a href="{% url 'inventory:equipment_list' %}" class="btn btn-secondary">Назад</a>
+                            <a href="{{ equipment_list_url }}" class="btn btn-secondary">Назад</a>
                         </div>
                     </div>
                 </div>

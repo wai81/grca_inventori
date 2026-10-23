@@ -15,7 +15,7 @@
               <h5 class="m-b-10">Этикетка QR</h5>
             </div>
             <ul class="breadcrumb">
-              <li class="breadcrumb-item"><a href="{% url 'inventory:equipment_list' %}">Оборудование</a></li>
+              <li class="breadcrumb-item"><a href="{{ equipment_list_url }}">Оборудование</a></li>
               <li class="breadcrumb-item"><a href="{% url 'inventory:equipment_detail' object.pk %}">{{ object.name }}</a></li>
               <li class="breadcrumb-item" aria-current="page">Этикетка</li>
             </ul>
