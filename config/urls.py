@@ -31,6 +31,7 @@ urlpatterns = [
     path('sample-page/', views.sample_page, name='sample_page'),
     path('users/login/', UserLoginView.as_view(), name='login'),
     path('users/profile/', ProfileView.as_view(), name='profile'),
+    path('users/manage/', include("apps.users.manage_urls", namespace="users")),
     path('users/', include("django.contrib.auth.urls")),
     # path('', views.home, name='home'),
     path('', RedirectView.as_view(pattern_name="inventory:equipment_list", permanent=False), name="index"),

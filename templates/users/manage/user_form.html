@@ -1,0 +1,176 @@
+{% extends "layouts/base.html" %}
+{% block title %}{% if object %}{{ object.username }}{% else %}Новый пользователь{% endif %}{% endblock %}
+
+{% block content %}
+    <div class="pc-container">
+        <div class="pc-content">
+
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="row align-items-center g-2">
+                        <div class="col">
+                            <div class="page-header-title">
+                                <h5 class="m-b-10">{% if object %}{{ object.get_full_name|default:object.username }}{% else %}Новый пользователь{% endif %}</h5>
+                            </div>
+                            <ul class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Пользователи</a></li>
+                                <li class="breadcrumb-item" aria-current="page">{% if object %}@{{ object.username }}{% else %}Создание{% endif %}</li>
+                            </ul>
+                        </div>
+                        <div class="col-auto">
+                            <a class="btn btn-light" href="{{ next|default:'' }}{% if not next %}{% url 'users:user_list' %}{% endif %}">Отмена</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors|striptags }}</div>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-xl-8">
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">Учётная запись</h5></div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    {% include "users/manage/_field.html" with field=form.username col="col-md-6" %}
+                                    {% include "users/manage/_field.html" with field=form.email col="col-md-6" %}
+                                    {% include "users/manage/_field.html" with field=form.last_name col="col-md-6" %}
+                                    {% include "users/manage/_field.html" with field=form.first_name col="col-md-6" %}
+                                    {% include "users/manage/_field.html" with field=form.telegram_id col="col-md-6" %}
+                                    {% if form.password1 %}
+                                        <div class="col-12"><hr class="my-1"></div>
+                                        {% include "users/manage/_field.html" with field=form.password1 col="col-md-6" %}
+                                        {% include "users/manage/_field.html" with field=form.password2 col="col-md-6" %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">Права доступа</h5></div>
+                            <div class="card-body">
+                                <label class="form-label">Роль</label>
+                                <div class="role-picker">
+                                    {% for r in roles %}
+                                        <label class="role-option">
+                                            <input type="radio" name="{{ form.role.html_name }}" value="{{ r.name }}"
+                                                   {% if form.role.value|default:"" == r.name %}checked{% endif %}>
+                                            <span class="role-option__body">
+                                                <span class="role-option__title">{{ r.label }}{% if not r.system %} <span class="role-option__tag">своя</span>{% endif %}</span>
+                                                <span class="role-option__hint">{{ r.summary }}</span>
+                                            </span>
+                                        </label>
+                                    {% endfor %}
+                                    <label class="role-option">
+                                        <input type="radio" name="{{ form.role.html_name }}" value=""
+                                               {% if not form.role.value %}checked{% endif %}>
+                                        <span class="role-option__body">
+                                            <span class="role-option__title">Без роли</span>
+                                            <span class="role-option__hint">Нет прав — пользователь ничего не увидит</span>
+                                        </span>
+                                    </label>
+                                </div>
+                                {% if form.role.errors %}<div class="invalid-feedback d-block">{{ form.role.errors|striptags }}</div>{% endif %}
+
+                                <div class="mt-4">
+                                    <label class="form-label" for="{{ form.organizations.id_for_label }}">{{ form.organizations.label }}</label>
+                                    {{ form.organizations }}
+                                    <div class="form-text">{{ form.organizations.help_text }}</div>
+                                    {% if form.organizations.errors %}<div class="invalid-feedback d-block">{{ form.organizations.errors|striptags }}</div>{% endif %}
+                                </div>
+
+                                <div class="mt-4 d-flex flex-column gap-2">
+                                    {% for field in form %}{% if field.name == "is_active" or field.name == "is_superuser" %}
+                                        <div class="form-check form-switch">
+                                            {{ field }}
+                                            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                            {% if field.help_text %}<div class="form-text mt-0">{{ field.help_text }}</div>{% endif %}
+                                        </div>
+                                    {% endif %}{% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-4">
+                        {% if object %}
+                            <div class="card">
+                                <div class="card-header"><h5 class="mb-0">Сведения</h5></div>
+                                <div class="card-body">
+                                    <dl class="profile-list">
+                                        <dt><i class="ti ti-calendar-plus"></i>Создан</dt>
+                                        <dd>{{ object.date_joined|date:"d.m.Y H:i" }}</dd>
+                                        <dt><i class="ti ti-login"></i>Последний вход</dt>
+                                        <dd>{{ object.last_login|date:"d.m.Y H:i"|default:"никогда" }}</dd>
+                                        <dt><i class="ti ti-shield"></i>Сейчас</dt>
+                                        <dd>{{ object.role_label }}</dd>
+                                    </dl>
+                                    <a class="btn btn-light w-100 mt-3 d-inline-flex align-items-center justify-content-center gap-2"
+                                       href="{% url 'users:user_password' object.pk %}">
+                                        <i class="ti ti-key"></i> Сменить пароль
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="card table-card">
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <h5 class="mb-0">Что может роль</h5>
+                                <a class="small" href="{% url 'users:role_list' %}" target="_blank">Настроить роли</a>
+                            </div>
+                            <div class="card-body p-0">
+                                {% for r in roles %}
+                                    <table class="table table-sm mb-0 perm-table js-role-perms" data-role="{{ r.name }}" hidden>
+                                        <thead><tr><th class="ps-3">Раздел</th><th class="text-center" title="Просмотр"><i class="ti ti-eye"></i></th><th class="text-center" title="Создание"><i class="ti ti-plus"></i></th><th class="text-center" title="Изменение"><i class="ti ti-pencil"></i></th><th class="text-center pe-3" title="Удаление"><i class="ti ti-trash"></i></th></tr></thead>
+                                        <tbody>
+                                        {% for row in r.rows %}
+                                            <tr>
+                                                <td class="ps-3">{{ row.title }}</td>
+                                                {% for cell in row.cells %}
+                                                    <td class="text-center">{% if cell.allowed %}<i class="ti ti-check perm-yes"></i>{% else %}<i class="ti ti-minus perm-no"></i>{% endif %}</td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                {% endfor %}
+                                <div class="p-3 text-muted small js-role-perms" data-role="" hidden>Без роли у пользователя нет прав ни на один раздел.</div>
+                                <div class="p-3 text-muted small js-role-perms" data-role="superuser" hidden>Суперпользователь имеет все права и доступ ко всем организациям, независимо от роли.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mb-4">
+                    <button type="submit" class="btn btn-primary">{% if object %}Сохранить{% else %}Создать пользователя{% endif %}</button>
+                    <a class="btn btn-light" href="{{ next|default:'' }}{% if not next %}{% url 'users:user_list' %}{% endif %}">Отмена</a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+{% endblock content %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const radios = document.querySelectorAll('input[name="{{ form.role.html_name }}"]');
+            const superuser = document.getElementById("{{ form.is_superuser.id_for_label }}");
+            const update = () => {
+                const checked = document.querySelector('input[name="{{ form.role.html_name }}"]:checked');
+                const role = superuser && superuser.checked ? "superuser" : (checked ? checked.value : "");
+                document.querySelectorAll(".js-role-perms").forEach(el => el.hidden = el.dataset.role !== role);
+            };
+            radios.forEach(r => r.addEventListener("change", update));
+            if (superuser) superuser.addEventListener("change", update);
+            update();
+        });
+    </script>
+{% endblock extra_js %}

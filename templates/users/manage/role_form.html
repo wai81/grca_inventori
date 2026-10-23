@@ -1,0 +1,177 @@
+{% extends "layouts/base.html" %}
+{% block title %}{% if group %}Роль {{ form.name.value }}{% else %}Новая роль{% endif %}{% endblock %}
+
+{% block content %}
+    <div class="pc-container">
+        <div class="pc-content">
+
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="row align-items-center g-2">
+                        <div class="col">
+                            <div class="page-header-title">
+                                <h5 class="m-b-10">{% if group %}Роль «{{ form.name.value }}»{% else %}Новая роль{% endif %}</h5>
+                            </div>
+                            <ul class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Пользователи</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'users:role_list' %}">Роли и права</a></li>
+                                <li class="breadcrumb-item" aria-current="page">{% if group %}Настройка{% else %}Создание{% endif %}</li>
+                            </ul>
+                        </div>
+                        <div class="col-auto">
+                            <a class="btn btn-light" href="{% url 'users:role_list' %}">Отмена</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xl-8">
+                    <form method="post" novalidate id="role-form">
+                        {% csrf_token %}
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    {% include "users/manage/_field.html" with field=form.name col="col-md-8" %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card table-card">
+                            <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <h5 class="mb-0">Права</h5>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-light js-preset" data-preset="view">Только просмотр</button>
+                                    <button type="button" class="btn btn-sm btn-light js-preset" data-preset="all">Всё</button>
+                                    <button type="button" class="btn btn-sm btn-light js-preset" data-preset="none">Ничего</button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table mb-0 perm-table perm-matrix">
+                                        <thead>
+                                        <tr>
+                                            <th class="ps-4">Раздел</th>
+                                            {% for action, label in permission_actions %}
+                                                <th class="text-center">
+                                                    <button type="button" class="perm-col-toggle js-col" data-action="{{ action }}"
+                                                            title="Отметить/снять весь столбец">{{ label }}</button>
+                                                </th>
+                                            {% endfor %}
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for row in matrix %}
+                                            <tr>
+                                                <td class="ps-4 fw-medium">{{ row.title }}</td>
+                                                {% for cell in row.cells %}
+                                                    <td class="text-center">
+                                                        <input type="checkbox" class="form-check-input perm-check js-perm"
+                                                               name="{{ cell.field.html_name }}" id="{{ cell.field.id_for_label }}"
+                                                               data-action="{{ cell.action }}"
+                                                               {% if cell.field.value %}checked{% endif %}
+                                                               aria-label="{{ row.title }}: {{ cell.label }}">
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer text-muted small">
+                                Создание, изменение и удаление автоматически включают просмотр раздела.
+                                Права на историю перемещений и строки актов выдаются вместе с разделами «Оборудование» и «Акты».
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mb-4">
+                            <button type="submit" class="btn btn-primary">{% if group %}Сохранить{% else %}Создать роль{% endif %}</button>
+                            <a class="btn btn-light" href="{% url 'users:role_list' %}">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+
+                {% if group %}
+                    <div class="col-xl-4">
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <h5 class="mb-0">Пользователи с ролью</h5>
+                                <span class="text-muted">{{ role_users|length }}</span>
+                            </div>
+                            <div class="card-body">
+                                {% for u in role_users %}
+                                    <a class="d-flex align-items-center justify-content-between py-1 text-body" href="{% url 'users:user_edit' u.pk %}">
+                                        <span>{{ u.get_full_name|default:u.username }} <span class="text-muted small">@{{ u.username }}</span></span>
+                                        {% if not u.is_active %}<span class="status-badge status-to_write_off">Заблокирован</span>{% endif %}
+                                    </a>
+                                {% empty %}
+                                    <span class="text-muted">Роль никому не назначена.</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        {% if system %}
+                            <div class="card">
+                                <div class="card-body d-flex gap-3 align-items-start">
+                                    <span class="profile-icon"><i class="ti ti-lock"></i></span>
+                                    <div class="text-muted small">
+                                        Системную роль нельзя переименовать или удалить. Её стандартные права можно вернуть
+                                        кнопкой «Сбросить системные» на странице ролей.
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="card border-danger-subtle">
+                                <div class="card-body">
+                                    <div class="fw-semibold mb-1">Удалить роль</div>
+                                    <p class="text-muted small mb-3">
+                                        {% if role_users %}У {{ role_users|length }} пользовател{{ role_users|length|pluralize:"я,ей" }} не останется роли — они перестанут видеть данные.
+                                        {% else %}Роль никому не назначена.{% endif %}
+                                    </p>
+                                    <form method="post" action="{% url 'users:role_delete' group.pk %}"
+                                          onsubmit="return confirm('Удалить роль «{{ form.name.value|escapejs }}»?')">
+                                        {% csrf_token %}
+                                        <button class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-2" type="submit">
+                                            <i class="ti ti-trash"></i> Удалить роль
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+{% endblock content %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.getElementById("role-form");
+            const checks = [...form.querySelectorAll(".js-perm")];
+            const rowOf = el => [...el.closest("tr").querySelectorAll(".js-perm")];
+
+            // любое действие кроме просмотра включает просмотр; снятие просмотра снимает всю строку
+            checks.forEach(ch => ch.addEventListener("change", () => {
+                const row = rowOf(ch);
+                if (ch.dataset.action === "view" && !ch.checked) row.forEach(c => c.checked = false);
+                if (ch.dataset.action !== "view" && ch.checked) row.find(c => c.dataset.action === "view").checked = true;
+            }));
+
+            form.querySelectorAll(".js-col").forEach(btn => btn.addEventListener("click", () => {
+                const col = checks.filter(c => c.dataset.action === btn.dataset.action);
+                const value = !col.every(c => c.checked);
+                col.forEach(c => { c.checked = value; c.dispatchEvent(new Event("change")); });
+            }));
+
+            form.querySelectorAll(".js-preset").forEach(btn => btn.addEventListener("click", () => {
+                const p = btn.dataset.preset;
+                checks.forEach(c => c.checked = p === "all" || (p === "view" && c.dataset.action === "view"));
+            }));
+        });
+    </script>
+{% endblock extra_js %}

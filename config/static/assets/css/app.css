@@ -1410,6 +1410,77 @@ tr:hover .note-cell__edit,
     color: var(--app-muted);
 }
 
+/* управление пользователями */
+.role-chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    background: #f1f3f7;
+    color: #6b7280;
+}
+
+.role-chip--inventory_viewer { background: #eaf2ff; color: #1d4ed8; }
+.role-chip--inventory_storekeeper { background: #e8f7ef; color: #15803d; }
+.role-chip--inventory_admin { background: #fff5e6; color: #b45309; }
+.role-chip--superuser { background: #f1ecff; color: #6d28d9; }
+.role-chip--none { background: #fdecec; color: #b91c1c; }
+
+.org-code-chip {
+    display: inline-block;
+    margin: 1px 2px 1px 0;
+    padding: 1px 7px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+}
+
+.user-row--blocked td { opacity: .6; }
+
+.role-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.role-option {
+    position: relative;
+    display: block;
+    cursor: pointer;
+    margin: 0;
+}
+
+.role-option input {
+    position: absolute;
+    opacity: 0;
+}
+
+.role-option__body {
+    display: block;
+    height: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+    transition: border-color .15s, box-shadow .15s, background .15s;
+}
+
+.role-option:hover .role-option__body { border-color: var(--app-primary); }
+
+.role-option input:checked + .role-option__body {
+    border-color: var(--app-primary);
+    background: var(--app-primary-soft);
+    box-shadow: 0 0 0 1px var(--app-primary);
+}
+
+.role-option input:focus-visible + .role-option__body { outline: 2px solid var(--app-primary); outline-offset: 2px; }
+
+.role-option__title { display: block; font-weight: 600; }
+.role-option__hint { display: block; margin-top: 2px; font-size: 12px; color: var(--app-muted); }
+
 /* всплывающие сообщения */
 .app-toasts {
     position: fixed;
@@ -1457,3 +1528,42 @@ tr:hover .note-cell__edit,
     from { opacity: 0; transform: translateY(-6px); }
     to { opacity: 1; transform: none; }
 }
+
+/* управление ролями */
+.role-chip--custom { background: #e6f6f8; color: #0e7490; }
+
+.role-option__tag {
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #e6f6f8;
+    color: #0e7490;
+}
+
+.role-card .role-chip { max-width: 220px; }
+
+.perm-matrix td, .perm-matrix th { vertical-align: middle; }
+
+.perm-matrix .perm-check {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.perm-col-toggle {
+    border: 0;
+    background: none;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font: inherit;
+    color: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+}
+
+.perm-col-toggle:hover { background: var(--app-primary-soft); color: var(--app-primary); }
+
+.min-w-0 { min-width: 0; }

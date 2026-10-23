@@ -1,0 +1,197 @@
+{% extends "layouts/base.html" %}
+{% block title %}Пользователи{% endblock %}
+
+{% block content %}
+    <div class="pc-container">
+        <div class="pc-content">
+
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="row align-items-center g-2">
+                        <div class="col">
+                            <div class="page-header-title">
+                                <h5 class="m-b-10">Пользователи</h5>
+                            </div>
+                            <ul class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+                                <li class="breadcrumb-item" aria-current="page">Пользователи</li>
+                            </ul>
+                        </div>
+                        <div class="col-12 col-md-auto d-flex gap-2">
+                            <a class="btn btn-light d-inline-flex align-items-center gap-2" href="{% url 'users:role_list' %}">
+                                <i class="ti ti-shield-lock"></i> Роли и права
+                            </a>
+                            <a class="btn btn-primary d-inline-flex align-items-center gap-2" href="{% url 'users:user_create' %}">
+                                <i class="ti ti-user-plus"></i> Новый пользователь
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if no_access_count %}
+                <div class="alert alert-warning d-flex align-items-center gap-2">
+                    <i class="ti ti-alert-triangle fs-5"></i>
+                    <div>
+                        У {{ no_access_count }} активн{{ no_access_count|pluralize:"ого,ых" }} пользовател{{ no_access_count|pluralize:"я,ей" }}
+                        нет роли или организаций — они видят пустые списки.
+                        <a href="?role=none">Показать без роли</a>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="eq-filter">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-12 col-lg-3">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="ti ti-search"></i></span>
+                                    <input type="search" name="q" value="{{ request.GET.q }}" class="form-control"
+                                           placeholder="Логин, ФИО или e-mail">
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <select name="role" class="form-select" data-no-search>
+                                    <option value="">Все роли</option>
+                                    {% for v, l in role_choices %}
+                                        <option value="{{ v }}" {% if request.GET.role == v %}selected{% endif %}>{{ l }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <select name="organization" class="form-select">
+                                    <option value="">Все организации</option>
+                                    {% for org in organizations %}
+                                        <option value="{{ org.pk }}" {% if request.GET.organization == org.pk|stringformat:"s" %}selected{% endif %}>{{ org.code }} — {{ org.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <select name="active" class="form-select" data-no-search>
+                                    <option value="">Все</option>
+                                    <option value="1" {% if request.GET.active == "1" %}selected{% endif %}>Активные</option>
+                                    <option value="0" {% if request.GET.active == "0" %}selected{% endif %}>Заблокированные</option>
+                                </select>
+                            </div>
+                            <div class="col-6 col-lg-2 d-flex gap-2">
+                                <button class="btn btn-primary flex-fill" type="submit">Найти</button>
+                                {% if request.GET %}<a class="btn btn-outline-secondary" href="{% url 'users:user_list' %}" title="Сбросить"><i class="ti ti-x"></i></a>{% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card table-card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="mb-0">Список</h5>
+                    <span class="text-muted">Найдено: {{ page_obj.paginator.count }} из {{ total_count }}</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead>
+                            <tr>
+                                <th class="ps-4">Пользователь</th>
+                                <th>Роль</th>
+                                <th>Организации</th>
+                                <th>Telegram</th>
+                                <th>Последний вход</th>
+                                <th>Статус</th>
+                                <th class="text-end pe-4"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for u in users %}
+                                <tr class="{% if not u.is_active %}user-row--blocked{% endif %}">
+                                    <td class="ps-4">
+                                        <a class="d-flex align-items-center gap-2 text-body" href="{% url 'users:user_edit' u.pk %}">
+                                            <span class="user-avatar">{{ u.initials }}</span>
+                                            <span class="min-w-0">
+                                                <span class="d-block fw-semibold">{{ u.get_full_name|default:u.username }}</span>
+                                                <span class="d-block text-muted small">@{{ u.username }}{% if u.email %} · {{ u.email }}{% endif %}</span>
+                                            </span>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="role-chip role-chip--{{ u.role_css }}">{{ u.role_label }}</span>
+                                    </td>
+                                    <td>
+                                        {% if u.is_superuser %}
+                                            <span class="text-muted">все</span>
+                                        {% else %}
+                                            {% for org in u.org_list|slice:":4" %}
+                                                <span class="org-code-chip" title="{{ org.name }}">{{ org.code }}</span>
+                                            {% empty %}
+                                                <span class="text-danger small">нет доступа</span>
+                                            {% endfor %}
+                                            {% if u.org_list|length > 4 %}<span class="text-muted small">+{{ u.org_list|length|add:"-4" }}</span>{% endif %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if u.telegram_id %}
+                                            <span class="d-inline-flex align-items-center gap-1"><i class="ti ti-brand-telegram text-primary"></i>{{ u.telegram_id }}</span>
+                                        {% else %}<span class="text-muted">—</span>{% endif %}
+                                    </td>
+                                    <td class="text-muted small">{{ u.last_login|date:"d.m.Y H:i"|default:"никогда" }}</td>
+                                    <td>
+                                        {% if u.is_active %}<span class="status-badge status-in_use">Активен</span>
+                                        {% else %}<span class="status-badge status-to_write_off">Заблокирован</span>{% endif %}
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="feather icon-more-horizontal"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                                <li><a class="dropdown-item" href="{% url 'users:user_edit' u.pk %}?next={{ request.get_full_path|urlencode }}"><i class="ti ti-edit"></i> Редактировать</a></li>
+                                                <li><a class="dropdown-item" href="{% url 'users:user_password' u.pk %}"><i class="ti ti-key"></i> Сменить пароль</a></li>
+                                                {% if u.pk != request.user.pk %}
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <form method="post" action="{% url 'users:user_toggle_active' u.pk %}">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                                            {% if u.is_active %}
+                                                                <button class="dropdown-item text-danger" type="submit"
+                                                                        onclick="return confirm('Заблокировать {{ u.username|escapejs }}? Пользователь не сможет войти.')">
+                                                                    <i class="ti ti-lock"></i> Заблокировать
+                                                                </button>
+                                                            {% else %}
+                                                                <button class="dropdown-item" type="submit"><i class="ti ti-lock-open"></i> Разблокировать</button>
+                                                            {% endif %}
+                                                        </form>
+                                                    </li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="7" class="text-center text-muted py-4">Пользователи не найдены</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% if is_paginated %}
+                    <div class="card-footer d-flex justify-content-center">
+                        <nav>
+                            <ul class="pagination mb-0">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item"><a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">‹</a></li>
+                                {% endif %}
+                                <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                                {% if page_obj.has_next %}
+                                    <li class="page-item"><a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">›</a></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+{% endblock content %}

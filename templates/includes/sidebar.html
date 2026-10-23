@@ -16,14 +16,24 @@
                 {% if request.user.is_superuser %}
 
                     <li class="pc-item pc-caption">
-                        <label>ADMIN</label>
+                        <label>Администрирование</label>
+                    </li>
+                    <li class="pc-item">
+                        <a href="{% url "users:user_list" %}" class="pc-link">
+                            <span class="pc-micon"><i data-feather="user-check"></i></span>
+                            <span class="pc-mtext">Пользователи</span>
+                        </a>
+                    </li>
+                    <li class="pc-item">
+                        <a href="{% url "users:role_list" %}" class="pc-link">
+                            <span class="pc-micon"><i data-feather="shield"></i></span>
+                            <span class="pc-mtext">Роли и права</span>
+                        </a>
                     </li>
                     <li class="pc-item">
                         <a href="{% url "admin:index" %}" class="pc-link">
-          <span class="pc-micon">
-            <i data-feather="settings"></i>
-          </span>
-                            <span class="pc-mtext">Superuser UI</span>
+                            <span class="pc-micon"><i data-feather="settings"></i></span>
+                            <span class="pc-mtext">Django admin</span>
                         </a>
                     </li>
 
