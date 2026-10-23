@@ -1,0 +1,14 @@
+{% if messages %}
+    <div class="app-toasts" aria-live="polite">
+        {% for message in messages %}
+            <div class="app-toast app-toast--{{ message.tags|default:'info' }}" role="status">
+                <i class="ti {% if message.level_tag == 'success' %}ti-circle-check{% elif message.level_tag == 'error' %}ti-alert-circle{% elif message.level_tag == 'warning' %}ti-alert-triangle{% else %}ti-info-circle{% endif %}"></i>
+                <span>{{ message }}</span>
+                <button type="button" class="app-toast__close" aria-label="Закрыть" onclick="this.parentElement.remove()">×</button>
+            </div>
+        {% endfor %}
+    </div>
+    <script>
+        setTimeout(() => document.querySelectorAll(".app-toast--success, .app-toast--info").forEach(el => el.remove()), 6000);
+    </script>
+{% endif %}
